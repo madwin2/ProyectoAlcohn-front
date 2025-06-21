@@ -1,6 +1,55 @@
 .pedidos-page-container {
   width: 100%;
+  padding: 20px;
+  color: white;
+  max-width: 1600px;
+  margin: 0 auto;
   /* Ya no se necesita flexbox para centrar, el layout se encarga */
+}
+
+.top-bar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.search-input {
+  width: 40%;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #333;
+  background: #2a2a2a;
+  color: white;
+}
+
+.top-bar-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.filter-button, .new-pedido-button {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background: #333;
+  color: white;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.new-pedido-button {
+  background-color: #007bff;
+}
+
+.new-pedido-button:hover {
+  background-color: #0056b3;
+}
+
+.filter-button:hover {
+  background-color: #444;
 }
 
 .table-container {

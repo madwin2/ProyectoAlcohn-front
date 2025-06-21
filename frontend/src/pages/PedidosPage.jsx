@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import FilterPanel from '../components/FilterPanel';
+import AddPedidoModal from '../components/AddPedidoModal';
 import './PedidosPage.css';
 
 const initialFiltersState = {
@@ -13,9 +14,10 @@ const initialFiltersState = {
 
 // ✅ Función utilitaria para fecha final inclusiva
 const getInclusiveEndDateISOString = (dateStr) => {
+  if (!dateStr) return null;
   const [year, month, day] = dateStr.split('-');
   const endOfDay = new Date(year, month - 1, day);
-  endOfDay.setHours(23, 59, 59, 999); // final del día
+  endOfDay.setHours(23, 59, 59, 999);
   return endOfDay.toISOString();
 };
 
@@ -27,20 +29,27 @@ function PedidosPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
-  const [filterOptions, setFilterOptions] = useState({ estado_fabricacion: [], estado_venta: [], estado_envio: [] });
+  const [filterOptions, setFilterOptions] = useState({ 
+    estado_fabricacion: [], 
+    estado_venta: [], 
+    estado_envio: [],
+  });
   const [filters, setFilters] = useState(initialFiltersState);
   const [activeFilters, setActiveFilters] = useState(initialFiltersState);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchFilterOptions = async () => {
-      const fields = ['estado_fabricacion', 'estado_venta', 'estado_envio'];
+      const pedidoFields = ['estado_fabricacion', 'estado_venta', 'estado_envio'];
       const newOptions = {};
-      for (const field of fields) {
+      
+      for (const field of pedidoFields) {
         const { data } = await supabase.from('pedidos').select(field);
         if (data) {
           newOptions[field] = [...new Set(data.map(item => item[field]).filter(Boolean))];
         }
       }
+
       setFilterOptions(newOptions);
     };
     fetchFilterOptions();
@@ -58,14 +67,17 @@ function PedidosPage() {
     return () => clearTimeout(timerId);
   }, [searchTerm]);
 
+  const handlePedidoAdded = () => {
+    getPedidos();
+    setIsModalOpen(false);
+  };
+
   const getPedidos = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      let query = supabase
-        .from('pedidos')
-        .select('*, clientes (*)');
+      let query = supabase.from('pedidos').select('*, clientes (*)');
 
       if (debouncedSearchTerm) {
         const { data: idObjects, error: rpcError } = await supabase.rpc('get_pedido_ids_by_client_search', { search_term: debouncedSearchTerm });
@@ -74,11 +86,14 @@ function PedidosPage() {
         query = query.in('id_pedido', ids.length > 0 ? ids : [-1]);
       }
 
+      // Aplicar filtros de forma segura
+      if (activeFilters.fecha_compra_gte) {
+        query = query.gte('fecha_compra', activeFilters.fecha_compra_gte);
+      }
       if (activeFilters.fecha_compra_lte) {
         const isoEndOfDay = getInclusiveEndDateISOString(activeFilters.fecha_compra_lte);
         query = query.lte('fecha_compra', isoEndOfDay);
       }
-
       if (activeFilters.estado_fabricacion.length > 0) {
         query = query.in('estado_fabricacion', activeFilters.estado_fabricacion);
       }
@@ -89,6 +104,7 @@ function PedidosPage() {
         query = query.in('estado_envio', activeFilters.estado_envio);
       }
 
+      // Aplicar orden al final
       query = query.order('fecha_compra', { ascending: sortOrder === 'asc' });
 
       const { data, error: fetchError } = await query;
@@ -101,7 +117,7 @@ function PedidosPage() {
     } finally {
       setLoading(false);
     }
-  }, [sortOrder, debouncedSearchTerm, activeFilters]);
+  }, [sortOrder, debouncedSearchTerm, activeFilters, getInclusiveEndDateISOString]);
 
   useEffect(() => {
     getPedidos();
@@ -110,17 +126,22 @@ function PedidosPage() {
   return (
     <div className="pedidos-page-container">
       <h1>Gestión de Pedidos</h1>
-      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: '20px' }}>
+      <div className="top-bar-container">
         <input
           type="text"
           placeholder="Buscar por cliente, diseño o teléfono..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ width: '40%', padding: '10px', borderRadius: '5px', border: '1px solid #333', background: '#2a2a2a', color: 'white' }}
+          className="search-input"
         />
-        <button onClick={() => setShowFilterPanel(!showFilterPanel)} style={{ padding: '10px 15px', border: 'none', borderRadius: '5px', cursor: 'pointer', background: '#333', color: 'white' }}>
-          {showFilterPanel ? 'Ocultar Filtros' : 'Mostrar Filtros'}
-        </button>
+        <div className="top-bar-buttons">
+            <button onClick={() => setShowFilterPanel(!showFilterPanel)} className="filter-button">
+              {showFilterPanel ? 'Ocultar Filtros' : 'Mostrar Filtros'}
+            </button>
+            <button onClick={() => setIsModalOpen(true)} className="new-pedido-button">
+              Crear Pedido
+            </button>
+        </div>
       </div>
       {showFilterPanel && (
         <FilterPanel 
@@ -131,6 +152,12 @@ function PedidosPage() {
           onClear={onClearFilters}
         />
       )}
+       <AddPedidoModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onPedidoAdded={handlePedidoAdded}
+        filterOptions={filterOptions}
+      />
       <div className="table-container">
         <table className="pedidos-table">
           <thead>
