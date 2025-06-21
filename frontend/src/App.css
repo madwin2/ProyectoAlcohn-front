@@ -43,11 +43,11 @@
 
 .app-container {
   display: flex;
-  height: 100vh;
 }
 
 .content {
-  flex-grow: 1;
-  padding: 20px;
-  overflow-y: auto;
+  margin-left: 250px; /* Ancho exacto de la sidebar */
+  width: calc(100% - 250px); /* Ocupa el resto del espacio de la ventana */
+  padding: 20px 20px; /* Reducimos el padding lateral para más ancho */
+  box-sizing: border-box; /* Importante: el padding se incluye dentro del ancho, no se suma */
 }

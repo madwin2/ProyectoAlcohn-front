@@ -1,22 +1,24 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import './Sidebar.css';
 
-const Sidebar = () => {
+function Sidebar() {
   return (
     <div className="sidebar">
-      <div className="sidebar-header">
-        <h3>Alcohn AI</h3>
-      </div>
-      <nav className="sidebar-nav">
+      <h2>Alcohn AI</h2>
+      <nav>
         <ul>
           <li>
-            <Link to="/pedidos">Pedidos</Link>
+            <NavLink to="/">Inicio</NavLink>
           </li>
+          <li>
+            <NavLink to="/pedidos">Pedidos</NavLink>
+          </li>
+          {/* Aquí se pueden añadir más enlaces en el futuro */}
         </ul>
       </nav>
     </div>
   );
-};
+}
 
 export default Sidebar; 

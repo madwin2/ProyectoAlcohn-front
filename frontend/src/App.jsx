@@ -1,6 +1,7 @@
 import { Routes, Route, Outlet } from 'react-router-dom';
+import HomePage from "./pages/HomePage";
+import PedidosPage from "./pages/PedidosPage";
 import Sidebar from './components/Sidebar';
-import Pedidos from './pages/Pedidos';
 import './App.css';
 
 function Layout() {
@@ -8,7 +9,7 @@ function Layout() {
     <div className="app-container">
       <Sidebar />
       <main className="content">
-        <Outlet /> 
+        <Outlet /> {/* Aquí se renderizarán las páginas */}
       </main>
     </div>
   );
@@ -18,16 +19,11 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
-        <Route index element={
-          <div>
-            <h1>Bienvenido a Alcohn AI</h1>
-            <p>Por favor, selecciona una opción del menú lateral para comenzar.</p>
-          </div>
-        } />
-        <Route path="pedidos" element={<Pedidos />} />
+        <Route index element={<HomePage />} />
+        <Route path="pedidos" element={<PedidosPage />} />
       </Route>
     </Routes>
-  );
+  )
 }
 
 export default App;

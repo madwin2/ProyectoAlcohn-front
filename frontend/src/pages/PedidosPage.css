@@ -1,0 +1,37 @@
+.pedidos-page-container {
+  width: 100%;
+  /* Ya no se necesita flexbox para centrar, el layout se encarga */
+}
+
+.table-container {
+  overflow-x: auto; /* La magia sucede aquí */
+  border: 1px solid #333;
+  border-radius: 8px;
+  margin-top: 20px;
+  width: 100%; /* La tabla ocupará todo el ancho del contenedor con padding */
+}
+
+.pedidos-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1200px; /* Un ancho mínimo para forzar el scroll si es necesario */
+}
+
+.pedidos-table th,
+.pedidos-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #333;
+  white-space: nowrap; /* Evita que el texto se parta en varias líneas */
+}
+
+.pedidos-table thead th {
+  background-color: #1f1f1f;
+  color: #fff;
+  position: sticky;
+  top: 0; /* Fija el encabezado al hacer scroll vertical */
+}
+
+.pedidos-table tbody tr:hover {
+  background-color: #2a2a2a;
+} 
