@@ -13,9 +13,10 @@ const initialFiltersState = {
 
 // ✅ Función utilitaria para fecha final inclusiva
 const getInclusiveEndDateISOString = (dateStr) => {
-  const localEndDate = new Date(dateStr); // se interpreta como local (00:00:00)
-  localEndDate.setDate(localEndDate.getDate() + 1); // sumamos un día
-  return localEndDate.toISOString(); // convierte a UTC (Z)
+  const [year, month, day] = dateStr.split('-');
+  const endOfDay = new Date(year, month - 1, day);
+  endOfDay.setHours(23, 59, 59, 999); // final del día
+  return endOfDay.toISOString();
 };
 
 function PedidosPage() {
@@ -73,13 +74,9 @@ function PedidosPage() {
         query = query.in('id_pedido', ids.length > 0 ? ids : [-1]);
       }
 
-      if (activeFilters.fecha_compra_gte) {
-        query = query.gte('fecha_compra', activeFilters.fecha_compra_gte);
-      }
-
       if (activeFilters.fecha_compra_lte) {
-        const isoNextDay = getInclusiveEndDateISOString(activeFilters.fecha_compra_lte);
-        query = query.lt('fecha_compra', isoNextDay);
+        const isoEndOfDay = getInclusiveEndDateISOString(activeFilters.fecha_compra_lte);
+        query = query.lte('fecha_compra', isoEndOfDay);
       }
 
       if (activeFilters.estado_fabricacion.length > 0) {
