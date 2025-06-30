@@ -12,6 +12,7 @@ const initialFormState = {
   fecha_compra: new Date().toISOString().split('T')[0],
   valor_sello: '',
   valor_envio: '',
+  valor_senia: '',
   estado_fabricacion: 'Sin Hacer',
   estado_venta: 'Foto',
   estado_envio: 'Sin enviar',
@@ -71,30 +72,31 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded, filterOptions }) {
       const archivoBaseUrl = await uploadFile(formData.archivo_base, 'base');
       const archivoVectorUrl = await uploadFile(formData.archivo_vector, 'vector');
 
-      // 2. Preparar datos para la función RPC (todo el resto lo maneja Supabase)
+      // 2. Preparar datos para la función RPC (ajustado a la nueva función crear_pedido)
       const pedidoCompleto = {
         // Datos del cliente
         p_nombre_cliente: formData.nombre_cliente,
-        p_apellido_cliente: formData.apellido_cliente,
+        p_apellido_cliente: formData.apellido_cliente || null,
         p_telefono_cliente: formData.telefono_cliente,
-        p_medio_contacto: formData.medio_contacto,
+        p_medio_contacto: formData.medio_contacto || null,
         // Datos del pedido
         p_fecha_compra: formData.fecha_compra,
         p_valor_sello: formData.valor_sello ? parseFloat(formData.valor_sello) : null,
         p_valor_envio: formData.valor_envio ? parseFloat(formData.valor_envio) : null,
+        p_valor_senia: formData.valor_senia ? parseFloat(formData.valor_senia) : 0,
         p_estado_fabricacion: formData.estado_fabricacion,
         p_estado_venta: formData.estado_venta,
         p_estado_envio: formData.estado_envio,
-        p_notas: formData.notas,
-        p_disenio: formData.disenio,
-        p_archivo_base: archivoBaseUrl,
-        p_archivo_vector: archivoVectorUrl,
-        p_foto_sello: formData.foto_sello,
-        p_numero_seguimiento: formData.numero_seguimiento
+        p_notas: formData.notas || null,
+        p_disenio: formData.disenio || null,
+        p_archivo_base: archivoBaseUrl || null,
+        p_archivo_vector: archivoVectorUrl || null,
+        p_foto_sello: formData.foto_sello || null,
+        p_numero_seguimiento: formData.numero_seguimiento || null
       };
 
-      // 3. Una sola llamada RPC que maneja cliente + pedido
-      const { error: rpcError } = await supabase.rpc('crear_pedido_completo', pedidoCompleto);
+      // 3. Llamada RPC a la nueva función crear_pedido
+      const { error: rpcError } = await supabase.rpc('crear_pedido', pedidoCompleto);
 
       if (rpcError) throw rpcError;
 
@@ -154,6 +156,10 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded, filterOptions }) {
             <div className="form-group">
               <label htmlFor="valor_envio">Valor Envío</label>
               <input type="number" name="valor_envio" value={formData.valor_envio} onChange={handleChange} />
+            </div>
+            <div className="form-group">
+              <label htmlFor="valor_senia">Valor Seña</label>
+              <input type="number" name="valor_senia" value={formData.valor_senia} onChange={handleChange} />
             </div>
 
             <div className="form-group">

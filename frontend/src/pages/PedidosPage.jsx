@@ -37,6 +37,8 @@ function PedidosPage() {
   const [filters, setFilters] = useState(initialFiltersState);
   const [activeFilters, setActiveFilters] = useState(initialFiltersState);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({});
 
   useEffect(() => {
     const fetchFilterOptions = async () => {
@@ -123,24 +125,66 @@ function PedidosPage() {
     getPedidos();
   }, [getPedidos]);
 
-  const handleEditar = async (id) => {
-    // Ejemplo: editar algunos campos (puedes adaptar esto a un modal/formulario real)
-    const nuevoEstadoFabricacion = prompt('Nuevo estado de fabricación:');
-    const nuevoEstadoVenta = prompt('Nuevo estado de venta:');
-    const nuevoEstadoEnvio = prompt('Nuevo estado de envío:');
-    const nuevasNotas = prompt('Nuevas notas:');
+  const startEdit = (pedido) => {
+    setEditingId(pedido.id_pedido);
+    setEditForm({
+      fecha_compra: pedido.fecha_compra ? pedido.fecha_compra.split('T')[0] : '',
+      nombre_cliente: pedido.clientes?.nombre_cliente || '',
+      apellido_cliente: pedido.clientes?.apellido_cliente || '',
+      telefono_cliente: pedido.clientes?.telefono_cliente || '',
+      medio_contacto: pedido.clientes?.medio_contacto || '',
+      valor_sello: pedido.valor_sello || '',
+      valor_envio: pedido.valor_envio || '',
+      valor_senia: pedido.valor_senia || '',
+      estado_fabricacion: pedido.estado_fabricacion || '',
+      estado_venta: pedido.estado_venta || '',
+      estado_envio: pedido.estado_envio || '',
+      notas: pedido.notas || '',
+      disenio: pedido.disenio || '',
+      archivo_base: pedido.archivo_base || '',
+      archivo_vector: pedido.archivo_vector || '',
+      foto_sello: pedido.foto_sello || '',
+      numero_seguimiento: pedido.numero_seguimiento || '',
+    });
+  };
 
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditForm({});
+  };
+
+  const handleEditFormChange = (e) => {
+    const { name, value } = e.target;
+    setEditForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const saveEdit = async (id) => {
     const { error } = await supabase.rpc('editar_pedido', {
       p_id: id,
-      p_estado_fabricacion: nuevoEstadoFabricacion || null,
-      p_estado_venta: nuevoEstadoVenta || null,
-      p_estado_envio: nuevoEstadoEnvio || null,
-      p_notas: nuevasNotas || null
+      p_fecha_compra: editForm.fecha_compra,
+      p_nombre_cliente: editForm.nombre_cliente,
+      p_apellido_cliente: editForm.apellido_cliente,
+      p_telefono_cliente: editForm.telefono_cliente,
+      p_medio_contacto: editForm.medio_contacto,
+      p_valor_sello: editForm.valor_sello ? parseFloat(editForm.valor_sello) : null,
+      p_valor_envio: editForm.valor_envio ? parseFloat(editForm.valor_envio) : null,
+      p_valor_senia: editForm.valor_senia ? parseFloat(editForm.valor_senia) : 0,
+      p_estado_fabricacion: editForm.estado_fabricacion,
+      p_estado_venta: editForm.estado_venta,
+      p_estado_envio: editForm.estado_envio,
+      p_notas: editForm.notas,
+      p_disenio: editForm.disenio,
+      p_archivo_base: editForm.archivo_base,
+      p_archivo_vector: editForm.archivo_vector,
+      p_foto_sello: editForm.foto_sello,
+      p_numero_seguimiento: editForm.numero_seguimiento,
     });
     if (error) {
       alert('Error al editar el pedido');
     } else {
       getPedidos();
+      setEditingId(null);
+      setEditForm({});
     }
   };
 
@@ -222,31 +266,72 @@ function PedidosPage() {
               <tr><td colSpan="19" style={{ textAlign: 'center', color: 'red' }}>Error: {error}</td></tr>
             ) : pedidos.length > 0 ? (
               pedidos.map((pedido) => (
-                <tr key={pedido.id_pedido}>
-                  <td>{new Date(pedido.fecha_compra).toLocaleDateString()}</td>
-                  <td>{pedido.clientes?.nombre_cliente || 'N/A'}</td>
-                  <td>{pedido.clientes?.apellido_cliente || 'N/A'}</td>
-                  <td>{pedido.clientes?.telefono_cliente || 'N/A'}</td>
-                  <td>{pedido.clientes?.medio_contacto || 'N/A'}</td>
-                  <td>{pedido.valor_sello}</td>
-                  <td>{pedido.valor_envio}</td>
-                  <td>{pedido.restante_pagar}</td>
-                  <td>{pedido.estado_fabricacion}</td>
-                  <td>{pedido.estado_venta}</td>
-                  <td>{pedido.estado_envio}</td>
-                  <td>{pedido.notas}</td>
-                  <td>{pedido.disenio}</td>
-                  <td>{pedido.archivo_base}</td>
-                  <td>{pedido.archivo_vector}</td>
-                  <td>{pedido.foto_sello}</td>
-                  <td>{pedido.numero_seguimiento}</td>
-                  <td>
-                    <button onClick={() => handleEditar(pedido.id_pedido)}>Editar</button>
-                  </td>
-                  <td>
-                    <button onClick={() => handleEliminar(pedido.id_pedido)}>Eliminar</button>
-                  </td>
-                </tr>
+                editingId === pedido.id_pedido ? (
+                  <tr key={pedido.id_pedido}>
+                    <td><input name="fecha_compra" type="date" value={editForm.fecha_compra} onChange={handleEditFormChange} /></td>
+                    <td><input name="nombre_cliente" value={editForm.nombre_cliente} onChange={handleEditFormChange} /></td>
+                    <td><input name="apellido_cliente" value={editForm.apellido_cliente} onChange={handleEditFormChange} /></td>
+                    <td><input name="telefono_cliente" value={editForm.telefono_cliente} onChange={handleEditFormChange} /></td>
+                    <td><input name="medio_contacto" value={editForm.medio_contacto} onChange={handleEditFormChange} /></td>
+                    <td><input name="valor_sello" type="number" value={editForm.valor_sello} onChange={handleEditFormChange} /></td>
+                    <td><input name="valor_envio" type="number" value={editForm.valor_envio} onChange={handleEditFormChange} /></td>
+                    <td>{pedido.restante_pagar}</td>
+                    <td>
+                      <select name="estado_fabricacion" value={editForm.estado_fabricacion} onChange={handleEditFormChange}>
+                        {filterOptions.estado_fabricacion.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                      </select>
+                    </td>
+                    <td>
+                      <select name="estado_venta" value={editForm.estado_venta} onChange={handleEditFormChange}>
+                        {filterOptions.estado_venta.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                      </select>
+                    </td>
+                    <td>
+                      <select name="estado_envio" value={editForm.estado_envio} onChange={handleEditFormChange}>
+                        {filterOptions.estado_envio.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                      </select>
+                    </td>
+                    <td><input name="notas" value={editForm.notas} onChange={handleEditFormChange} /></td>
+                    <td><input name="disenio" value={editForm.disenio} onChange={handleEditFormChange} /></td>
+                    <td><input name="archivo_base" value={editForm.archivo_base} onChange={handleEditFormChange} /></td>
+                    <td><input name="archivo_vector" value={editForm.archivo_vector} onChange={handleEditFormChange} /></td>
+                    <td><input name="foto_sello" value={editForm.foto_sello} onChange={handleEditFormChange} /></td>
+                    <td><input name="numero_seguimiento" value={editForm.numero_seguimiento} onChange={handleEditFormChange} /></td>
+                    <td>
+                      <button onClick={() => saveEdit(pedido.id_pedido)}>Guardar</button>
+                      <button onClick={cancelEdit}>Cancelar</button>
+                    </td>
+                    <td>
+                      <button onClick={() => handleEliminar(pedido.id_pedido)}>Eliminar</button>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={pedido.id_pedido}>
+                    <td>{new Date(pedido.fecha_compra).toLocaleDateString()}</td>
+                    <td>{pedido.clientes?.nombre_cliente || 'N/A'}</td>
+                    <td>{pedido.clientes?.apellido_cliente || 'N/A'}</td>
+                    <td>{pedido.clientes?.telefono_cliente || 'N/A'}</td>
+                    <td>{pedido.clientes?.medio_contacto || 'N/A'}</td>
+                    <td>{pedido.valor_sello}</td>
+                    <td>{pedido.valor_envio}</td>
+                    <td>{pedido.restante_pagar}</td>
+                    <td>{pedido.estado_fabricacion}</td>
+                    <td>{pedido.estado_venta}</td>
+                    <td>{pedido.estado_envio}</td>
+                    <td>{pedido.notas}</td>
+                    <td>{pedido.disenio}</td>
+                    <td>{pedido.archivo_base}</td>
+                    <td>{pedido.archivo_vector}</td>
+                    <td>{pedido.foto_sello}</td>
+                    <td>{pedido.numero_seguimiento}</td>
+                    <td>
+                      <button onClick={() => startEdit(pedido)}>Editar</button>
+                    </td>
+                    <td>
+                      <button onClick={() => handleEliminar(pedido.id_pedido)}>Eliminar</button>
+                    </td>
+                  </tr>
+                )
               ))
             ) : (
               <tr><td colSpan="19" style={{ textAlign: 'center' }}>No se encontraron pedidos.</td></tr>
