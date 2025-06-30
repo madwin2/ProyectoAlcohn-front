@@ -9,7 +9,7 @@ const initialFormState = {
   telefono_cliente: '',
   medio_contacto: '',
   // Campos de PEDIDOS
-  fecha_compra: new Date().toISOString().split('T')[0], // Fecha de hoy por defecto
+  fecha_compra: new Date().toISOString().split('T')[0],
   valor_sello: '',
   valor_envio: '',
   estado_fabricacion: 'Sin Hacer',
@@ -29,7 +29,6 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded, filterOptions }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Resetea el formulario cuando el modal se abre
     if (isOpen) {
       setFormData(initialFormState);
       setError(null);
@@ -39,11 +38,27 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded, filterOptions }) {
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     if (files) {
-      // Manejar la selección de archivos
       setFormData(prev => ({ ...prev, [name]: files[0] }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
+  };
+
+  // Función helper para subir archivos (mantener en frontend por eficiencia)
+  const uploadFile = async (file, folder) => {
+    if (!file) return '';
+
+    const filePath = `public/${folder}/${Date.now()}-${file.name}`;
+    const { error: uploadError } = await supabase.storage
+      .from('archivos_pedidos')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      throw new Error(`Error subiendo archivo ${folder}: ${uploadError.message}`);
+    }
+
+    const { data } = supabase.storage.from('archivos_pedidos').getPublicUrl(filePath);
+    return data.publicUrl;
   };
 
   const handleSubmit = async (e) => {
@@ -52,74 +67,21 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded, filterOptions }) {
     setError(null);
 
     try {
-      // --- Lógica de subida de archivos ---
-      // Nota: Requiere un bucket PÚBLICO en Supabase Storage llamado 'archivos_pedidos'
-      
-      let archivoBaseUrl = '';
-      if (formData.archivo_base) {
-        const file = formData.archivo_base;
-        const filePath = `public/base/${Date.now()}-${file.name}`;
-        const { error: uploadError } = await supabase.storage
-          .from('archivos_pedidos')
-          .upload(filePath, file);
-        if (uploadError) throw new Error(`Error subiendo archivo base: ${uploadError.message}`);
-        const { data } = supabase.storage.from('archivos_pedidos').getPublicUrl(filePath);
-        archivoBaseUrl = data.publicUrl;
-      }
+      // 1. Subir archivos (mantener en frontend)
+      const archivoBaseUrl = await uploadFile(formData.archivo_base, 'base');
+      const archivoVectorUrl = await uploadFile(formData.archivo_vector, 'vector');
 
-      let archivoVectorUrl = '';
-      if (formData.archivo_vector) {
-        const file = formData.archivo_vector;
-        const filePath = `public/vector/${Date.now()}-${file.name}`;
-        const { error: uploadError } = await supabase.storage
-          .from('archivos_pedidos')
-          .upload(filePath, file);
-        if (uploadError) throw new Error(`Error subiendo archivo vector: ${uploadError.message}`);
-        const { data } = supabase.storage.from('archivos_pedidos').getPublicUrl(filePath);
-        archivoVectorUrl = data.publicUrl;
-      }
-
-      // --- Lógica de Cliente Mejorada ---
-      let clienteId = null;
-
-      // 1. Buscar si el cliente ya existe por número de teléfono
-      const { data: existingClient } = await supabase
-        .from('clientes')
-        .select('id_cliente')
-        .eq('telefono_cliente', formData.telefono_cliente)
-        .single();
-      
-      if (existingClient) {
-        // Usar el ID del cliente existente
-        clienteId = existingClient.id_cliente;
-      } else {
-        // Si no existe, crear un nuevo cliente
-        const { data: newClient, error: clienteError } = await supabase
-          .from('clientes')
-          .insert({
-            nombre_cliente: formData.nombre_cliente,
-            apellido_cliente: formData.apellido_cliente,
-            telefono_cliente: formData.telefono_cliente,
-            medio_contacto: formData.medio_contacto,
-          })
-          .select('id_cliente')
-          .single();
-        
-        if (clienteError) throw clienteError;
-        clienteId = newClient.id_cliente;
-      }
-
-      if (!clienteId) {
-        throw new Error("No se pudo obtener el ID del cliente.");
-      }
-
-      // 2. Crear el pedido asociando el ID del cliente y las URLs de los archivos
-      const pedidoData = {
-        p_id_cliente: clienteId,
+      // 2. Preparar datos para la función RPC (todo el resto lo maneja Supabase)
+      const pedidoCompleto = {
+        // Datos del cliente
+        p_nombre_cliente: formData.nombre_cliente,
+        p_apellido_cliente: formData.apellido_cliente,
+        p_telefono_cliente: formData.telefono_cliente,
+        p_medio_contacto: formData.medio_contacto,
+        // Datos del pedido
         p_fecha_compra: formData.fecha_compra,
         p_valor_sello: formData.valor_sello ? parseFloat(formData.valor_sello) : null,
         p_valor_envio: formData.valor_envio ? parseFloat(formData.valor_envio) : null,
-        p_restante_pagar: formData.restante_pagar ? parseFloat(formData.restante_pagar) : null,
         p_estado_fabricacion: formData.estado_fabricacion,
         p_estado_venta: formData.estado_venta,
         p_estado_envio: formData.estado_envio,
@@ -130,13 +92,14 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded, filterOptions }) {
         p_foto_sello: formData.foto_sello,
         p_numero_seguimiento: formData.numero_seguimiento
       };
-      
-      const { error: pedidoError } = await supabase.rpc('crear_pedido', pedidoData);
 
-      if (pedidoError) throw pedidoError;
+      // 3. Una sola llamada RPC que maneja cliente + pedido
+      const { error: rpcError } = await supabase.rpc('crear_pedido_completo', pedidoCompleto);
 
-      // 3. Éxito
+      if (rpcError) throw rpcError;
+
       onPedidoAdded();
+      onClose();
 
     } catch (err) {
       setError(err.message);
@@ -192,44 +155,43 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded, filterOptions }) {
               <label htmlFor="valor_envio">Valor Envío</label>
               <input type="number" name="valor_envio" value={formData.valor_envio} onChange={handleChange} />
             </div>
-            
+
             <div className="form-group">
-                <label>Estado Fabricación</label>
-                <select name="estado_fabricacion" value={formData.estado_fabricacion} onChange={handleChange}>
-                    {filterOptions?.estado_fabricacion?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                    {/* Opciones por defecto si no hay desde BD */}
-                    {!filterOptions?.estado_fabricacion?.length && ['Sin Hacer', 'Haciendo', 'Hecho'].map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
+              <label>Estado Fabricación</label>
+              <select name="estado_fabricacion" value={formData.estado_fabricacion} onChange={handleChange}>
+                {filterOptions?.estado_fabricacion?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                {!filterOptions?.estado_fabricacion?.length && ['Sin Hacer', 'Haciendo', 'Hecho'].map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
             </div>
             <div className="form-group">
-                <label>Estado Venta</label>
-                <select name="estado_venta" value={formData.estado_venta} onChange={handleChange}>
-                    <option value="">Ninguno</option>
-                    {filterOptions?.estado_venta?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                    {!filterOptions?.estado_venta?.length && ['Foto', 'Transferido'].map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
+              <label>Estado Venta</label>
+              <select name="estado_venta" value={formData.estado_venta} onChange={handleChange}>
+                <option value="">Ninguno</option>
+                {filterOptions?.estado_venta?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                {!filterOptions?.estado_venta?.length && ['Foto', 'Transferido'].map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
             </div>
             <div className="form-group">
-                <label>Estado Envío</label>
-                <select name="estado_envio" value={formData.estado_envio} onChange={handleChange}>
-                    {filterOptions?.estado_envio?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                     {!filterOptions?.estado_envio?.length && ['Sin enviar', 'Hacer Etiqueta', 'Despachado'].map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
+              <label>Estado Envío</label>
+              <select name="estado_envio" value={formData.estado_envio} onChange={handleChange}>
+                {filterOptions?.estado_envio?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                {!filterOptions?.estado_envio?.length && ['Sin enviar', 'Hacer Etiqueta', 'Despachado'].map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
             </div>
 
-            <div className="form-group" style={{gridColumn: 'span 2'}}>
+            <div className="form-group" style={{ gridColumn: 'span 2' }}>
               <label htmlFor="disenio">Diseño</label>
               <textarea name="disenio" value={formData.disenio} onChange={handleChange}></textarea>
             </div>
-            <div className="form-group" style={{gridColumn: 'span 2'}}>
+            <div className="form-group" style={{ gridColumn: 'span 2' }}>
               <label htmlFor="archivo_base">Archivo Base (.jpg, .png, .jpeg)</label>
               <input type="file" name="archivo_base" onChange={handleChange} accept=".jpg,.jpeg,.png" />
             </div>
-            <div className="form-group" style={{gridColumn: 'span 2'}}>
+            <div className="form-group" style={{ gridColumn: 'span 2' }}>
               <label htmlFor="archivo_vector">Archivo Vector (.eps, .svg, .ai, .pdf)</label>
               <input type="file" name="archivo_vector" onChange={handleChange} accept=".eps,.svg,.ai,.pdf" />
             </div>
-            <div className="form-group" style={{gridColumn: 'span 2'}}>
+            <div className="form-group" style={{ gridColumn: 'span 2' }}>
               <label htmlFor="notas">Notas</label>
               <textarea name="notas" value={formData.notas} onChange={handleChange}></textarea>
             </div>
@@ -246,4 +208,4 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded, filterOptions }) {
   );
 }
 
-export default AddPedidoModal; 
+export default AddPedidoModal;

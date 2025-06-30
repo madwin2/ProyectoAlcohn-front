@@ -1,0 +1,58 @@
+CREATE OR REPLACE FUNCTION crear_pedido_completo(
+  -- Parámetros del cliente
+  p_nombre_cliente TEXT,
+  p_apellido_cliente TEXT DEFAULT NULL,
+  p_telefono_cliente TEXT,
+  p_medio_contacto TEXT DEFAULT NULL,
+  -- Parámetros del pedido
+  p_fecha_compra DATE,
+  p_valor_sello DECIMAL DEFAULT NULL,
+  p_valor_envio DECIMAL DEFAULT NULL,
+  p_estado_fabricacion TEXT DEFAULT 'Sin Hacer',
+  p_estado_venta TEXT DEFAULT 'Foto',
+  p_estado_envio TEXT DEFAULT 'Sin enviar',
+  p_notas TEXT DEFAULT NULL,
+  p_disenio TEXT DEFAULT NULL,
+  p_archivo_base TEXT DEFAULT NULL,
+  p_archivo_vector TEXT DEFAULT NULL,
+  p_foto_sello TEXT DEFAULT NULL,
+  p_numero_seguimiento TEXT DEFAULT NULL
+)
+RETURNS JSON
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_cliente_id INTEGER;
+  v_pedido_id INTEGER;
+BEGIN
+  -- 1. Buscar o crear cliente
+  SELECT id_cliente INTO v_cliente_id 
+  FROM clientes 
+  WHERE telefono_cliente = p_telefono_cliente;
+  
+  IF v_cliente_id IS NULL THEN
+    INSERT INTO clientes (nombre_cliente, apellido_cliente, telefono_cliente, medio_contacto)
+    VALUES (p_nombre_cliente, p_apellido_cliente, p_telefono_cliente, p_medio_contacto)
+    RETURNING id_cliente INTO v_cliente_id;
+  END IF;
+  
+  -- 2. Crear pedido
+  INSERT INTO pedidos (
+    p_id_cliente, p_fecha_compra, p_valor_sello, p_valor_envio,
+    p_estado_fabricacion, p_estado_venta, p_estado_envio,
+    p_notas, p_disenio, p_archivo_base, p_archivo_vector,
+    p_foto_sello, p_numero_seguimiento
+  ) VALUES (
+    v_cliente_id, p_fecha_compra, p_valor_sello, p_valor_envio,
+    p_estado_fabricacion, p_estado_venta, p_estado_envio,
+    p_notas, p_disenio, p_archivo_base, p_archivo_vector,
+    p_foto_sello, p_numero_seguimiento
+  ) RETURNING id_pedido INTO v_pedido_id;
+  
+  RETURN json_build_object(
+    'success', true,
+    'cliente_id', v_cliente_id,
+    'pedido_id', v_pedido_id
+  );
+END;
+$$;
