@@ -123,6 +123,38 @@ function PedidosPage() {
     getPedidos();
   }, [getPedidos]);
 
+  const handleEditar = async (id) => {
+    // Ejemplo: editar algunos campos (puedes adaptar esto a un modal/formulario real)
+    const nuevoEstadoFabricacion = prompt('Nuevo estado de fabricación:');
+    const nuevoEstadoVenta = prompt('Nuevo estado de venta:');
+    const nuevoEstadoEnvio = prompt('Nuevo estado de envío:');
+    const nuevasNotas = prompt('Nuevas notas:');
+
+    const { error } = await supabase.rpc('editar_pedido', {
+      p_id: id,
+      p_estado_fabricacion: nuevoEstadoFabricacion || null,
+      p_estado_venta: nuevoEstadoVenta || null,
+      p_estado_envio: nuevoEstadoEnvio || null,
+      p_notas: nuevasNotas || null
+    });
+    if (error) {
+      alert('Error al editar el pedido');
+    } else {
+      getPedidos();
+    }
+  };
+
+  const handleEliminar = async (id) => {
+    if (window.confirm('¿Estás seguro de que deseas eliminar este pedido?')) {
+      const { error } = await supabase.rpc('eliminar_pedido', { p_id: id });
+      if (error) {
+        alert('Error al eliminar el pedido');
+      } else {
+        getPedidos(); // Refresca la lista
+      }
+    }
+  };
+
   return (
     <div className="pedidos-page-container">
       <h1>Gestión de Pedidos</h1>
@@ -179,13 +211,15 @@ function PedidosPage() {
               <th>Archivo Vector</th>
               <th>Foto Sello</th>
               <th>Nro. Seguimiento</th>
+              <th>Editar</th>
+              <th>Eliminar</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan="17" style={{ textAlign: 'center' }}>Cargando...</td></tr>
+              <tr><td colSpan="19" style={{ textAlign: 'center' }}>Cargando...</td></tr>
             ) : error ? (
-              <tr><td colSpan="17" style={{ textAlign: 'center', color: 'red' }}>Error: {error}</td></tr>
+              <tr><td colSpan="19" style={{ textAlign: 'center', color: 'red' }}>Error: {error}</td></tr>
             ) : pedidos.length > 0 ? (
               pedidos.map((pedido) => (
                 <tr key={pedido.id_pedido}>
@@ -206,10 +240,16 @@ function PedidosPage() {
                   <td>{pedido.archivo_vector}</td>
                   <td>{pedido.foto_sello}</td>
                   <td>{pedido.numero_seguimiento}</td>
+                  <td>
+                    <button onClick={() => handleEditar(pedido.id_pedido)}>Editar</button>
+                  </td>
+                  <td>
+                    <button onClick={() => handleEliminar(pedido.id_pedido)}>Eliminar</button>
+                  </td>
                 </tr>
               ))
             ) : (
-              <tr><td colSpan="17" style={{ textAlign: 'center' }}>No se encontraron pedidos.</td></tr>
+              <tr><td colSpan="19" style={{ textAlign: 'center' }}>No se encontraron pedidos.</td></tr>
             )}
           </tbody>
         </table>

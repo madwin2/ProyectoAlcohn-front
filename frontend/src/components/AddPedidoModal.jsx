@@ -115,22 +115,23 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded, filterOptions }) {
 
       // 2. Crear el pedido asociando el ID del cliente y las URLs de los archivos
       const pedidoData = {
-        id_cliente: clienteId,
-        fecha_compra: formData.fecha_compra,
-        valor_sello: formData.valor_sello ? parseFloat(formData.valor_sello) : null,
-        valor_envio: formData.valor_envio ? parseFloat(formData.valor_envio) : null,
-        estado_fabricacion: formData.estado_fabricacion,
-        estado_venta: formData.estado_venta,
-        estado_envio: formData.estado_envio,
-        notas: formData.notas,
-        disenio: formData.disenio,
-        archivo_base: archivoBaseUrl,
-        archivo_vector: archivoVectorUrl,
-        foto_sello: formData.foto_sello,
-        numero_seguimiento: formData.numero_seguimiento,
+        p_id_cliente: clienteId,
+        p_fecha_compra: formData.fecha_compra,
+        p_valor_sello: formData.valor_sello ? parseFloat(formData.valor_sello) : null,
+        p_valor_envio: formData.valor_envio ? parseFloat(formData.valor_envio) : null,
+        p_restante_pagar: formData.restante_pagar ? parseFloat(formData.restante_pagar) : null,
+        p_estado_fabricacion: formData.estado_fabricacion,
+        p_estado_venta: formData.estado_venta,
+        p_estado_envio: formData.estado_envio,
+        p_notas: formData.notas,
+        p_disenio: formData.disenio,
+        p_archivo_base: archivoBaseUrl,
+        p_archivo_vector: archivoVectorUrl,
+        p_foto_sello: formData.foto_sello,
+        p_numero_seguimiento: formData.numero_seguimiento
       };
       
-      const { error: pedidoError } = await supabase.from('pedidos').insert(pedidoData);
+      const { error: pedidoError } = await supabase.rpc('crear_pedido', pedidoData);
 
       if (pedidoError) throw pedidoError;
 
@@ -203,7 +204,7 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded, filterOptions }) {
             <div className="form-group">
                 <label>Estado Venta</label>
                 <select name="estado_venta" value={formData.estado_venta} onChange={handleChange}>
-                    <option value="">-- Vacío --</option>
+                    <option value="">Ninguno</option>
                     {filterOptions?.estado_venta?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                     {!filterOptions?.estado_venta?.length && ['Foto', 'Transferido'].map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
