@@ -21,6 +21,26 @@ const getInclusiveEndDateISOString = (dateStr) => {
   return endOfDay.toISOString();
 };
 
+const getSignedUrl = async (filePath) => {
+  if (!filePath) return null;
+  // Si es una URL completa, extrae solo la ruta relativa
+  if (filePath.startsWith('http')) {
+    const idx = filePath.indexOf('/archivos-ventas/');
+    if (idx !== -1) {
+      filePath = filePath.substring(idx + '/archivos-ventas/'.length);
+    }
+  }
+  console.log('Intentando generar signedUrl para:', filePath); // DEPURACIÓN
+  const { data, error } = await supabase.storage
+    .from('archivos-ventas')
+    .createSignedUrl(filePath, 60);
+  if (error) {
+    alert('No se pudo generar el enlace de acceso al archivo');
+    return null;
+  }
+  return data.signedUrl;
+};
+
 function PedidosPage() {
   const [pedidos, setPedidos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -199,6 +219,19 @@ function PedidosPage() {
     }
   };
 
+  const handleEliminarArchivo = async (publicUrl, field, pedidoId) => {
+    // Extraer el path relativo del archivo desde la URL pública
+    const url = new URL(publicUrl);
+    const path = decodeURIComponent(url.pathname.split('/storage/v1/object/public/archivos-ventas/')[1]);
+    await supabase.storage.from('archivos-ventas').remove([path]);
+    // Actualiza el pedido en la base de datos para quitar la referencia
+    await supabase.rpc('editar_pedido', {
+      p_id: pedidoId,
+      [`p_${field}`]: null
+    });
+    getPedidos();
+  };
+
   return (
     <div className="pedidos-page-container">
       <h1>Gestión de Pedidos</h1>
@@ -293,8 +326,12 @@ function PedidosPage() {
                     </td>
                     <td><input name="notas" value={editForm.notas} onChange={handleEditFormChange} /></td>
                     <td><input name="disenio" value={editForm.disenio} onChange={handleEditFormChange} /></td>
-                    <td><input name="archivo_base" value={editForm.archivo_base} onChange={handleEditFormChange} /></td>
-                    <td><input name="archivo_vector" value={editForm.archivo_vector} onChange={handleEditFormChange} /></td>
+                    <td>
+                      <ArchivoCell filePath={pedido.archivo_base} nombre="Archivo Base" />
+                    </td>
+                    <td>
+                      <ArchivoCell filePath={pedido.archivo_vector} nombre="Archivo Vector" />
+                    </td>
                     <td><input name="foto_sello" value={editForm.foto_sello} onChange={handleEditFormChange} /></td>
                     <td><input name="numero_seguimiento" value={editForm.numero_seguimiento} onChange={handleEditFormChange} /></td>
                     <td>
@@ -320,8 +357,16 @@ function PedidosPage() {
                     <td>{pedido.estado_envio}</td>
                     <td>{pedido.notas}</td>
                     <td>{pedido.disenio}</td>
-                    <td>{pedido.archivo_base}</td>
-                    <td>{pedido.archivo_vector}</td>
+                    <td>
+                      {pedido.archivo_base ? (
+                        <ArchivoCell filePath={pedido.archivo_base} nombre="Archivo Base" />
+                      ) : null}
+                    </td>
+                    <td>
+                      {pedido.archivo_vector ? (
+                        <ArchivoCell filePath={pedido.archivo_vector} nombre="Archivo Vector" />
+                      ) : null}
+                    </td>
                     <td>{pedido.foto_sello}</td>
                     <td>{pedido.numero_seguimiento}</td>
                     <td>
@@ -339,6 +384,51 @@ function PedidosPage() {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+// Componente auxiliar para mostrar y gestionar archivos
+function ArchivoCell({ filePath, nombre }) {
+  const [signedUrl, setSignedUrl] = React.useState(null);
+
+  React.useEffect(() => {
+    let mounted = true;
+    getSignedUrl(filePath).then(url => { if (mounted) setSignedUrl(url); });
+    return () => { mounted = false; };
+  }, [filePath]);
+
+  if (!signedUrl) return <span>Cargando...</span>;
+
+  const isImage = filePath.match(/\.(jpg|jpeg|png|gif)$/i);
+
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(signedUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filePath.split('/').pop();
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('No se pudo descargar el archivo');
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      {isImage ? (
+        <a href={signedUrl} target="_blank" rel="noopener noreferrer">
+          <img src={signedUrl} alt={nombre} style={{ width: 60, height: 60, objectFit: 'cover' }} />
+        </a>
+      ) : (
+        <a href={signedUrl} target="_blank" rel="noopener noreferrer">Ver archivo</a>
+      )}
+      <button onClick={handleDownload}>Descargar</button>
     </div>
   );
 }

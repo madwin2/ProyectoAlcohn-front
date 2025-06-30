@@ -48,18 +48,14 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded, filterOptions }) {
   // Función helper para subir archivos (mantener en frontend por eficiencia)
   const uploadFile = async (file, folder) => {
     if (!file) return '';
-
-    const filePath = `public/${folder}/${Date.now()}-${file.name}`;
+    const filePath = `${folder}/${Date.now()}-${file.name}`;
     const { error: uploadError } = await supabase.storage
-      .from('archivos_pedidos')
+      .from('archivos-ventas')
       .upload(filePath, file);
-
     if (uploadError) {
       throw new Error(`Error subiendo archivo ${folder}: ${uploadError.message}`);
     }
-
-    const { data } = supabase.storage.from('archivos_pedidos').getPublicUrl(filePath);
-    return data.publicUrl;
+    return filePath; // Solo la ruta relativa
   };
 
   const handleSubmit = async (e) => {
@@ -69,8 +65,8 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded, filterOptions }) {
 
     try {
       // 1. Subir archivos (mantener en frontend)
-      const archivoBaseUrl = await uploadFile(formData.archivo_base, 'base');
-      const archivoVectorUrl = await uploadFile(formData.archivo_vector, 'vector');
+      const archivoBasePath = await uploadFile(formData.archivo_base, 'base');
+      const archivoVectorPath = await uploadFile(formData.archivo_vector, 'vector');
 
       // 2. Preparar datos para la función RPC (ajustado a la nueva función crear_pedido)
       const pedidoCompleto = {
@@ -89,8 +85,8 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded, filterOptions }) {
         p_estado_envio: formData.estado_envio,
         p_notas: formData.notas || null,
         p_disenio: formData.disenio || null,
-        p_archivo_base: archivoBaseUrl || null,
-        p_archivo_vector: archivoVectorUrl || null,
+        p_archivo_base: archivoBasePath || null,
+        p_archivo_vector: archivoVectorPath || null,
         p_foto_sello: formData.foto_sello || null,
         p_numero_seguimiento: formData.numero_seguimiento || null
       };
