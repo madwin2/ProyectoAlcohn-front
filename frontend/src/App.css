@@ -1,8 +1,9 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 .logo {
@@ -43,11 +44,30 @@
 
 .app-container {
   display: flex;
+  width: 100vw;
+  height: 100vh;
+  background: #1a1a1a;
+  position: relative;
 }
 
 .content {
-  margin-left: 250px; /* Ancho exacto de la sidebar */
-  width: calc(100% - 250px); /* Ocupa el resto del espacio de la ventana */
-  padding: 20px 20px; /* Reducimos el padding lateral para más ancho */
-  box-sizing: border-box; /* Importante: el padding se incluye dentro del ancho, no se suma */
+  flex: 1;
+  padding: 1.5rem;
+  padding-left: 6rem; /* Espacio para el sidebar colapsado */
+  overflow-y: auto;
+  box-sizing: border-box;
+  transition: padding-left 0.3s ease;
+}
+
+/* Resetear estilos globales para el nuevo diseño */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #1a1a1a;
+  color: white;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
