@@ -4,6 +4,76 @@ import './FilterPanel.css';
 function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, onToggle }) {
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
   const [activeFiltersChips, setActiveFiltersChips] = useState([]);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // Opciones de fecha predefinidas tipo Notion
+  const datePresets = [
+    { label: 'Hoy', getValue: () => ({ gte: getTodayString(), lte: getTodayString() }) },
+    { label: 'Ayer', getValue: () => ({ gte: getDateString(-1), lte: getDateString(-1) }) },
+    { label: 'Esta semana', getValue: () => ({ gte: getWeekStart(), lte: getWeekEnd() }) },
+    { label: 'La semana pasada', getValue: () => ({ gte: getWeekStart(-1), lte: getWeekEnd(-1) }) },
+    { label: 'Este mes', getValue: () => ({ gte: getMonthStart(), lte: getMonthEnd() }) },
+    { label: 'El mes pasado', getValue: () => ({ gte: getMonthStart(-1), lte: getMonthEnd(-1) }) },
+    { label: 'Últimos 7 días', getValue: () => ({ gte: getDateString(-7), lte: getTodayString() }) },
+    { label: 'Últimos 30 días', getValue: () => ({ gte: getDateString(-30), lte: getTodayString() }) },
+  ];
+
+  // Funciones de utilidad para fechas
+  const getTodayString = () => new Date().toISOString().split('T')[0];
+  
+  const getDateString = (daysOffset = 0) => {
+    const date = new Date();
+    date.setDate(date.getDate() + daysOffset);
+    return date.toISOString().split('T')[0];
+  };
+
+  const getWeekStart = (weeksOffset = 0) => {
+    const date = new Date();
+    date.setDate(date.getDate() + (weeksOffset * 7));
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+    date.setDate(diff);
+    return date.toISOString().split('T')[0];
+  };
+
+  const getWeekEnd = (weeksOffset = 0) => {
+    const date = new Date();
+    date.setDate(date.getDate() + (weeksOffset * 7));
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? 0 : 7);
+    date.setDate(diff);
+    return date.toISOString().split('T')[0];
+  };
+
+  const getMonthStart = (monthsOffset = 0) => {
+    const date = new Date();
+    date.setMonth(date.getMonth() + monthsOffset);
+    return new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+  };
+
+  const getMonthEnd = (monthsOffset = 0) => {
+    const date = new Date();
+    date.setMonth(date.getMonth() + monthsOffset + 1);
+    return new Date(date.getFullYear(), date.getMonth(), 0).toISOString().split('T')[0];
+  };
+
+  // Detectar qué preset está activo
+  const getActiveDatePreset = () => {
+    if (!filters.fecha_compra_gte || !filters.fecha_compra_lte) return null;
+    
+    for (const preset of datePresets) {
+      const { gte, lte } = preset.getValue();
+      if (filters.fecha_compra_gte === gte && filters.fecha_compra_lte === lte) {
+        return preset.label;
+      }
+    }
+    
+    if (filters.fecha_compra_gte === filters.fecha_compra_lte) {
+      return filters.fecha_compra_gte;
+    }
+    
+    return `${filters.fecha_compra_gte} - ${filters.fecha_compra_lte}`;
+  };
 
   useEffect(() => {
     // Calcular filtros activos y crear chips
@@ -13,15 +83,12 @@ function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, 
     // Contar filtros de fecha
     if (filters.fecha_compra_gte || filters.fecha_compra_lte) {
       count++;
-      let dateText = 'Fecha: ';
-      if (filters.fecha_compra_gte && filters.fecha_compra_lte) {
-        dateText += `${filters.fecha_compra_gte} - ${filters.fecha_compra_lte}`;
-      } else if (filters.fecha_compra_gte) {
-        dateText += `desde ${filters.fecha_compra_gte}`;
-      } else {
-        dateText += `hasta ${filters.fecha_compra_lte}`;
-      }
-      chips.push({ type: 'date', text: dateText, key: 'date' });
+      const activePreset = getActiveDatePreset();
+      chips.push({ 
+        type: 'date', 
+        text: `Fecha: ${activePreset || 'Personalizado'}`, 
+        key: 'date' 
+      });
     }
 
     // Contar filtros de estado de fabricación
@@ -58,9 +125,44 @@ function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, 
     setActiveFiltersChips(chips);
   }, [filters]);
 
-  const handleDateChange = (e) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value || null }));
+  // Cerrar dropdown al hacer click fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.notion-date-filter')) {
+        setShowDatePicker(false);
+      }
+    };
+
+    if (showDatePicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDatePicker]);
+
+  const handleDatePresetSelect = (preset) => {
+    const { gte, lte } = preset.getValue();
+    setFilters(prev => ({
+      ...prev,
+      fecha_compra_gte: gte,
+      fecha_compra_lte: lte
+    }));
+    setShowDatePicker(false);
+  };
+
+  const handleCustomDateChange = (field, value) => {
+    setFilters(prev => ({ ...prev, [field]: value || null }));
+  };
+
+  const clearDateFilter = () => {
+    setFilters(prev => ({
+      ...prev,
+      fecha_compra_gte: null,
+      fecha_compra_lte: null
+    }));
+    setShowDatePicker(false);
   };
 
   const handleCheckboxChange = (e) => {
@@ -141,27 +243,67 @@ function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, 
       {isExpanded && (
         <div className="filter-panel-expanded">
           <div className="filter-sections">
+            {/* Sección de Fecha estilo Notion */}
             <div className="filter-section">
-              <h4>📅 Rango de Fechas</h4>
-              <div className="date-range-filter">
-                <div className="date-input-group">
-                  <label>Desde:</label>
-                  <input 
-                    type="date" 
-                    name="fecha_compra_gte" 
-                    value={filters.fecha_compra_gte || ''} 
-                    onChange={handleDateChange} 
-                  />
-                </div>
-                <div className="date-input-group">
-                  <label>Hasta:</label>
-                  <input 
-                    type="date" 
-                    name="fecha_compra_lte" 
-                    value={filters.fecha_compra_lte || ''} 
-                    onChange={handleDateChange} 
-                  />
-                </div>
+              <h4>📅 Fecha</h4>
+              <div className="notion-date-filter">
+                <button 
+                  className="date-selector-btn"
+                  onClick={() => setShowDatePicker(!showDatePicker)}
+                >
+                  <span className="date-selector-text">
+                    {getActiveDatePreset() || 'Seleccionar fecha'}
+                  </span>
+                  <svg className="date-selector-icon" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+
+                {showDatePicker && (
+                  <div className="date-picker-dropdown">
+                    <div className="date-presets">
+                      {datePresets.map((preset) => (
+                        <button
+                          key={preset.label}
+                          className="date-preset-option"
+                          onClick={() => handleDatePresetSelect(preset)}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                    
+                    <div className="date-custom-section">
+                      <div className="date-custom-header">Fechas personalizadas</div>
+                      <div className="date-custom-inputs">
+                        <div className="date-input-group">
+                          <label>Desde</label>
+                          <input 
+                            type="date"
+                            value={filters.fecha_compra_gte || ''}
+                            onChange={(e) => handleCustomDateChange('fecha_compra_gte', e.target.value)}
+                          />
+                        </div>
+                        <div className="date-input-group">
+                          <label>Hasta</label>
+                          <input 
+                            type="date"
+                            value={filters.fecha_compra_lte || ''}
+                            onChange={(e) => handleCustomDateChange('fecha_compra_lte', e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {(filters.fecha_compra_gte || filters.fecha_compra_lte) && (
+                      <div className="date-actions">
+                        <button className="date-clear-btn" onClick={clearDateFilter}>
+                          Limpiar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
