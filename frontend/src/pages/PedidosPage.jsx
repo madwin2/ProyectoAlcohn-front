@@ -55,7 +55,7 @@ function PedidosPage() {
     estado_envio: [],
   });
   const [filters, setFilters] = useState(initialFiltersState);
-  const [activeFilters, setActiveFilters] = useState(initialFiltersState);
+  const [debouncedFilters, setDebouncedFilters] = useState(initialFiltersState);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
@@ -88,16 +88,22 @@ function PedidosPage() {
   }, []);
 
   const handleSort = () => setSortOrder(current => (current === 'asc' ? 'desc' : 'asc'));
-  const onApplyFilters = () => setActiveFilters(filters);
+  
   const onClearFilters = () => {
     setFilters(initialFiltersState);
-    setActiveFilters(initialFiltersState);
   };
 
+  // Debounce para término de búsqueda
   useEffect(() => {
     const timerId = setTimeout(() => setDebouncedSearchTerm(searchTerm), 500);
     return () => clearTimeout(timerId);
   }, [searchTerm]);
+
+  // Debounce para filtros (más rápido que la búsqueda)
+  useEffect(() => {
+    const timerId = setTimeout(() => setDebouncedFilters(filters), 300);
+    return () => clearTimeout(timerId);
+  }, [filters]);
 
   const handlePedidoAdded = () => {
     getPedidos();
@@ -119,21 +125,21 @@ function PedidosPage() {
       }
 
       // Aplicar filtros de forma segura
-      if (activeFilters.fecha_compra_gte) {
-        query = query.gte('fecha_compra', activeFilters.fecha_compra_gte);
+      if (debouncedFilters.fecha_compra_gte) {
+        query = query.gte('fecha_compra', debouncedFilters.fecha_compra_gte);
       }
-      if (activeFilters.fecha_compra_lte) {
-        const isoEndOfDay = getInclusiveEndDateISOString(activeFilters.fecha_compra_lte);
+      if (debouncedFilters.fecha_compra_lte) {
+        const isoEndOfDay = getInclusiveEndDateISOString(debouncedFilters.fecha_compra_lte);
         query = query.lte('fecha_compra', isoEndOfDay);
       }
-      if (activeFilters.estado_fabricacion.length > 0) {
-        query = query.in('estado_fabricacion', activeFilters.estado_fabricacion);
+      if (debouncedFilters.estado_fabricacion.length > 0) {
+        query = query.in('estado_fabricacion', debouncedFilters.estado_fabricacion);
       }
-      if (activeFilters.estado_venta.length > 0) {
-        query = query.in('estado_venta', activeFilters.estado_venta);
+      if (debouncedFilters.estado_venta.length > 0) {
+        query = query.in('estado_venta', debouncedFilters.estado_venta);
       }
-      if (activeFilters.estado_envio.length > 0) {
-        query = query.in('estado_envio', activeFilters.estado_envio);
+      if (debouncedFilters.estado_envio.length > 0) {
+        query = query.in('estado_envio', debouncedFilters.estado_envio);
       }
 
       // Aplicar orden al final
@@ -149,7 +155,7 @@ function PedidosPage() {
     } finally {
       setLoading(false);
     }
-  }, [sortOrder, debouncedSearchTerm, activeFilters, getInclusiveEndDateISOString]);
+  }, [sortOrder, debouncedSearchTerm, debouncedFilters, getInclusiveEndDateISOString]);
 
   useEffect(() => {
     getPedidos();
@@ -266,23 +272,20 @@ function PedidosPage() {
           className="search-input"
         />
         <div className="top-bar-buttons">
-            <button onClick={() => setShowFilterPanel(!showFilterPanel)} className="filter-button">
-              {showFilterPanel ? 'Ocultar Filtros' : 'Mostrar Filtros'}
-            </button>
             <button onClick={() => setIsModalOpen(true)} className="new-pedido-button">
               Crear Pedido
             </button>
         </div>
       </div>
-      {showFilterPanel && (
-        <FilterPanel 
-          filterOptions={filterOptions}
-          filters={filters}
-          setFilters={setFilters}
-          onApply={onApplyFilters}
-          onClear={onClearFilters}
-        />
-      )}
+      
+      <FilterPanel 
+        filterOptions={filterOptions}
+        filters={filters}
+        setFilters={setFilters}
+        onClear={onClearFilters}
+        isExpanded={showFilterPanel}
+        onToggle={() => setShowFilterPanel(!showFilterPanel)}
+      />
        <AddPedidoModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
