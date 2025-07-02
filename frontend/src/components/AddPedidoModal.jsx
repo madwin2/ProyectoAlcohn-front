@@ -140,6 +140,11 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded, filterOptions }) {
               </select>
             </div>
 
+            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+              <label htmlFor="disenio">Diseño</label>
+              <textarea name="disenio" value={formData.disenio} onChange={handleChange}></textarea>
+            </div>
+
             {/* Campos del Pedido */}
             <div className="form-group">
               <label htmlFor="fecha_compra">Fecha Compra</label>
@@ -162,13 +167,13 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded, filterOptions }) {
               <label>Estado Fabricación</label>
               <select name="estado_fabricacion" value={formData.estado_fabricacion} onChange={handleChange}>
                 {filterOptions?.estado_fabricacion?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                {!filterOptions?.estado_fabricacion?.length && ['Sin Hacer', 'Haciendo', 'Hecho'].map(o => <option key={o} value={o}>{o}</option>)}
+                {!filterOptions?.estado_fabricacion?.length && ['Sin Hacer', 'Haciendo', 'Hecho', 'Completar diseño'].map(o => <option key={o} value={o}>{o}</option>)}
               </select>
             </div>
             <div className="form-group">
               <label>Estado Venta</label>
               <select name="estado_venta" value={formData.estado_venta} onChange={handleChange}>
-                <option value="">Ninguno</option>
+                <option value={null}>Ninguno</option>
                 {filterOptions?.estado_venta?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                 {!filterOptions?.estado_venta?.length && ['Foto', 'Transferido'].map(o => <option key={o} value={o}>{o}</option>)}
               </select>
@@ -181,10 +186,6 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded, filterOptions }) {
               </select>
             </div>
 
-            <div className="form-group" style={{ gridColumn: 'span 2' }}>
-              <label htmlFor="disenio">Diseño</label>
-              <textarea name="disenio" value={formData.disenio} onChange={handleChange}></textarea>
-            </div>
             <div className="form-group" style={{ gridColumn: 'span 2' }}>
               <label htmlFor="archivo_base">Archivo Base (.jpg, .png, .jpeg)</label>
               <input type="file" name="archivo_base" onChange={handleChange} accept=".jpg,.jpeg,.png" />

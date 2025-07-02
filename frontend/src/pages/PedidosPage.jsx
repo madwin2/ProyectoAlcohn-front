@@ -400,7 +400,7 @@ function ArchivoCell({ filePath, nombre }) {
 
   if (!signedUrl) return <span>Cargando...</span>;
 
-  const isImage = filePath.match(/\.(jpg|jpeg|png|gif)$/i);
+  const isImage = filePath.match(/\.(jpg|jpeg|png|gif|svg)$/i);
 
   const handleDownload = async () => {
     try {
