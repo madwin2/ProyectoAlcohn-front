@@ -60,6 +60,7 @@ function PedidosPage() {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, pedidoId: null });
+  const [editContextMenu, setEditContextMenu] = useState({ visible: false, x: 0, y: 0 });
 
   useEffect(() => {
     const fetchFilterOptions = async () => {
@@ -82,6 +83,7 @@ function PedidosPage() {
   useEffect(() => {
     const handleClickOutside = () => {
       setContextMenu({ visible: false, x: 0, y: 0, pedidoId: null });
+      setEditContextMenu({ visible: false, x: 0, y: 0 });
     };
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
@@ -171,6 +173,15 @@ function PedidosPage() {
     });
   };
 
+  const handleEditRowRightClick = (e) => {
+    e.preventDefault();
+    setEditContextMenu({
+      visible: true,
+      x: e.pageX,
+      y: e.pageY
+    });
+  };
+
   const startEdit = (pedido) => {
     setEditingId(pedido.id_pedido);
     setEditForm({
@@ -195,45 +206,140 @@ function PedidosPage() {
     setContextMenu({ visible: false, x: 0, y: 0, pedidoId: null });
   };
 
-  const cancelEdit = () => {
+  const cancelEdit = useCallback(() => {
     setEditingId(null);
     setEditForm({});
-  };
+  }, []);
 
   const handleEditFormChange = (e) => {
     const { name, value } = e.target;
     setEditForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const saveEdit = async (id) => {
-    const { error } = await supabase.rpc('editar_pedido', {
-      p_id: id,
-      p_fecha_compra: editForm.fecha_compra,
-      p_nombre_cliente: editForm.nombre_cliente,
-      p_apellido_cliente: editForm.apellido_cliente,
-      p_telefono_cliente: editForm.telefono_cliente,
-      p_medio_contacto: editForm.medio_contacto,
-      p_valor_sello: editForm.valor_sello ? parseFloat(editForm.valor_sello) : null,
-      p_valor_envio: editForm.valor_envio ? parseFloat(editForm.valor_envio) : null,
-      p_valor_senia: editForm.valor_senia ? parseFloat(editForm.valor_senia) : 0,
-      p_estado_fabricacion: editForm.estado_fabricacion,
-      p_estado_venta: editForm.estado_venta,
-      p_estado_envio: editForm.estado_envio,
-      p_notas: editForm.notas,
-      p_disenio: editForm.disenio,
-      p_archivo_base: editForm.archivo_base,
-      p_archivo_vector: editForm.archivo_vector,
-      p_foto_sello: editForm.foto_sello,
-      p_numero_seguimiento: editForm.numero_seguimiento,
-    });
-    if (error) {
-      alert('Error al editar el pedido');
-    } else {
+  const saveEdit = useCallback(async (id) => {
+    try {
+      // Separar campos de cliente y pedido
+      const clienteFields = {
+        p_id_pedido: id,
+        p_nombre_cliente: editForm.nombre_cliente,
+        p_apellido_cliente: editForm.apellido_cliente,
+        p_telefono_cliente: editForm.telefono_cliente,
+        p_medio_contacto: editForm.medio_contacto,
+      };
+
+      const pedidoFields = {
+        p_id: id,
+        p_fecha_compra: editForm.fecha_compra,
+        p_valor_sello: editForm.valor_sello ? parseFloat(editForm.valor_sello) : null,
+        p_valor_envio: editForm.valor_envio ? parseFloat(editForm.valor_envio) : null,
+        p_valor_senia: editForm.valor_senia ? parseFloat(editForm.valor_senia) : 0,
+        p_estado_fabricacion: editForm.estado_fabricacion,
+        p_estado_venta: editForm.estado_venta,
+        p_estado_envio: editForm.estado_envio,
+        p_notas: editForm.notas,
+        p_disenio: editForm.disenio,
+        p_archivo_base: editForm.archivo_base,
+        p_archivo_vector: editForm.archivo_vector,
+        p_foto_sello: editForm.foto_sello,
+        p_numero_seguimiento: editForm.numero_seguimiento,
+      };
+
+      // Ejecutar ambas actualizaciones
+      const [clienteResult, pedidoResult] = await Promise.all([
+        supabase.rpc('editar_cliente', clienteFields),
+        supabase.rpc('editar_pedido', pedidoFields)
+      ]);
+
+      if (clienteResult.error) {
+        console.error('Error al actualizar cliente:', clienteResult.error);
+        alert('Error al actualizar los datos del cliente');
+        return;
+      }
+
+      if (pedidoResult.error) {
+        console.error('Error al actualizar pedido:', pedidoResult.error);
+        alert('Error al actualizar los datos del pedido');
+        return;
+      }
+
+      // Si ambas actualizaciones fueron exitosas
       getPedidos();
       setEditingId(null);
       setEditForm({});
+
+    } catch (error) {
+      console.error('Error general al editar:', error);
+      alert('Error al editar el pedido');
     }
-  };
+  }, [editForm, getPedidos]);
+
+  // Manejar teclas Escape y Enter para edición
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (editingId) {
+        if (e.key === 'Escape') {
+          cancelEdit();
+        } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+          saveEdit(editingId);
+        }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [editingId, saveEdit, cancelEdit]);
+
+  // Manejar redimensionamiento de columnas
+  useEffect(() => {
+    const table = document.querySelector('.pedidos-table');
+    if (!table) return;
+
+    const resizers = table.querySelectorAll('.resizer');
+    let isResizing = false;
+
+    const handleMouseDown = (e) => {
+      e.preventDefault();
+      isResizing = true;
+      const resizer = e.target;
+      const th = resizer.parentElement;
+      const startX = e.clientX;
+      const startWidth = th.offsetWidth;
+
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+
+              const handleMouseMove = (e) => {
+          if (!isResizing) return;
+          const newWidth = startWidth + (e.clientX - startX);
+          const minWidth = 80;
+          
+          if (newWidth >= minWidth) {
+            th.style.width = newWidth + 'px';
+            th.style.minWidth = newWidth + 'px';
+          }
+        };
+
+      const handleMouseUp = () => {
+        isResizing = false;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    };
+
+    resizers.forEach(resizer => {
+      resizer.addEventListener('mousedown', handleMouseDown);
+    });
+
+    return () => {
+      resizers.forEach(resizer => {
+        resizer.removeEventListener('mousedown', handleMouseDown);
+      });
+    };
+  }, [pedidos]);
 
   const handleEliminar = async (id) => {
     if (window.confirm('¿Estás seguro de que deseas eliminar este pedido?')) {
@@ -327,27 +433,64 @@ function PedidosPage() {
         </div>
       )}
 
+      {/* Menú contextual para edición */}
+      {editContextMenu.visible && (
+        <div 
+          className="context-menu"
+          style={{ 
+            position: 'absolute', 
+            top: editContextMenu.y, 
+            left: editContextMenu.x,
+            background: '#333',
+            border: '1px solid #555',
+            borderRadius: '5px',
+            padding: '5px 0',
+            zIndex: 1000,
+            boxShadow: '0 2px 10px rgba(0,0,0,0.3)'
+          }}
+        >
+          <button 
+            className="context-menu-item"
+            onClick={() => {
+              saveEdit(editingId);
+              setEditContextMenu({ visible: false, x: 0, y: 0 });
+            }}
+          >
+            Guardar (Ctrl+Enter)
+          </button>
+          <button 
+            className="context-menu-item"
+            onClick={() => {
+              cancelEdit();
+              setEditContextMenu({ visible: false, x: 0, y: 0 });
+            }}
+          >
+            Cancelar (Escape)
+          </button>
+        </div>
+      )}
+
       <div className="table-container">
         <table className="pedidos-table">
           <thead>
             <tr>
-              <th><button onClick={handleSort}>Fecha Compra {sortOrder === 'asc' ? '↑' : '↓'}</button></th>
-              <th>Nombre</th>
-              <th>Apellido</th>
-              <th>Teléfono</th>
-              <th>Medio Contacto</th>
-              <th>Valor Sello</th>
-              <th>Valor Envío</th>
-              <th>Restante</th>
-              <th>Estado Fabricación</th>
-              <th>Estado Venta</th>
-              <th>Estado Envío</th>
-              <th>Notas</th>
-              <th>Diseño</th>
-              <th>Archivo Base</th>
-              <th>Archivo Vector</th>
-              <th>Foto Sello</th>
-              <th>Nro. Seguimiento</th>
+              <th><button onClick={handleSort}>Fecha Compra {sortOrder === 'asc' ? '↑' : '↓'}</button><div className="resizer"></div></th>
+              <th>Nombre<div className="resizer"></div></th>
+              <th>Apellido<div className="resizer"></div></th>
+              <th>Diseño<div className="resizer"></div></th>
+              <th>Teléfono<div className="resizer"></div></th>
+              <th>Medio Contacto<div className="resizer"></div></th>
+              <th>Valor Sello<div className="resizer"></div></th>
+              <th>Valor Envío<div className="resizer"></div></th>
+              <th>Restante<div className="resizer"></div></th>
+              <th>Estado Fabricación<div className="resizer"></div></th>
+              <th>Estado Venta<div className="resizer"></div></th>
+              <th>Estado Envío<div className="resizer"></div></th>
+              <th>Notas<div className="resizer"></div></th>
+              <th>Archivo Base<div className="resizer"></div></th>
+              <th>Archivo Vector<div className="resizer"></div></th>
+              <th>Foto Sello<div className="resizer"></div></th>
+              <th>Nro. Seguimiento<div className="resizer"></div></th>
             </tr>
           </thead>
           <tbody>
@@ -358,75 +501,47 @@ function PedidosPage() {
             ) : pedidos.length > 0 ? (
               pedidos.map((pedido) => (
                 editingId === pedido.id_pedido ? (
-                  <>
-                    <tr key={pedido.id_pedido}>
-                      <td><input name="fecha_compra" type="date" value={editForm.fecha_compra} onChange={handleEditFormChange} /></td>
-                      <td><input name="nombre_cliente" value={editForm.nombre_cliente} onChange={handleEditFormChange} /></td>
-                      <td><input name="apellido_cliente" value={editForm.apellido_cliente} onChange={handleEditFormChange} /></td>
-                      <td><input name="telefono_cliente" value={editForm.telefono_cliente} onChange={handleEditFormChange} /></td>
-                      <td><input name="medio_contacto" value={editForm.medio_contacto} onChange={handleEditFormChange} /></td>
-                      <td><input name="valor_sello" type="number" value={editForm.valor_sello} onChange={handleEditFormChange} /></td>
-                      <td><input name="valor_envio" type="number" value={editForm.valor_envio} onChange={handleEditFormChange} /></td>
-                      <td>{pedido.restante_pagar}</td>
-                      <td>
-                        <select name="estado_fabricacion" value={editForm.estado_fabricacion} onChange={handleEditFormChange}>
-                          {filterOptions.estado_fabricacion.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                        </select>
-                      </td>
-                      <td>
-                        <select name="estado_venta" value={editForm.estado_venta} onChange={handleEditFormChange}>
-                          {filterOptions.estado_venta.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                        </select>
-                      </td>
-                      <td>
-                        <select name="estado_envio" value={editForm.estado_envio} onChange={handleEditFormChange}>
-                          {filterOptions.estado_envio.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                        </select>
-                      </td>
-                      <td><input name="notas" value={editForm.notas} onChange={handleEditFormChange} /></td>
-                      <td><input name="disenio" value={editForm.disenio} onChange={handleEditFormChange} /></td>
-                      <td>
-                        <ArchivoCell filePath={pedido.archivo_base} nombre="Archivo Base" pedidoId={pedido.id_pedido} field="archivo_base" onUpload={handlePedidoAdded} onDelete={handleEliminarArchivo} />
-                      </td>
-                      <td>
-                        <ArchivoCell filePath={pedido.archivo_vector} nombre="Archivo Vector" pedidoId={pedido.id_pedido} field="archivo_vector" onUpload={handlePedidoAdded} onDelete={handleEliminarArchivo} />
-                      </td>
-                      <td><input name="foto_sello" value={editForm.foto_sello} onChange={handleEditFormChange} /></td>
-                      <td><input name="numero_seguimiento" value={editForm.numero_seguimiento} onChange={handleEditFormChange} /></td>
-                    </tr>
-                    <tr>
-                      <td colSpan="17" style={{ textAlign: 'center', background: '#2a2a2a', padding: '10px' }}>
-                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-                          <button 
-                            onClick={() => saveEdit(pedido.id_pedido)}
-                            style={{ 
-                              padding: '8px 16px', 
-                              background: '#28a745', 
-                              color: 'white', 
-                              border: 'none', 
-                              borderRadius: '4px', 
-                              cursor: 'pointer' 
-                            }}
-                          >
-                            Guardar
-                          </button>
-                          <button 
-                            onClick={cancelEdit}
-                            style={{ 
-                              padding: '8px 16px', 
-                              background: '#6c757d', 
-                              color: 'white', 
-                              border: 'none', 
-                              borderRadius: '4px', 
-                              cursor: 'pointer' 
-                            }}
-                          >
-                            Cancelar
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  </>
+                  <tr 
+                    key={pedido.id_pedido}
+                    className="editing-row"
+                    onContextMenu={handleEditRowRightClick}
+                    style={{ cursor: 'context-menu' }}
+                    title="Clic derecho para opciones | Escape para cancelar | Ctrl+Enter para guardar"
+                  >
+                    <td><input name="fecha_compra" type="date" value={editForm.fecha_compra} onChange={handleEditFormChange} /></td>
+                    <td><input name="nombre_cliente" value={editForm.nombre_cliente} onChange={handleEditFormChange} /></td>
+                    <td><input name="apellido_cliente" value={editForm.apellido_cliente} onChange={handleEditFormChange} /></td>
+                    <td><input name="disenio" value={editForm.disenio} onChange={handleEditFormChange} /></td>
+                    <td><input name="telefono_cliente" value={editForm.telefono_cliente} onChange={handleEditFormChange} /></td>
+                    <td><input name="medio_contacto" value={editForm.medio_contacto} onChange={handleEditFormChange} /></td>
+                    <td><input name="valor_sello" type="number" value={editForm.valor_sello} onChange={handleEditFormChange} /></td>
+                    <td><input name="valor_envio" type="number" value={editForm.valor_envio} onChange={handleEditFormChange} /></td>
+                    <td>{pedido.restante_pagar}</td>
+                    <td>
+                      <select name="estado_fabricacion" value={editForm.estado_fabricacion} onChange={handleEditFormChange}>
+                        {filterOptions.estado_fabricacion.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                      </select>
+                    </td>
+                    <td>
+                      <select name="estado_venta" value={editForm.estado_venta} onChange={handleEditFormChange}>
+                        {filterOptions.estado_venta.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                      </select>
+                    </td>
+                    <td>
+                      <select name="estado_envio" value={editForm.estado_envio} onChange={handleEditFormChange}>
+                        {filterOptions.estado_envio.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                      </select>
+                    </td>
+                    <td><input name="notas" value={editForm.notas} onChange={handleEditFormChange} /></td>
+                    <td>
+                      <ArchivoCell filePath={pedido.archivo_base} nombre="Archivo Base" pedidoId={pedido.id_pedido} field="archivo_base" onUpload={handlePedidoAdded} onDelete={handleEliminarArchivo} />
+                    </td>
+                    <td>
+                      <ArchivoCell filePath={pedido.archivo_vector} nombre="Archivo Vector" pedidoId={pedido.id_pedido} field="archivo_vector" onUpload={handlePedidoAdded} onDelete={handleEliminarArchivo} />
+                    </td>
+                    <td><input name="foto_sello" value={editForm.foto_sello} onChange={handleEditFormChange} /></td>
+                    <td><input name="numero_seguimiento" value={editForm.numero_seguimiento} onChange={handleEditFormChange} /></td>
+                  </tr>
                 ) : (
                   <tr 
                     key={pedido.id_pedido} 
@@ -436,6 +551,7 @@ function PedidosPage() {
                     <td>{new Date(pedido.fecha_compra).toLocaleDateString()}</td>
                     <td>{pedido.clientes?.nombre_cliente || 'N/A'}</td>
                     <td>{pedido.clientes?.apellido_cliente || 'N/A'}</td>
+                    <td>{pedido.disenio}</td>
                     <td>{pedido.clientes?.telefono_cliente || 'N/A'}</td>
                     <td>{pedido.clientes?.medio_contacto || 'N/A'}</td>
                     <td>{pedido.valor_sello}</td>
@@ -445,7 +561,6 @@ function PedidosPage() {
                     <td>{pedido.estado_venta}</td>
                     <td>{pedido.estado_envio}</td>
                     <td>{pedido.notas}</td>
-                    <td>{pedido.disenio}</td>
                     <td>
                       <ArchivoCell filePath={pedido.archivo_base} nombre="Archivo Base" pedidoId={pedido.id_pedido} field="archivo_base" onUpload={handlePedidoAdded} onDelete={handleEliminarArchivo} />
                     </td>

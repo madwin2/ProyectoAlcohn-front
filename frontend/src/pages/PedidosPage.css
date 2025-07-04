@@ -53,17 +53,21 @@
 }
 
 .table-container {
-  overflow-x: auto; /* La magia sucede aquí */
+  overflow-x: auto;
+  overflow-y: auto;
   border: 1px solid #333;
   border-radius: 8px;
   margin-top: 20px;
-  width: 100%; /* La tabla ocupará todo el ancho del contenedor con padding */
+  width: 100%;
+  max-height: 70vh;
+  position: relative;
 }
 
 .pedidos-table {
-  width: 100%;
+  width: auto;
+  min-width: 100%;
   border-collapse: collapse;
-  min-width: 1200px; /* Un ancho mínimo para forzar el scroll si es necesario */
+  table-layout: auto;
 }
 
 .pedidos-table th,
@@ -71,7 +75,8 @@
   padding: 12px 15px;
   text-align: left;
   border-bottom: 1px solid #333;
-  white-space: nowrap; /* Evita que el texto se parta en varias líneas */
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .pedidos-table thead th {
@@ -79,7 +84,29 @@
   color: #fff;
   position: sticky;
   top: 0; /* Fija el encabezado al hacer scroll vertical */
+  min-width: 80px;
+  width: auto;
+  position: relative;
 }
+
+/* Anchos específicos para cada tipo de columna */
+.pedidos-table th:nth-child(1) { width: 120px; } /* Fecha Compra */
+.pedidos-table th:nth-child(2) { width: 100px; } /* Nombre */
+.pedidos-table th:nth-child(3) { width: 100px; } /* Apellido */
+.pedidos-table th:nth-child(4) { width: 150px; } /* Diseño */
+.pedidos-table th:nth-child(5) { width: 120px; } /* Teléfono */
+.pedidos-table th:nth-child(6) { width: 120px; } /* Medio Contacto */
+.pedidos-table th:nth-child(7) { width: 100px; } /* Valor Sello */
+.pedidos-table th:nth-child(8) { width: 100px; } /* Valor Envío */
+.pedidos-table th:nth-child(9) { width: 90px; }  /* Restante */
+.pedidos-table th:nth-child(10) { width: 140px; } /* Estado Fabricación */
+.pedidos-table th:nth-child(11) { width: 120px; } /* Estado Venta */
+.pedidos-table th:nth-child(12) { width: 120px; } /* Estado Envío */
+.pedidos-table th:nth-child(13) { width: 150px; } /* Notas */
+.pedidos-table th:nth-child(14) { width: 120px; } /* Archivo Base */
+.pedidos-table th:nth-child(15) { width: 120px; } /* Archivo Vector */
+.pedidos-table th:nth-child(16) { width: 100px; } /* Foto Sello */
+.pedidos-table th:nth-child(17) { width: 150px; } /* Nro. Seguimiento */
 
 .pedidos-table tbody tr:hover {
   background-color: #2a2a2a;
@@ -120,4 +147,77 @@
 
 .context-menu-item:last-child {
   border-radius: 0 0 5px 5px;
-} 
+}
+
+/* Estilos para la fila de edición */
+.pedidos-table tr.editing-row {
+  background-color: #2a2a2a !important;
+  border: 2px solid #007bff;
+  box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
+}
+
+.pedidos-table tr.editing-row td {
+  padding: 8px 12px;
+}
+
+.pedidos-table tr.editing-row input,
+.pedidos-table tr.editing-row select {
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid #555;
+  border-radius: 3px;
+  background: #333;
+  color: white;
+  font-size: 14px;
+  min-width: 30px;
+}
+
+.pedidos-table tr.editing-row input:focus,
+.pedidos-table tr.editing-row select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+.pedidos-table tr.editing-row input[type="number"] {
+  min-width: 60px;
+}
+
+.pedidos-table tr.editing-row input[type="date"] {
+  min-width: 80px;
+}
+
+.pedidos-table tr.editing-row select {
+  min-width: 60px;
+}
+
+/* Estilos para columnas redimensionables */
+.pedidos-table th {
+  position: relative;
+  user-select: none;
+}
+
+.pedidos-table th:hover {
+  background-color: #2a2a2a;
+}
+
+.pedidos-table th .resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 5px;
+  height: 100%;
+  cursor: col-resize;
+  background: transparent;
+  z-index: 1;
+}
+
+.pedidos-table th .resizer:hover {
+  background: #007bff;
+}
+
+.pedidos-table td {
+  min-width: 80px;
+  word-wrap: break-word;
+  max-width: none;
+}
