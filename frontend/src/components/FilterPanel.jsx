@@ -196,6 +196,17 @@ function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, 
     onClear();
   };
 
+  // Arrays fijos para los filtros (igual que en PedidosPage.jsx)
+  const ESTADOS_FABRICACION = [
+    'Sin Hacer', 'Haciendo', 'Rehacer', 'Retocar', 'Prioridad', 'Verificar', 'Hecho'
+  ];
+  const ESTADOS_VENTA = [
+    'Foto', 'Transferido', 'Ninguno'
+  ];
+  const ESTADOS_ENVIO = [
+    'Sin enviar', 'Hacer Etiqueta', 'Etiqueta Lista', 'Despachado', 'Seguimiento Enviado'
+  ];
+
   return (
     <div className="filter-panel-container">
       {/* Botón de filtro y chips */}
@@ -310,7 +321,7 @@ function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, 
             <div className="filter-section">
               <h4>🔨 Estado de Fabricación</h4>
               <div className="checkbox-grid">
-                {filterOptions.estado_fabricacion.map(option => (
+                {ESTADOS_FABRICACION.map(option => (
                   <label key={option} className="checkbox-label">
                     <input 
                       type="checkbox" 
@@ -329,7 +340,7 @@ function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, 
             <div className="filter-section">
               <h4>💰 Estado de Venta</h4>
               <div className="checkbox-grid">
-                {filterOptions.estado_venta.map(option => (
+                {ESTADOS_VENTA.map(option => (
                   <label key={option} className="checkbox-label">
                     <input 
                       type="checkbox" 
@@ -348,7 +359,7 @@ function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, 
             <div className="filter-section">
               <h4>📦 Estado de Envío</h4>
               <div className="checkbox-grid">
-                {filterOptions.estado_envio.map(option => (
+                {ESTADOS_ENVIO.map(option => (
                   <label key={option} className="checkbox-label">
                     <input 
                       type="checkbox" 

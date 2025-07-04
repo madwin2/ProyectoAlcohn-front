@@ -4,6 +4,17 @@ import FilterPanel from '../components/FilterPanel';
 import AddPedidoModal from '../components/AddPedidoModal';
 import './PedidosPage.css';
 
+// Arrays fijos para los selects de estado
+const ESTADOS_FABRICACION = [
+  'Sin Hacer', 'Haciendo', 'Rehacer', 'Retocar', 'Prioridad', 'Verificar', 'Hecho'
+];
+const ESTADOS_VENTA = [
+  'Foto', 'Transferido', 'Ninguno'
+];
+const ESTADOS_ENVIO = [
+  'Sin enviar', 'Hacer Etiqueta', 'Etiqueta Lista', 'Despachado', 'Seguimiento Enviado'
+];
+
 const initialFiltersState = {
   fecha_compra_gte: null,
   fecha_compra_lte: null,
@@ -519,17 +530,17 @@ function PedidosPage() {
                     <td>{pedido.restante_pagar}</td>
                     <td>
                       <select name="estado_fabricacion" value={editForm.estado_fabricacion} onChange={handleEditFormChange}>
-                        {filterOptions.estado_fabricacion.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                        {ESTADOS_FABRICACION.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                       </select>
                     </td>
                     <td>
                       <select name="estado_venta" value={editForm.estado_venta} onChange={handleEditFormChange}>
-                        {filterOptions.estado_venta.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                        {ESTADOS_VENTA.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                       </select>
                     </td>
                     <td>
                       <select name="estado_envio" value={editForm.estado_envio} onChange={handleEditFormChange}>
-                        {filterOptions.estado_envio.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                        {ESTADOS_ENVIO.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                       </select>
                     </td>
                     <td><input name="notas" value={editForm.notas} onChange={handleEditFormChange} /></td>
