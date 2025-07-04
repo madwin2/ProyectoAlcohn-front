@@ -320,59 +320,56 @@ function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, 
 
             <div className="filter-section">
               <h4>🔨 Estado de Fabricación</h4>
-              <div className="checkbox-grid">
-                {ESTADOS_FABRICACION.map(option => (
-                  <label key={option} className="checkbox-label">
-                    <input 
-                      type="checkbox" 
-                      name="estado_fabricacion" 
-                      value={option} 
-                      checked={filters.estado_fabricacion.includes(option)} 
-                      onChange={handleCheckboxChange} 
-                    />
-                    <span className="checkbox-custom"></span>
-                    <span className="checkbox-text">{option}</span>
-                  </label>
-                ))}
-              </div>
+              <NotionDropdownFilter
+                label="Estado de Fabricación"
+                options={ESTADOS_FABRICACION}
+                selected={filters.estado_fabricacion}
+                onChange={(option, checked) => {
+                  setFilters(prev => {
+                    const arr = prev.estado_fabricacion || [];
+                    return {
+                      ...prev,
+                      estado_fabricacion: checked ? [...arr, option] : arr.filter(v => v !== option)
+                    };
+                  });
+                }}
+              />
             </div>
             
             <div className="filter-section">
               <h4>💰 Estado de Venta</h4>
-              <div className="checkbox-grid">
-                {ESTADOS_VENTA.map(option => (
-                  <label key={option} className="checkbox-label">
-                    <input 
-                      type="checkbox" 
-                      name="estado_venta" 
-                      value={option} 
-                      checked={filters.estado_venta.includes(option)} 
-                      onChange={handleCheckboxChange} 
-                    />
-                    <span className="checkbox-custom"></span>
-                    <span className="checkbox-text">{option}</span>
-                  </label>
-                ))}
-              </div>
+              <NotionDropdownFilter
+                label="Estado de Venta"
+                options={ESTADOS_VENTA}
+                selected={filters.estado_venta}
+                onChange={(option, checked) => {
+                  setFilters(prev => {
+                    const arr = prev.estado_venta || [];
+                    return {
+                      ...prev,
+                      estado_venta: checked ? [...arr, option] : arr.filter(v => v !== option)
+                    };
+                  });
+                }}
+              />
             </div>
 
             <div className="filter-section">
               <h4>📦 Estado de Envío</h4>
-              <div className="checkbox-grid">
-                {ESTADOS_ENVIO.map(option => (
-                  <label key={option} className="checkbox-label">
-                    <input 
-                      type="checkbox" 
-                      name="estado_envio" 
-                      value={option} 
-                      checked={filters.estado_envio.includes(option)} 
-                      onChange={handleCheckboxChange} 
-                    />
-                    <span className="checkbox-custom"></span>
-                    <span className="checkbox-text">{option}</span>
-                  </label>
-                ))}
-              </div>
+              <NotionDropdownFilter
+                label="Estado de Envío"
+                options={ESTADOS_ENVIO}
+                selected={filters.estado_envio}
+                onChange={(option, checked) => {
+                  setFilters(prev => {
+                    const arr = prev.estado_envio || [];
+                    return {
+                      ...prev,
+                      estado_envio: checked ? [...arr, option] : arr.filter(v => v !== option)
+                    };
+                  });
+                }}
+              />
             </div>
           </div>
 
@@ -384,6 +381,54 @@ function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, 
               </button>
             </div>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function NotionDropdownFilter({ label, options, selected, onChange }) {
+  const [open, setOpen] = useState(false);
+  const ref = React.useRef();
+
+  // Cerrar al hacer click fuera
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    if (open) document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [open]);
+
+  // Resumen de seleccionados
+  let summary = 'Todos';
+  if (selected.length === 1) summary = selected[0];
+  else if (selected.length > 1) summary = `${selected.length} seleccionados`;
+  else summary = 'Ninguno';
+
+  return (
+    <div className="notion-dropdown-filter" ref={ref}>
+      <button className="date-selector-btn" onClick={() => setOpen(o => !o)}>
+        <span className="date-selector-text">{label}: {summary}</span>
+        <svg className={`date-selector-icon ${open ? 'expanded' : ''}`} viewBox="0 0 24 24" fill="none">
+          <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+      {open && (
+        <div className="notion-filter-dropdown" style={{ minWidth: 220, maxHeight: 260, overflowY: 'auto' }}>
+          {options.map(option => (
+            <label key={option} className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={selected.includes(option)}
+                onChange={e => onChange(option, e.target.checked)}
+              />
+              <span className="checkbox-custom"></span>
+              <span className="checkbox-text">{option}</span>
+            </label>
+          ))}
         </div>
       )}
     </div>

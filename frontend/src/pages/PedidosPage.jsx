@@ -299,6 +299,19 @@ function PedidosPage() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [editingId, saveEdit, cancelEdit]);
 
+  // Guardar edición con doble clic fuera de la tabla
+  useEffect(() => {
+    if (!editingId) return;
+    const handleDblClick = (e) => {
+      const table = document.querySelector('.pedidos-table');
+      if (table && !table.contains(e.target)) {
+        saveEdit(editingId);
+      }
+    };
+    document.addEventListener('dblclick', handleDblClick);
+    return () => document.removeEventListener('dblclick', handleDblClick);
+  }, [editingId, saveEdit]);
+
   // Manejar redimensionamiento de columnas
   useEffect(() => {
     const table = document.querySelector('.pedidos-table');
@@ -557,6 +570,7 @@ function PedidosPage() {
                   <tr 
                     key={pedido.id_pedido} 
                     onContextMenu={(e) => handleRowRightClick(e, pedido.id_pedido)}
+                    onDoubleClick={() => startEdit(pedido)}
                     style={{ cursor: 'context-menu' }}
                   >
                     <td>{new Date(pedido.fecha_compra).toLocaleDateString()}</td>
