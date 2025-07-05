@@ -1,0 +1,51 @@
+.chip-select-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 2px 0;
+}
+
+.chip-select-chip {
+  border-radius: 16px;
+  padding: 6px 16px;
+  font-size: 14px;
+  border: 1px solid #bbb;
+  background: #e0e0e0;
+  color: #222;
+  cursor: pointer;
+  outline: none;
+  transition: box-shadow 0.15s, border 0.15s, background 0.15s, color 0.15s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  font-weight: 500;
+  user-select: none;
+}
+
+.chip-select-chip.selected {
+  border: 2px solid #222;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+}
+
+.chip-select-chip:hover {
+  filter: brightness(0.95);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.13);
+}
+
+.chip-visual {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 4px 16px;
+  border-radius: 20px;
+  min-width: 90px;
+  justify-content: center;
+  border-width: 2px;
+  border-style: solid;
+  background: rgba(255,255,255,0.03);
+  transition: border 0.2s, background 0.2s, color 0.2s;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+  cursor: default;
+  user-select: none;
+} 

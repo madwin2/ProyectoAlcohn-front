@@ -2,7 +2,10 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import FilterPanel from '../components/FilterPanel';
 import AddPedidoModal from '../components/AddPedidoModal';
+import ChipSelect from '../components/ChipSelect';
+import EstadoSelect from '../components/EstadoSelect';
 import './PedidosPage.css';
+import { FaUpload } from 'react-icons/fa';
 
 // Arrays fijos para los selects de estado
 const ESTADOS_FABRICACION = [
@@ -498,23 +501,23 @@ function PedidosPage() {
         <table className="pedidos-table">
           <thead>
             <tr>
-              <th><button onClick={handleSort}>Fecha Compra {sortOrder === 'asc' ? '↑' : '↓'}</button><div className="resizer"></div></th>
+              <th><button onClick={handleSort}>Fecha {sortOrder === 'asc' ? '↑' : '↓'}</button><div className="resizer"></div></th>
               <th>Nombre<div className="resizer"></div></th>
               <th>Apellido<div className="resizer"></div></th>
               <th>Diseño<div className="resizer"></div></th>
               <th>Teléfono<div className="resizer"></div></th>
-              <th>Medio Contacto<div className="resizer"></div></th>
-              <th>Valor Sello<div className="resizer"></div></th>
-              <th>Valor Envío<div className="resizer"></div></th>
+              <th>Contacto<div className="resizer"></div></th>
+              <th>Sello<div className="resizer"></div></th>
+              <th>V Envío<div className="resizer"></div></th>
               <th>Restante<div className="resizer"></div></th>
-              <th>Estado Fabricación<div className="resizer"></div></th>
-              <th>Estado Venta<div className="resizer"></div></th>
-              <th>Estado Envío<div className="resizer"></div></th>
+              <th>Fabricación<div className="resizer"></div></th>
+              <th>Venta<div className="resizer"></div></th>
+              <th>E Envío<div className="resizer"></div></th>
               <th>Notas<div className="resizer"></div></th>
-              <th>Archivo Base<div className="resizer"></div></th>
-              <th>Archivo Vector<div className="resizer"></div></th>
-              <th>Foto Sello<div className="resizer"></div></th>
-              <th>Nro. Seguimiento<div className="resizer"></div></th>
+              <th>Base<div className="resizer"></div></th>
+              <th>Vector<div className="resizer"></div></th>
+              <th>F Sello<div className="resizer"></div></th>
+              <th>Seguimiento<div className="resizer"></div></th>
             </tr>
           </thead>
           <tbody>
@@ -542,19 +545,31 @@ function PedidosPage() {
                     <td><input name="valor_envio" type="number" value={editForm.valor_envio} onChange={handleEditFormChange} /></td>
                     <td>{pedido.restante_pagar}</td>
                     <td>
-                      <select name="estado_fabricacion" value={editForm.estado_fabricacion} onChange={handleEditFormChange}>
-                        {ESTADOS_FABRICACION.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                      </select>
+                      <EstadoSelect
+                        value={editingId === pedido.id_pedido ? editForm.estado_fabricacion : pedido.estado_fabricacion}
+                        onChange={val => editingId === pedido.id_pedido && setEditForm(prev => ({ ...prev, estado_fabricacion: val }))}
+                        options={ESTADOS_FABRICACION}
+                        type="fabricacion"
+                        isDisabled={editingId !== pedido.id_pedido}
+                      />
                     </td>
                     <td>
-                      <select name="estado_venta" value={editForm.estado_venta} onChange={handleEditFormChange}>
-                        {ESTADOS_VENTA.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                      </select>
+                      <EstadoSelect
+                        value={editingId === pedido.id_pedido ? editForm.estado_venta : pedido.estado_venta}
+                        onChange={val => editingId === pedido.id_pedido && setEditForm(prev => ({ ...prev, estado_venta: val }))}
+                        options={ESTADOS_VENTA}
+                        type="venta"
+                        isDisabled={editingId !== pedido.id_pedido}
+                      />
                     </td>
                     <td>
-                      <select name="estado_envio" value={editForm.estado_envio} onChange={handleEditFormChange}>
-                        {ESTADOS_ENVIO.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                      </select>
+                      <EstadoSelect
+                        value={editingId === pedido.id_pedido ? editForm.estado_envio : pedido.estado_envio}
+                        onChange={val => editingId === pedido.id_pedido && setEditForm(prev => ({ ...prev, estado_envio: val }))}
+                        options={ESTADOS_ENVIO}
+                        type="envio"
+                        isDisabled={editingId !== pedido.id_pedido}
+                      />
                     </td>
                     <td><input name="notas" value={editForm.notas} onChange={handleEditFormChange} /></td>
                     <td>
@@ -582,9 +597,42 @@ function PedidosPage() {
                     <td>{pedido.valor_sello}</td>
                     <td>{pedido.valor_envio}</td>
                     <td>{pedido.restante_pagar}</td>
-                    <td>{pedido.estado_fabricacion}</td>
-                    <td>{pedido.estado_venta}</td>
-                    <td>{pedido.estado_envio}</td>
+                    <td>
+                      <EstadoSelect
+                        value={pedido.estado_fabricacion}
+                        onChange={async val => {
+                          await supabase.rpc('editar_pedido', { p_id: pedido.id_pedido, p_estado_fabricacion: val });
+                          getPedidos();
+                        }}
+                        options={ESTADOS_FABRICACION}
+                        type="fabricacion"
+                        isDisabled={false}
+                      />
+                    </td>
+                    <td>
+                      <EstadoSelect
+                        value={pedido.estado_venta}
+                        onChange={async val => {
+                          await supabase.rpc('editar_pedido', { p_id: pedido.id_pedido, p_estado_venta: val });
+                          getPedidos();
+                        }}
+                        options={ESTADOS_VENTA}
+                        type="venta"
+                        isDisabled={false}
+                      />
+                    </td>
+                    <td>
+                      <EstadoSelect
+                        value={pedido.estado_envio}
+                        onChange={async val => {
+                          await supabase.rpc('editar_pedido', { p_id: pedido.id_pedido, p_estado_envio: val });
+                          getPedidos();
+                        }}
+                        options={ESTADOS_ENVIO}
+                        type="envio"
+                        isDisabled={false}
+                      />
+                    </td>
                     <td>{pedido.notas}</td>
                     <td>
                       <ArchivoCell filePath={pedido.archivo_base} nombre="Archivo Base" pedidoId={pedido.id_pedido} field="archivo_base" onUpload={handlePedidoAdded} onDelete={handleEliminarArchivo} />
@@ -690,23 +738,51 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete }) 
   if (!filePath) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <label style={{ 
-          padding: '8px 12px', 
-          background: '#007bff', 
-          color: 'white', 
-          borderRadius: '4px', 
+        <label style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 44,
+          height: 44,
+          borderRadius: '50%',
+          background: 'rgba(40, 45, 60, 0.35)',
+          boxShadow: '0 4px 24px 0 rgba(0,0,0,0.13), 0 1.5px 6px 0 rgba(255,255,255,0.08) inset',
+          border: '1px solid rgba(200,200,220,0.22)',
           cursor: isUploading ? 'not-allowed' : 'pointer',
           opacity: isUploading ? 0.6 : 1,
-          fontSize: '12px'
+          transition: 'background 0.2s, border 0.2s',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          position: 'relative',
+          overflow: 'hidden',
         }}>
-          {isUploading ? 'Subiendo...' : `Subir ${nombre}`}
-          <input 
-            type="file" 
+          {/* SVG upload minimalista tipo feather/heroicons */}
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b3d0ff" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: isUploading ? 0.5 : 1 }}>
+            <path d="M12 17V5" />
+            <polyline points="6 11 12 5 18 11" />
+            <rect x="4" y="17" width="16" height="2" rx="1" />
+          </svg>
+          <input
+            type="file"
             onChange={handleFileUpload}
             style={{ display: 'none' }}
             disabled={isUploading}
             accept="image/*,.pdf,.doc,.docx,.txt"
           />
+          {isUploading && (
+            <span style={{
+              position: 'absolute',
+              bottom: -22,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              fontSize: 10,
+              color: '#b3d0ff',
+              background: 'rgba(30,32,36,0.8)',
+              borderRadius: 6,
+              padding: '2px 8px',
+              marginTop: 4,
+            }}>Subiendo...</span>
+          )}
         </label>
       </div>
     );
