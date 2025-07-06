@@ -215,6 +215,7 @@ function PedidosPage() {
       archivo_base: pedido.archivo_base || '',
       archivo_vector: pedido.archivo_vector || '',
       foto_sello: pedido.foto_sello || '',
+      medida_pedida: pedido.medida_pedida || '',
       numero_seguimiento: pedido.numero_seguimiento || '',
     });
     setContextMenu({ visible: false, x: 0, y: 0, pedidoId: null });
@@ -255,6 +256,7 @@ function PedidosPage() {
         p_archivo_base: editForm.archivo_base,
         p_archivo_vector: editForm.archivo_vector,
         p_foto_sello: editForm.foto_sello,
+        p_medida_pedida: editForm.medida_pedida || null,
         p_numero_seguimiento: editForm.numero_seguimiento,
       };
 
@@ -517,6 +519,7 @@ function PedidosPage() {
               <th>Base<div className="resizer"></div></th>
               <th>Vector<div className="resizer"></div></th>
               <th>F Sello<div className="resizer"></div></th>
+              <th>Medida<div className="resizer"></div></th>
               <th>Seguimiento<div className="resizer"></div></th>
             </tr>
           </thead>
@@ -579,6 +582,7 @@ function PedidosPage() {
                       <ArchivoCell filePath={pedido.archivo_vector} nombre="Archivo Vector" pedidoId={pedido.id_pedido} field="archivo_vector" onUpload={handlePedidoAdded} onDelete={handleEliminarArchivo} />
                     </td>
                     <td><input name="foto_sello" value={editForm.foto_sello} onChange={handleEditFormChange} /></td>
+                    <td><input name="medida_pedida" value={editForm.medida_pedida || ''} onChange={handleEditFormChange} /></td>
                     <td><input name="numero_seguimiento" value={editForm.numero_seguimiento} onChange={handleEditFormChange} /></td>
                   </tr>
                 ) : (
@@ -641,6 +645,7 @@ function PedidosPage() {
                       <ArchivoCell filePath={pedido.archivo_vector} nombre="Archivo Vector" pedidoId={pedido.id_pedido} field="archivo_vector" onUpload={handlePedidoAdded} onDelete={handleEliminarArchivo} />
                     </td>
                     <td>{pedido.foto_sello}</td>
+                    <td>{pedido.medida_pedida}</td>
                     <td>{pedido.numero_seguimiento}</td>
                   </tr>
                 )

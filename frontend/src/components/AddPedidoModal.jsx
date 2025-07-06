@@ -21,6 +21,7 @@ const initialFormState = {
   archivo_base: null,
   archivo_vector: null,
   foto_sello: '',
+  medida_pedida: '',
   numero_seguimiento: '',
 };
 
@@ -88,6 +89,7 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded, filterOptions }) {
         p_archivo_base: archivoBasePath || null,
         p_archivo_vector: archivoVectorPath || null,
         p_foto_sello: formData.foto_sello || null,
+        p_medida_pedida: formData.medida_pedida || null,
         p_numero_seguimiento: formData.numero_seguimiento || null
       };
 
@@ -184,6 +186,11 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded, filterOptions }) {
                 {filterOptions?.estado_envio?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                 {!filterOptions?.estado_envio?.length && ['Sin enviar', 'Hacer Etiqueta', 'Despachado'].map(o => <option key={o} value={o}>{o}</option>)}
               </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="medida_pedida">Medida</label>
+              <input type="text" name="medida_pedida" value={formData.medida_pedida} onChange={handleChange} />
             </div>
 
             <div className="form-group" style={{ gridColumn: 'span 2' }}>
