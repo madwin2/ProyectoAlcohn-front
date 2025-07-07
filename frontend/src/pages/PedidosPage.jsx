@@ -4,8 +4,21 @@ import FilterPanel from '../components/FilterPanel';
 import AddPedidoModal from '../components/AddPedidoModal';
 import ChipSelect from '../components/ChipSelect';
 import EstadoSelect from '../components/EstadoSelect';
-import './PedidosPage.css';
-import { FaUpload } from 'react-icons/fa';
+import {
+  Search,
+  Plus,
+  Upload,
+  Phone,
+  User,
+  FileText,
+  DollarSign,
+  Package,
+  Filter,
+  Calendar,
+  Settings,
+  Truck,
+  X
+} from 'lucide-react';
 
 // Arrays fijos para los selects de estado
 const ESTADOS_FABRICACION = [
@@ -26,6 +39,31 @@ const initialFiltersState = {
   estado_envio: [],
 };
 
+// Estados con estilos tipo estetica.txt
+const estadosFabricacion = [
+  { value: "Sin Hacer", label: "Sin Hacer", color: "slate", glow: "shadow-slate-500/20" },
+  { value: "Haciendo", label: "Haciendo", color: "cyan", glow: "shadow-cyan-500/20" },
+  { value: "Hecho", label: "Hecho", color: "emerald", glow: "shadow-emerald-500/20" },
+  { value: "Rehacer", label: "Rehacer", color: "red", glow: "shadow-red-500/20" },
+  { value: "Retocar", label: "Retocar", color: "amber", glow: "shadow-amber-500/20" },
+  { value: "Prioridad", label: "Prioridad", color: "purple", glow: "shadow-purple-500/20" },
+  { value: "Verificar", label: "Verificar", color: "teal", glow: "shadow-teal-500/20" },
+];
+
+const estadosVenta = [
+  { value: "Ninguno", label: "Ninguno", color: "slate", glow: "shadow-slate-500/20" },
+  { value: "Foto", label: "Foto", color: "blue", glow: "shadow-blue-500/20" },
+  { value: "Transferido", label: "Transferido", color: "green", glow: "shadow-green-500/20" },
+];
+
+const estadosEnvio = [
+  { value: "Sin enviar", label: "Sin Enviar", color: "slate", glow: "shadow-slate-500/20" },
+  { value: "Hacer Etiqueta", label: "Hacer Etiqueta", color: "orange", glow: "shadow-orange-500/20" },
+  { value: "Etiqueta Lista", label: "Etiqueta Lista", color: "violet", glow: "shadow-violet-500/20" },
+  { value: "Despachado", label: "Despachado", color: "teal", glow: "shadow-teal-500/20" },
+  { value: "Seguimiento Enviado", label: "Seguimiento Enviado", color: "green", glow: "shadow-green-500/20" },
+];
+
 // ✅ Función utilitaria para fecha final inclusiva
 const getInclusiveEndDateISOString = (dateStr) => {
   if (!dateStr) return null;
@@ -37,14 +75,12 @@ const getInclusiveEndDateISOString = (dateStr) => {
 
 const getSignedUrl = async (filePath) => {
   if (!filePath) return null;
-  // Si es una URL completa, extrae solo la ruta relativa
   if (filePath.startsWith('http')) {
     const idx = filePath.indexOf('/archivos-ventas/');
     if (idx !== -1) {
       filePath = filePath.substring(idx + '/archivos-ventas/'.length);
     }
   }
-  console.log('Intentando generar signedUrl para:', filePath); // DEPURACIÓN
   const { data, error } = await supabase.storage
     .from('archivos-ventas')
     .createSignedUrl(filePath, 60);
@@ -63,9 +99,9 @@ function PedidosPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
-  const [filterOptions, setFilterOptions] = useState({ 
-    estado_fabricacion: [], 
-    estado_venta: [], 
+  const [filterOptions, setFilterOptions] = useState({
+    estado_fabricacion: [],
+    estado_venta: [],
     estado_envio: [],
   });
   const [filters, setFilters] = useState(initialFiltersState);
@@ -80,7 +116,7 @@ function PedidosPage() {
     const fetchFilterOptions = async () => {
       const pedidoFields = ['estado_fabricacion', 'estado_venta', 'estado_envio'];
       const newOptions = {};
-      
+
       for (const field of pedidoFields) {
         const { data } = await supabase.from('pedidos').select(field);
         if (data) {
@@ -104,7 +140,7 @@ function PedidosPage() {
   }, []);
 
   const handleSort = () => setSortOrder(current => (current === 'asc' ? 'desc' : 'asc'));
-  
+
   const onClearFilters = () => {
     setFilters(initialFiltersState);
   };
@@ -115,7 +151,7 @@ function PedidosPage() {
     return () => clearTimeout(timerId);
   }, [searchTerm]);
 
-  // Debounce para filtros (más rápido que la búsqueda)
+  // Debounce para filtros
   useEffect(() => {
     const timerId = setTimeout(() => setDebouncedFilters(filters), 300);
     return () => clearTimeout(timerId);
@@ -140,7 +176,7 @@ function PedidosPage() {
         query = query.in('id_pedido', ids.length > 0 ? ids : [-1]);
       }
 
-      // Aplicar filtros de forma segura
+      // Aplicar filtros
       if (debouncedFilters.fecha_compra_gte) {
         query = query.gte('fecha_compra', debouncedFilters.fecha_compra_gte);
       }
@@ -158,7 +194,6 @@ function PedidosPage() {
         query = query.in('estado_envio', debouncedFilters.estado_envio);
       }
 
-      // Aplicar orden al final
       query = query.order('fecha_compra', { ascending: sortOrder === 'asc' });
 
       const { data, error: fetchError } = await query;
@@ -171,7 +206,7 @@ function PedidosPage() {
     } finally {
       setLoading(false);
     }
-  }, [sortOrder, debouncedSearchTerm, debouncedFilters, getInclusiveEndDateISOString]);
+  }, [sortOrder, debouncedSearchTerm, debouncedFilters]);
 
   useEffect(() => {
     getPedidos();
@@ -233,7 +268,6 @@ function PedidosPage() {
 
   const saveEdit = useCallback(async (id) => {
     try {
-      // Separar campos de cliente y pedido
       const clienteFields = {
         p_id_pedido: id,
         p_nombre_cliente: editForm.nombre_cliente,
@@ -260,7 +294,6 @@ function PedidosPage() {
         p_numero_seguimiento: editForm.numero_seguimiento,
       };
 
-      // Ejecutar ambas actualizaciones
       const [clienteResult, pedidoResult] = await Promise.all([
         supabase.rpc('editar_cliente', clienteFields),
         supabase.rpc('editar_pedido', pedidoFields)
@@ -278,7 +311,6 @@ function PedidosPage() {
         return;
       }
 
-      // Si ambas actualizaciones fueron exitosas
       getPedidos();
       setEditingId(null);
       setEditForm({});
@@ -304,11 +336,11 @@ function PedidosPage() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [editingId, saveEdit, cancelEdit]);
 
-  // Guardar edición con doble clic fuera de la tabla
+  // Guardar edición con doble clic fuera
   useEffect(() => {
     if (!editingId) return;
     const handleDblClick = (e) => {
-      const table = document.querySelector('.pedidos-table');
+      const table = document.querySelector('.table-container');
       if (table && !table.contains(e.target)) {
         saveEdit(editingId);
       }
@@ -317,135 +349,288 @@ function PedidosPage() {
     return () => document.removeEventListener('dblclick', handleDblClick);
   }, [editingId, saveEdit]);
 
-  // Manejar redimensionamiento de columnas
-  useEffect(() => {
-    const table = document.querySelector('.pedidos-table');
-    if (!table) return;
-
-    const resizers = table.querySelectorAll('.resizer');
-    let isResizing = false;
-
-    const handleMouseDown = (e) => {
-      e.preventDefault();
-      isResizing = true;
-      const resizer = e.target;
-      const th = resizer.parentElement;
-      const startX = e.clientX;
-      const startWidth = th.offsetWidth;
-
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-
-              const handleMouseMove = (e) => {
-          if (!isResizing) return;
-          const newWidth = startWidth + (e.clientX - startX);
-          const minWidth = 80;
-          
-          if (newWidth >= minWidth) {
-            th.style.width = newWidth + 'px';
-            th.style.minWidth = newWidth + 'px';
-          }
-        };
-
-      const handleMouseUp = () => {
-        isResizing = false;
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    };
-
-    resizers.forEach(resizer => {
-      resizer.addEventListener('mousedown', handleMouseDown);
-    });
-
-    return () => {
-      resizers.forEach(resizer => {
-        resizer.removeEventListener('mousedown', handleMouseDown);
-      });
-    };
-  }, [pedidos]);
-
   const handleEliminar = async (id) => {
     if (window.confirm('¿Estás seguro de que deseas eliminar este pedido?')) {
       const { error } = await supabase.rpc('eliminar_pedido', { p_id: id });
       if (error) {
         alert('Error al eliminar el pedido');
       } else {
-        getPedidos(); // Refresca la lista
+        getPedidos();
       }
     }
     setContextMenu({ visible: false, x: 0, y: 0, pedidoId: null });
   };
 
   const handleEliminarArchivo = async (publicUrl, field, pedidoId) => {
-    // Extraer el path relativo del archivo desde la URL pública
     const url = new URL(publicUrl);
     const path = decodeURIComponent(url.pathname.split('/storage/v1/object/public/archivos-ventas/')[1]);
     await supabase.storage.from('archivos-ventas').remove([path]);
-    // Actualiza el pedido en la base de datos para quitar la referencia
+    const updateData = {};
+    updateData[`p_${field}`] = null;
     await supabase.rpc('editar_pedido', {
       p_id: pedidoId,
-      [`p_${field}`]: null
+      ...updateData
     });
     getPedidos();
   };
 
+  const getEstadoStyle = (estado, tipo) => {
+    let estados = estadosFabricacion;
+    if (tipo === "venta") estados = estadosVenta;
+    if (tipo === "envio") estados = estadosEnvio;
+
+    const estadoObj = estados.find((e) => e.value === estado);
+    return estadoObj || { color: "slate", glow: "shadow-slate-500/20", label: estado };
+  };
+
+  const hayFiltrosActivos = Object.values(filters).some((filtro) => filtro !== "" && filtro !== null && (!Array.isArray(filtro) || filtro.length > 0));
+
   return (
-    <div className="pedidos-page-container">
-      <h1>Gestión de Pedidos</h1>
-      <div className="top-bar-container">
-        <input
-          type="text"
-          placeholder="Buscar por cliente, diseño o teléfono..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="search-input"
-        />
-        <div className="top-bar-buttons">
-            <button onClick={() => setIsModalOpen(true)} className="new-pedido-button">
-              Crear Pedido
+    <div style={{
+      background: '#000000',
+      minHeight: '100vh',
+      color: 'white',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    }}>
+      {/* Header */}
+      <div style={{
+        borderBottom: '1px solid rgba(39, 39, 42, 0.5)',
+        background: 'rgba(9, 9, 11, 0.8)',
+        backdropFilter: 'blur(16px)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+        padding: '24px 32px'
+      }}>
+        <div style={{
+          maxWidth: '1200px',
+          margin: '0 auto',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{
+                width: '32px',
+                height: '32px',
+                background: 'white',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Package style={{ width: '20px', height: '20px', color: 'black' }} />
+              </div>
+              <div>
+                <h1 style={{
+                  fontSize: '32px',
+                  fontWeight: '300',
+                  letterSpacing: '-0.025em',
+                  margin: 0
+                }}>
+                  Pedidos
+                </h1>
+                <p style={{
+                  fontSize: '12px',
+                  color: '#71717a',
+                  margin: '2px 0 0 0'
+                }}>
+                  {pedidos.length} activos
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ position: 'relative' }}>
+              <Search style={{
+                position: 'absolute',
+                left: '16px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '16px',
+                height: '16px',
+                color: '#71717a'
+              }} />
+              <input
+                placeholder="Buscar..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  paddingLeft: '48px',
+                  width: '320px',
+                  background: 'rgba(39, 39, 42, 0.5)',
+                  border: '1px solid rgba(63, 63, 70, 0.5)',
+                  color: 'white',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  outline: 'none',
+                  fontSize: '14px',
+                  transition: 'border-color 0.3s ease'
+                }}
+                onFocus={(e) => e.target.style.borderColor = 'rgba(96, 165, 250, 0.5)'}
+                onBlur={(e) => e.target.style.borderColor = 'rgba(63, 63, 70, 0.5)'}
+              />
+            </div>
+
+            {/* Filtros */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowFilterPanel(!showFilterPanel)}
+                style={{
+                  color: hayFiltrosActivos ? 'white' : '#a1a1aa',
+                  background: hayFiltrosActivos ? 'rgba(39, 39, 42, 0.5)' : 'transparent',
+                  border: 'none',
+                  padding: '8px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.color = 'white';
+                  e.target.style.background = 'rgba(39, 39, 42, 0.5)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.color = hayFiltrosActivos ? 'white' : '#a1a1aa';
+                  e.target.style.background = hayFiltrosActivos ? 'rgba(39, 39, 42, 0.5)' : 'transparent';
+                }}
+              >
+                <Filter style={{ width: '16px', height: '16px' }} />
+              </button>
+
+              {showFilterPanel && (
+                <div style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: '48px',
+                  width: '384px',
+                  background: 'rgba(9, 9, 11, 0.95)',
+                  backdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(39, 39, 42, 0.5)',
+                  borderRadius: '8px',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                  zIndex: 50,
+                  padding: '24px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{
+                        width: '4px',
+                        height: '24px',
+                        background: 'linear-gradient(to bottom, #3b82f6, #8b5cf6)',
+                        borderRadius: '9999px'
+                      }}></div>
+                      <h3 style={{ fontSize: '18px', fontWeight: '500', color: 'white', margin: 0 }}>Filtros</h3>
+                    </div>
+                    {hayFiltrosActivos && (
+                      <button
+                        onClick={onClearFilters}
+                        style={{
+                          color: '#a1a1aa',
+                          background: 'transparent',
+                          border: 'none',
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          transition: 'all 0.3s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.color = 'white';
+                          e.target.style.background = 'rgba(39, 39, 42, 0.5)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.color = '#a1a1aa';
+                          e.target.style.background = 'transparent';
+                        }}
+                      >
+                        <X style={{ width: '12px', height: '12px' }} />
+                        Limpiar
+                      </button>
+                    )}
+                  </div>
+
+                  <FilterPanel
+                    filterOptions={filterOptions}
+                    filters={filters}
+                    setFilters={setFilters}
+                    onClear={onClearFilters}
+                    isExpanded={showFilterPanel}
+                    onToggle={() => setShowFilterPanel(!showFilterPanel)}
+                    showHeader={false}
+                  />
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={() => setIsModalOpen(true)}
+              style={{
+                background: 'white',
+                color: 'black',
+                border: 'none',
+                fontWeight: '500',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '14px',
+                transition: 'background 0.3s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.background = '#e5e7eb'}
+              onMouseLeave={(e) => e.target.style.background = 'white'}
+            >
+              <Plus style={{ width: '16px', height: '16px' }} />
+              Nuevo
             </button>
+          </div>
         </div>
       </div>
-      
-      <FilterPanel 
-        filterOptions={filterOptions}
-        filters={filters}
-        setFilters={setFilters}
-        onClear={onClearFilters}
-        isExpanded={showFilterPanel}
-        onToggle={() => setShowFilterPanel(!showFilterPanel)}
-      />
-       <AddPedidoModal 
+
+      {/* Modal */}
+      <AddPedidoModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onPedidoAdded={handlePedidoAdded}
         filterOptions={filterOptions}
       />
 
-      {/* Menú contextual */}
+      {/* Menús contextuales */}
       {contextMenu.visible && (
-        <div 
-          className="context-menu"
-          style={{ 
-            position: 'absolute', 
-            top: contextMenu.y, 
+        <div
+          style={{
+            position: 'fixed',
+            top: contextMenu.y,
             left: contextMenu.x,
-            background: '#333',
-            border: '1px solid #555',
-            borderRadius: '5px',
-            padding: '5px 0',
+            background: 'rgba(9, 9, 11, 0.95)',
+            backdropFilter: 'blur(16px)',
+            border: '1px solid rgba(39, 39, 42, 0.5)',
+            borderRadius: '8px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
             zIndex: 1000,
-            boxShadow: '0 2px 10px rgba(0,0,0,0.3)'
+            padding: '8px 0'
           }}
         >
-          <button 
-            className="context-menu-item"
+          <button
+            style={{
+              width: '100%',
+              padding: '8px 16px',
+              textAlign: 'left',
+              color: 'white',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '14px',
+              transition: 'background 0.3s ease'
+            }}
+            onMouseEnter={(e) => e.target.style.background = 'rgba(39, 39, 42, 0.5)'}
+            onMouseLeave={(e) => e.target.style.background = 'transparent'}
             onClick={() => {
               const pedido = pedidos.find(p => p.id_pedido === contextMenu.pedidoId);
               if (pedido) startEdit(pedido);
@@ -453,8 +638,20 @@ function PedidosPage() {
           >
             Editar
           </button>
-          <button 
-            className="context-menu-item"
+          <button
+            style={{
+              width: '100%',
+              padding: '8px 16px',
+              textAlign: 'left',
+              color: '#ef4444',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '14px',
+              transition: 'background 0.3s ease'
+            }}
+            onMouseEnter={(e) => e.target.style.background = 'rgba(39, 39, 42, 0.5)'}
+            onMouseLeave={(e) => e.target.style.background = 'transparent'}
             onClick={() => handleEliminar(contextMenu.pedidoId)}
           >
             Eliminar
@@ -462,24 +659,35 @@ function PedidosPage() {
         </div>
       )}
 
-      {/* Menú contextual para edición */}
       {editContextMenu.visible && (
-        <div 
-          className="context-menu"
-          style={{ 
-            position: 'absolute', 
-            top: editContextMenu.y, 
+        <div
+          style={{
+            position: 'fixed',
+            top: editContextMenu.y,
             left: editContextMenu.x,
-            background: '#333',
-            border: '1px solid #555',
-            borderRadius: '5px',
-            padding: '5px 0',
+            background: 'rgba(9, 9, 11, 0.95)',
+            backdropFilter: 'blur(16px)',
+            border: '1px solid rgba(39, 39, 42, 0.5)',
+            borderRadius: '8px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
             zIndex: 1000,
-            boxShadow: '0 2px 10px rgba(0,0,0,0.3)'
+            padding: '8px 0'
           }}
         >
-          <button 
-            className="context-menu-item"
+          <button
+            style={{
+              width: '100%',
+              padding: '8px 16px',
+              textAlign: 'left',
+              color: 'white',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '14px',
+              transition: 'background 0.3s ease'
+            }}
+            onMouseEnter={(e) => e.target.style.background = 'rgba(39, 39, 42, 0.5)'}
+            onMouseLeave={(e) => e.target.style.background = 'transparent'}
             onClick={() => {
               saveEdit(editingId);
               setEditContextMenu({ visible: false, x: 0, y: 0 });
@@ -487,8 +695,20 @@ function PedidosPage() {
           >
             Guardar (Ctrl+Enter)
           </button>
-          <button 
-            className="context-menu-item"
+          <button
+            style={{
+              width: '100%',
+              padding: '8px 16px',
+              textAlign: 'left',
+              color: '#a1a1aa',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '14px',
+              transition: 'background 0.3s ease'
+            }}
+            onMouseEnter={(e) => e.target.style.background = 'rgba(39, 39, 42, 0.5)'}
+            onMouseLeave={(e) => e.target.style.background = 'transparent'}
             onClick={() => {
               cancelEdit();
               setEditContextMenu({ visible: false, x: 0, y: 0 });
@@ -499,169 +719,610 @@ function PedidosPage() {
         </div>
       )}
 
-      <div className="table-container">
-        <table className="pedidos-table">
-          <thead>
-            <tr>
-              <th><button onClick={handleSort}>Fecha {sortOrder === 'asc' ? '↑' : '↓'}</button><div className="resizer"></div></th>
-              <th>Nombre<div className="resizer"></div></th>
-              <th>Apellido<div className="resizer"></div></th>
-              <th>Diseño<div className="resizer"></div></th>
-              <th>Teléfono<div className="resizer"></div></th>
-              <th>Contacto<div className="resizer"></div></th>
-              <th>Sello<div className="resizer"></div></th>
-              <th>V Envío<div className="resizer"></div></th>
-              <th>Restante<div className="resizer"></div></th>
-              <th>Fabricación<div className="resizer"></div></th>
-              <th>Venta<div className="resizer"></div></th>
-              <th>E Envío<div className="resizer"></div></th>
-              <th>Notas<div className="resizer"></div></th>
-              <th>Base<div className="resizer"></div></th>
-              <th>Vector<div className="resizer"></div></th>
-              <th>F Sello<div className="resizer"></div></th>
-              <th>Medida<div className="resizer"></div></th>
-              <th>Seguimiento<div className="resizer"></div></th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan="17" style={{ textAlign: 'center' }}>Cargando...</td></tr>
-            ) : error ? (
-              <tr><td colSpan="17" style={{ textAlign: 'center', color: 'red' }}>Error: {error}</td></tr>
-            ) : pedidos.length > 0 ? (
-              pedidos.map((pedido) => (
-                editingId === pedido.id_pedido ? (
-                  <tr 
-                    key={pedido.id_pedido}
-                    className="editing-row"
-                    onContextMenu={handleEditRowRightClick}
-                    style={{ cursor: 'context-menu' }}
-                    title="Clic derecho para opciones | Escape para cancelar | Ctrl+Enter para guardar"
-                  >
-                    <td><input name="fecha_compra" type="date" value={editForm.fecha_compra} onChange={handleEditFormChange} /></td>
-                    <td><input name="nombre_cliente" value={editForm.nombre_cliente} onChange={handleEditFormChange} /></td>
-                    <td><input name="apellido_cliente" value={editForm.apellido_cliente} onChange={handleEditFormChange} /></td>
-                    <td><input name="disenio" value={editForm.disenio} onChange={handleEditFormChange} /></td>
-                    <td><input name="telefono_cliente" value={editForm.telefono_cliente} onChange={handleEditFormChange} /></td>
-                    <td><input name="medio_contacto" value={editForm.medio_contacto} onChange={handleEditFormChange} /></td>
-                    <td><input name="valor_sello" type="number" value={editForm.valor_sello} onChange={handleEditFormChange} /></td>
-                    <td><input name="valor_envio" type="number" value={editForm.valor_envio} onChange={handleEditFormChange} /></td>
-                    <td>{pedido.restante_pagar}</td>
-                    <td>
-                      <EstadoSelect
-                        value={editingId === pedido.id_pedido ? editForm.estado_fabricacion : pedido.estado_fabricacion}
-                        onChange={val => editingId === pedido.id_pedido && setEditForm(prev => ({ ...prev, estado_fabricacion: val }))}
-                        options={ESTADOS_FABRICACION}
-                        type="fabricacion"
-                        isDisabled={editingId !== pedido.id_pedido}
-                      />
+      {/* Tabla */}
+      <div style={{
+        maxWidth: '100%',
+        margin: '0 auto',
+        padding: '32px'
+      }}>
+        <div className="table-container" style={{
+          background: 'rgba(9, 9, 11, 0.5)',
+          backdropFilter: 'blur(16px)',
+          border: '1px solid rgba(39, 39, 42, 0.5)',
+          borderRadius: '8px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          overflow: 'hidden'
+        }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{
+              width: '100%',
+              borderCollapse: 'collapse',
+              minWidth: '1200px'
+            }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(39, 39, 42, 0.5)' }}>
+                  <th style={{
+                    color: '#a1a1aa',
+                    fontWeight: '500',
+                    fontSize: '12px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    padding: '24px 24px 24px 24px',
+                    textAlign: 'left'
+                  }}>
+                    Cliente
+                  </th>
+                  <th style={{
+                    color: '#a1a1aa',
+                    fontWeight: '500',
+                    fontSize: '12px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    textAlign: 'left'
+                  }}>
+                    Diseño
+                  </th>
+                  <th style={{
+                    color: '#a1a1aa',
+                    fontWeight: '500',
+                    fontSize: '12px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    textAlign: 'left'
+                  }}>
+                    Contacto
+                  </th>
+                  <th style={{
+                    color: '#a1a1aa',
+                    fontWeight: '500',
+                    fontSize: '12px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    textAlign: 'left'
+                  }}>
+                    Valores
+                  </th>
+                  <th style={{
+                    color: '#a1a1aa',
+                    fontWeight: '500',
+                    fontSize: '12px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    textAlign: 'left'
+                  }}>
+                    Estado
+                  </th>
+                  <th style={{
+                    color: '#a1a1aa',
+                    fontWeight: '500',
+                    fontSize: '12px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    textAlign: 'left'
+                  }}>
+                    Base
+                  </th>
+                  <th style={{
+                    color: '#a1a1aa',
+                    fontWeight: '500',
+                    fontSize: '12px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    textAlign: 'left'
+                  }}>
+                    Vector
+                  </th>
+                  <th style={{
+                    color: '#a1a1aa',
+                    fontWeight: '500',
+                    fontSize: '12px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    textAlign: 'left'
+                  }}>
+                    F Sello
+                  </th>
+                  <th style={{
+                    color: '#a1a1aa',
+                    fontWeight: '500',
+                    fontSize: '12px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    textAlign: 'left'
+                  }}>
+                    Seguimiento
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="9" style={{
+                      textAlign: 'center',
+                      color: '#71717a',
+                      padding: '32px'
+                    }}>
+                      Cargando...
                     </td>
-                    <td>
-                      <EstadoSelect
-                        value={editingId === pedido.id_pedido ? editForm.estado_venta : pedido.estado_venta}
-                        onChange={val => editingId === pedido.id_pedido && setEditForm(prev => ({ ...prev, estado_venta: val }))}
-                        options={ESTADOS_VENTA}
-                        type="venta"
-                        isDisabled={editingId !== pedido.id_pedido}
-                      />
-                    </td>
-                    <td>
-                      <EstadoSelect
-                        value={editingId === pedido.id_pedido ? editForm.estado_envio : pedido.estado_envio}
-                        onChange={val => editingId === pedido.id_pedido && setEditForm(prev => ({ ...prev, estado_envio: val }))}
-                        options={ESTADOS_ENVIO}
-                        type="envio"
-                        isDisabled={editingId !== pedido.id_pedido}
-                      />
-                    </td>
-                    <td><input name="notas" value={editForm.notas} onChange={handleEditFormChange} /></td>
-                    <td>
-                      <ArchivoCell filePath={pedido.archivo_base} nombre="Archivo Base" pedidoId={pedido.id_pedido} field="archivo_base" onUpload={handlePedidoAdded} onDelete={handleEliminarArchivo} />
-                    </td>
-                    <td>
-                      <ArchivoCell filePath={pedido.archivo_vector} nombre="Archivo Vector" pedidoId={pedido.id_pedido} field="archivo_vector" onUpload={handlePedidoAdded} onDelete={handleEliminarArchivo} />
-                    </td>
-                    <td><input name="foto_sello" value={editForm.foto_sello} onChange={handleEditFormChange} /></td>
-                    <td><input name="medida_pedida" value={editForm.medida_pedida || ''} onChange={handleEditFormChange} /></td>
-                    <td><input name="numero_seguimiento" value={editForm.numero_seguimiento} onChange={handleEditFormChange} /></td>
                   </tr>
+                ) : error ? (
+                  <tr>
+                    <td colSpan="9" style={{
+                      textAlign: 'center',
+                      color: '#ef4444',
+                      padding: '32px'
+                    }}>
+                      Error: {error}
+                    </td>
+                  </tr>
+                ) : pedidos.length > 0 ? (
+                  pedidos.map((pedido) => (
+                    editingId === pedido.id_pedido ? (
+                      <EditingRow
+                        key={pedido.id_pedido}
+                        pedido={pedido}
+                        editForm={editForm}
+                        handleEditFormChange={handleEditFormChange}
+                        handleEditRowRightClick={handleEditRowRightClick}
+                        handlePedidoAdded={handlePedidoAdded}
+                        handleEliminarArchivo={handleEliminarArchivo}
+                        ESTADOS_FABRICACION={ESTADOS_FABRICACION}
+                        ESTADOS_VENTA={ESTADOS_VENTA}
+                        ESTADOS_ENVIO={ESTADOS_ENVIO}
+                        setEditForm={setEditForm}
+                        supabase={supabase}
+                        getPedidos={getPedidos}
+                      />
+                    ) : (
+                      <DisplayRow
+                        key={pedido.id_pedido}
+                        pedido={pedido}
+                        handleRowRightClick={handleRowRightClick}
+                        startEdit={startEdit}
+                        getEstadoStyle={getEstadoStyle}
+                        handlePedidoAdded={handlePedidoAdded}
+                        handleEliminarArchivo={handleEliminarArchivo}
+                        supabase={supabase}
+                        getPedidos={getPedidos}
+                        ESTADOS_FABRICACION={ESTADOS_FABRICACION}
+                        ESTADOS_VENTA={ESTADOS_VENTA}
+                        ESTADOS_ENVIO={ESTADOS_ENVIO}
+                      />
+                    )
+                  ))
                 ) : (
-                  <tr 
-                    key={pedido.id_pedido} 
-                    onContextMenu={(e) => handleRowRightClick(e, pedido.id_pedido)}
-                    onDoubleClick={() => startEdit(pedido)}
-                    style={{ cursor: 'context-menu' }}
-                  >
-                    <td>{new Date(pedido.fecha_compra).toLocaleDateString()}</td>
-                    <td>{pedido.clientes?.nombre_cliente || 'N/A'}</td>
-                    <td>{pedido.clientes?.apellido_cliente || 'N/A'}</td>
-                    <td>{pedido.disenio}</td>
-                    <td>{pedido.clientes?.telefono_cliente || 'N/A'}</td>
-                    <td>{pedido.clientes?.medio_contacto || 'N/A'}</td>
-                    <td>{pedido.valor_sello}</td>
-                    <td>{pedido.valor_envio}</td>
-                    <td>{pedido.restante_pagar}</td>
-                    <td>
-                      <EstadoSelect
-                        value={pedido.estado_fabricacion}
-                        onChange={async val => {
-                          await supabase.rpc('editar_pedido', { p_id: pedido.id_pedido, p_estado_fabricacion: val });
-                          getPedidos();
-                        }}
-                        options={ESTADOS_FABRICACION}
-                        type="fabricacion"
-                        isDisabled={false}
-                      />
+                  <tr>
+                    <td colSpan="9" style={{
+                      textAlign: 'center',
+                      color: '#71717a',
+                      padding: '32px'
+                    }}>
+                      No se encontraron pedidos.
                     </td>
-                    <td>
-                      <EstadoSelect
-                        value={pedido.estado_venta}
-                        onChange={async val => {
-                          await supabase.rpc('editar_pedido', { p_id: pedido.id_pedido, p_estado_venta: val });
-                          getPedidos();
-                        }}
-                        options={ESTADOS_VENTA}
-                        type="venta"
-                        isDisabled={false}
-                      />
-                    </td>
-                    <td>
-                      <EstadoSelect
-                        value={pedido.estado_envio}
-                        onChange={async val => {
-                          await supabase.rpc('editar_pedido', { p_id: pedido.id_pedido, p_estado_envio: val });
-                          getPedidos();
-                        }}
-                        options={ESTADOS_ENVIO}
-                        type="envio"
-                        isDisabled={false}
-                      />
-                    </td>
-                    <td>{pedido.notas}</td>
-                    <td>
-                      <ArchivoCell filePath={pedido.archivo_base} nombre="Archivo Base" pedidoId={pedido.id_pedido} field="archivo_base" onUpload={handlePedidoAdded} onDelete={handleEliminarArchivo} />
-                    </td>
-                    <td>
-                      <ArchivoCell filePath={pedido.archivo_vector} nombre="Archivo Vector" pedidoId={pedido.id_pedido} field="archivo_vector" onUpload={handlePedidoAdded} onDelete={handleEliminarArchivo} />
-                    </td>
-                    <td>{pedido.foto_sello}</td>
-                    <td>{pedido.medida_pedida}</td>
-                    <td>{pedido.numero_seguimiento}</td>
                   </tr>
-                )
-              ))
-            ) : (
-              <tr><td colSpan="17" style={{ textAlign: 'center' }}>No se encontraron pedidos.</td></tr>
-            )}
-          </tbody>
-        </table>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-// Componente auxiliar para mostrar y gestionar archivos
-function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete }) {
+// Componente para fila en modo edición
+function EditingRow({ pedido, editForm, handleEditFormChange, handleEditRowRightClick, handlePedidoAdded, handleEliminarArchivo, ESTADOS_FABRICACION, ESTADOS_VENTA, ESTADOS_ENVIO, setEditForm, supabase, getPedidos }) {
+  // Estilo invisible para inputs
+  const invisibleInput = {
+    background: 'transparent',
+    border: 'none',
+    outline: 'none',
+    color: 'inherit',
+    font: 'inherit',
+    width: '100%',
+    padding: 0,
+    margin: 0,
+    boxShadow: 'none',
+    appearance: 'none',
+    minWidth: 0,
+    fontSize: 'inherit',
+    fontWeight: 'inherit',
+  };
+  return (
+    <tr
+      style={{
+        borderBottom: '1px solid rgba(39, 39, 42, 0.3)',
+        background: 'rgba(39, 39, 42, 0.3)',
+        transition: 'background 0.3s ease'
+      }}
+      onContextMenu={handleEditRowRightClick}
+    >
+      {/* Cliente */}
+      <td style={{ minWidth: '220px', width: '220px', maxWidth: '220px', padding: '24px 24px 24px 24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            background: '#27272a',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <span style={{ color: 'white', fontWeight: '600', fontSize: '14px' }}>
+              {(editForm.nombre_cliente?.charAt(0) || '?')}{(editForm.apellido_cliente?.charAt(0) || '?')}
+            </span>
+          </div>
+          <div style={{ width: '140px' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+              <input
+                name="nombre_cliente"
+                value={editForm.nombre_cliente}
+                onChange={handleEditFormChange}
+                style={{ ...invisibleInput, width: '50%' }}
+                placeholder="Nombre"
+                autoFocus
+              />
+              <input
+                name="apellido_cliente"
+                value={editForm.apellido_cliente}
+                onChange={handleEditFormChange}
+                style={{ ...invisibleInput, width: '50%' }}
+                placeholder="Apellido"
+              />
+            </div>
+            <input
+              name="fecha_compra"
+              type="date"
+              value={editForm.fecha_compra}
+              onChange={handleEditFormChange}
+              style={invisibleInput}
+            />
+          </div>
+        </div>
+      </td>
+
+      {/* Diseño, medida, notas */}
+      <td style={{ minWidth: '192px', width: '192px', maxWidth: '192px' }}>
+        <div style={{ maxWidth: '192px' }}>
+          <input
+            name="disenio"
+            value={editForm.disenio}
+            onChange={handleEditFormChange}
+            style={invisibleInput}
+            placeholder="Diseño"
+          />
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input
+              name="medida_pedida"
+              value={editForm.medida_pedida || ''}
+              onChange={handleEditFormChange}
+              style={{ ...invisibleInput, width: '70px' }}
+              placeholder="Medida"
+            />
+            <input
+              name="notas"
+              value={editForm.notas}
+              onChange={handleEditFormChange}
+              style={{ ...invisibleInput, flex: 1, minWidth: 0 }}
+              placeholder="Notas"
+            />
+          </div>
+        </div>
+      </td>
+
+      {/* Contacto */}
+      <td style={{ minWidth: '120px', width: '120px', maxWidth: '120px' }}>
+        <div>
+          <input
+            name="medio_contacto"
+            value={editForm.medio_contacto}
+            onChange={handleEditFormChange}
+            style={invisibleInput}
+            placeholder="Medio"
+          />
+          <input
+            name="telefono_cliente"
+            value={editForm.telefono_cliente}
+            onChange={handleEditFormChange}
+            style={invisibleInput}
+            placeholder="Teléfono"
+          />
+        </div>
+      </td>
+
+      {/* Valores */}
+      <td style={{ minWidth: '120px', width: '120px', maxWidth: '120px' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <input
+              name="valor_sello"
+              type="number"
+              value={editForm.valor_sello}
+              onChange={handleEditFormChange}
+              style={{ ...invisibleInput, width: '64px', fontFamily: 'monospace' }}
+              placeholder="Sello"
+            />
+            <span style={{ color: '#71717a', fontSize: '11px' }}>
+              (<input
+                name="valor_senia"
+                type="number"
+                value={editForm.valor_senia}
+                onChange={handleEditFormChange}
+                style={{ ...invisibleInput, width: '48px', fontFamily: 'monospace' }}
+                placeholder="Seña"
+              />)
+            </span>
+          </div>
+          <p style={{ color: '#71717a', fontSize: '12px', margin: 0 }}>
+            Resta: ${(Number(editForm.valor_sello || 0) - Number(editForm.valor_senia || 0)).toLocaleString()}
+          </p>
+        </div>
+      </td>
+
+      {/* Estado */}
+      <td style={{ minWidth: '160px', width: '160px', maxWidth: '160px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <EstadoSelect
+            value={editForm.estado_fabricacion}
+            onChange={val => setEditForm(prev => ({ ...prev, estado_fabricacion: val }))}
+            options={ESTADOS_FABRICACION}
+            type="fabricacion"
+            isDisabled={false}
+          />
+          <div style={{ display: 'flex', gap: '4px' }}>
+            <EstadoSelect
+              value={editForm.estado_venta}
+              onChange={val => setEditForm(prev => ({ ...prev, estado_venta: val }))}
+              options={ESTADOS_VENTA}
+              type="venta"
+              isDisabled={false}
+            />
+            <EstadoSelect
+              value={editForm.estado_envio}
+              onChange={val => setEditForm(prev => ({ ...prev, estado_envio: val }))}
+              options={ESTADOS_ENVIO}
+              type="envio"
+              isDisabled={false}
+            />
+          </div>
+        </div>
+      </td>
+
+      {/* Archivos */}
+      <td style={{ minWidth: '100px', width: '100px', maxWidth: '100px' }}>
+        <ArchivoCell
+          filePath={pedido.archivo_base}
+          nombre="Archivo Base"
+          pedidoId={pedido.id_pedido}
+          field="archivo_base"
+          onUpload={handlePedidoAdded}
+          onDelete={handleEliminarArchivo}
+          editing={true}
+        />
+      </td>
+      <td style={{ minWidth: '100px', width: '100px', maxWidth: '100px' }}>
+        <ArchivoCell
+          filePath={pedido.archivo_vector}
+          nombre="Archivo Vector"
+          pedidoId={pedido.id_pedido}
+          field="archivo_vector"
+          onUpload={handlePedidoAdded}
+          onDelete={handleEliminarArchivo}
+          editing={true}
+        />
+      </td>
+      <td style={{ minWidth: '100px', width: '100px', maxWidth: '100px' }}>
+        <ArchivoCell
+          filePath={pedido.foto_sello}
+          nombre="Foto Sello"
+          pedidoId={pedido.id_pedido}
+          field="foto_sello"
+          onUpload={handlePedidoAdded}
+          onDelete={handleEliminarArchivo}
+          editing={true}
+        />
+      </td>
+
+      {/* Seguimiento */}
+      <td style={{ minWidth: '110px', width: '110px', maxWidth: '110px' }}>
+        <input
+          name="numero_seguimiento"
+          value={editForm.numero_seguimiento}
+          onChange={handleEditFormChange}
+          style={{ ...invisibleInput, fontFamily: 'monospace' }}
+          placeholder="Seguimiento"
+        />
+      </td>
+    </tr>
+  );
+}
+
+// Componente para fila en modo display
+function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, handlePedidoAdded, handleEliminarArchivo, supabase, getPedidos, ESTADOS_FABRICACION, ESTADOS_VENTA, ESTADOS_ENVIO }) {
+  // Función para actualizar un campo de estado en la base de datos
+  const handleEstadoChange = async (campo, valor) => {
+    try {
+      const pedidoFields = {
+        p_id: pedido.id_pedido,
+        p_fecha_compra: pedido.fecha_compra,
+        p_valor_sello: pedido.valor_sello,
+        p_valor_envio: pedido.valor_envio,
+        p_valor_senia: pedido.valor_senia,
+        p_estado_fabricacion: campo === 'estado_fabricacion' ? valor : pedido.estado_fabricacion,
+        p_estado_venta: campo === 'estado_venta' ? valor : pedido.estado_venta,
+        p_estado_envio: campo === 'estado_envio' ? valor : pedido.estado_envio,
+        p_notas: pedido.notas,
+        p_disenio: pedido.disenio,
+        p_archivo_base: pedido.archivo_base,
+        p_archivo_vector: pedido.archivo_vector,
+        p_foto_sello: pedido.foto_sello,
+        p_medida_pedida: pedido.medida_pedida,
+        p_numero_seguimiento: pedido.numero_seguimiento,
+      };
+      await supabase.rpc('editar_pedido', pedidoFields);
+      getPedidos();
+    } catch (err) {
+      alert('Error al actualizar el estado');
+    }
+  };
+
+  return (
+    <tr
+      style={{
+        borderBottom: '1px solid rgba(39, 39, 42, 0.3)',
+        cursor: 'context-menu',
+        transition: 'background 0.3s ease'
+      }}
+      onMouseEnter={(e) => e.target.closest('tr').style.background = 'rgba(39, 39, 42, 0.3)'}
+      onMouseLeave={(e) => e.target.closest('tr').style.background = 'transparent'}
+      onContextMenu={(e) => handleRowRightClick(e, pedido.id_pedido)}
+      onDoubleClick={e => {
+        e.preventDefault();
+        e.stopPropagation();
+        startEdit(pedido);
+      }}
+    >
+      <td style={{ padding: '24px 24px 24px 24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            background: '#27272a',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <span style={{ color: 'white', fontWeight: '600', fontSize: '14px' }}>
+              {(pedido.clientes?.nombre_cliente?.charAt(0) || '?')}{(pedido.clientes?.apellido_cliente?.charAt(0) || '?')}
+            </span>
+          </div>
+          <div>
+            <p style={{ fontWeight: '500', color: 'white', margin: 0, fontSize: '16px' }}>
+              {pedido.clientes?.nombre_cliente || 'N/A'} {pedido.clientes?.apellido_cliente || ''}
+            </p>
+            <p style={{ fontSize: '14px', color: '#71717a', margin: '2px 0 0 0' }}>
+              {new Date(pedido.fecha_compra).toLocaleDateString()}
+            </p>
+          </div>
+        </div>
+      </td>
+
+      <td>
+        <div style={{ maxWidth: '192px' }}>
+          <p style={{ color: 'white', fontWeight: '500', margin: '0 0 4px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {pedido.disenio || "Sin especificar"}
+          </p>
+          <p style={{ fontSize: '14px', color: '#71717a', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {pedido.medida_pedida && `${pedido.medida_pedida} • `}
+            {pedido.notas || "Sin notas"}
+          </p>
+        </div>
+      </td>
+
+      <td>
+        <div>
+          <p style={{ color: 'white', fontSize: '14px', margin: '0 0 4px 0' }}>
+            {pedido.clientes?.medio_contacto || 'N/A'}
+          </p>
+          <p style={{ color: '#71717a', fontSize: '12px', margin: 0 }}>
+            {pedido.clientes?.telefono_cliente || 'N/A'}
+          </p>
+        </div>
+      </td>
+
+      <td>
+        <div>
+          <p style={{ color: 'white', fontFamily: 'monospace', fontSize: '15px', margin: '0 0 4px 0' }}>
+            ${pedido.valor_sello?.toLocaleString()}{" "}
+            <span style={{ color: '#71717a', fontSize: '10px' }}>
+              ({pedido.valor_senia?.toLocaleString()})
+            </span>
+          </p>
+          <p style={{ color: '#71717a', fontSize: '12px', margin: 0 }}>
+            Resta: ${pedido.restante_pagar?.toLocaleString()}
+          </p>
+        </div>
+      </td>
+
+      <td>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <EstadoSelect
+            value={pedido.estado_fabricacion}
+            onChange={val => handleEstadoChange('estado_fabricacion', val)}
+            options={ESTADOS_FABRICACION}
+            type="fabricacion"
+            isDisabled={false}
+          />
+          <div style={{ display: 'flex', gap: '4px' }}>
+            <EstadoSelect
+              value={pedido.estado_venta}
+              onChange={val => handleEstadoChange('estado_venta', val)}
+              options={ESTADOS_VENTA}
+              type="venta"
+              isDisabled={false}
+            />
+            <EstadoSelect
+              value={pedido.estado_envio}
+              onChange={val => handleEstadoChange('estado_envio', val)}
+              options={ESTADOS_ENVIO}
+              type="envio"
+              isDisabled={false}
+            />
+          </div>
+        </div>
+      </td>
+
+      <td>
+        <ArchivoCell
+          filePath={pedido.archivo_base}
+          nombre="Archivo Base"
+          pedidoId={pedido.id_pedido}
+          field="archivo_base"
+          onUpload={handlePedidoAdded}
+          onDelete={handleEliminarArchivo}
+        />
+      </td>
+
+      <td>
+        <ArchivoCell
+          filePath={pedido.archivo_vector}
+          nombre="Archivo Vector"
+          pedidoId={pedido.id_pedido}
+          field="archivo_vector"
+          onUpload={handlePedidoAdded}
+          onDelete={handleEliminarArchivo}
+        />
+      </td>
+
+      <td>
+        <ArchivoCell
+          filePath={pedido.foto_sello}
+          nombre="Foto Sello"
+          pedidoId={pedido.id_pedido}
+          field="foto_sello"
+          onUpload={handlePedidoAdded}
+          onDelete={handleEliminarArchivo}
+        />
+      </td>
+
+      <td>
+        <div style={{
+          fontFamily: 'monospace',
+          fontSize: '13px',
+          color: pedido.numero_seguimiento ? '#d4d4d8' : '#71717a',
+          fontStyle: pedido.numero_seguimiento ? 'normal' : 'italic'
+        }}>
+          {pedido.numero_seguimiento || 'Sin asignar'}
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+// Componente para gestión de archivos estilo estetica.txt
+function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, editing }) {
   const [signedUrl, setSignedUrl] = React.useState(null);
   const [isHovered, setIsHovered] = React.useState(false);
   const [isUploading, setIsUploading] = React.useState(false);
@@ -676,38 +1337,25 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete }) 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-
     setIsUploading(true);
     try {
-      // Crear nombre único para el archivo
       const timestamp = Date.now();
       const fileExtension = file.name.split('.').pop();
       const fileName = `${field}_${pedidoId}_${timestamp}.${fileExtension}`;
-      
-      // Subir archivo a Supabase Storage
       const { data, error } = await supabase.storage
         .from('archivos-ventas')
         .upload(fileName, file);
-
       if (error) throw error;
-
-      // Obtener URL pública
       const { data: publicData } = supabase.storage
         .from('archivos-ventas')
         .getPublicUrl(fileName);
-
-      // Actualizar el pedido en la base de datos
       const updateData = {};
       updateData[`p_${field}`] = publicData.publicUrl;
-      
       await supabase.rpc('editar_pedido', {
         p_id: pedidoId,
         ...updateData
       });
-
-      // Llamar callback para refrescar datos
       if (onUpload) onUpload();
-
     } catch (err) {
       alert('Error al subir el archivo: ' + err.message);
     } finally {
@@ -739,166 +1387,149 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete }) 
     }
   };
 
-  // Si no hay archivo, mostrar botón de subida
   if (!filePath) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <label style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: 44,
-          height: 44,
-          borderRadius: '50%',
-          background: 'rgba(40, 45, 60, 0.35)',
-          boxShadow: '0 4px 24px 0 rgba(0,0,0,0.13), 0 1.5px 6px 0 rgba(255,255,255,0.08) inset',
-          border: '1px solid rgba(200,200,220,0.22)',
-          cursor: isUploading ? 'not-allowed' : 'pointer',
-          opacity: isUploading ? 0.6 : 1,
-          transition: 'background 0.2s, border 0.2s',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          position: 'relative',
-          overflow: 'hidden',
-        }}>
-          {/* SVG upload minimalista tipo feather/heroicons */}
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b3d0ff" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: isUploading ? 0.5 : 1 }}>
-            <path d="M12 17V5" />
-            <polyline points="6 11 12 5 18 11" />
-            <rect x="4" y="17" width="16" height="2" rx="1" />
-          </svg>
-          <input
-            type="file"
-            onChange={handleFileUpload}
-            style={{ display: 'none' }}
-            disabled={isUploading}
-            accept="image/*,.pdf,.doc,.docx,.txt"
+      <label style={{
+        color: '#a1a1aa',
+        background: 'transparent',
+        border: '1px solid rgba(63, 63, 70, 0.5)',
+        borderRadius: '8px',
+        padding: '6px 12px',
+        fontSize: '12px',
+        cursor: 'pointer',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '4px',
+        transition: 'all 0.3s ease'
+      }}
+        onMouseEnter={(e) => {
+          e.target.style.color = 'white';
+          e.target.style.background = 'rgba(39, 39, 42, 0.5)';
+          e.target.style.borderColor = 'rgba(96, 165, 250, 0.5)';
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.color = '#a1a1aa';
+          e.target.style.background = 'transparent';
+          e.target.style.borderColor = 'rgba(63, 63, 70, 0.5)';
+        }}
+      >
+        <Upload style={{ width: '12px', height: '12px' }} />
+        {field === 'foto_sello' ? 'Foto' : 'Subir'}
+        <input
+          type="file"
+          onChange={handleFileUpload}
+          style={{ display: 'none' }}
+          disabled={isUploading}
+          accept="image/*,.pdf,.doc,.docx,.txt"
+        />
+      </label>
+    );
+  }
+
+  if (!signedUrl) return <span style={{ color: '#71717a', fontSize: '12px' }}>Cargando...</span>;
+
+  const isImage = filePath.match(/\.(jpg|jpeg|png|gif|svg)$/i);
+
+  if (isImage) {
+    return (
+      <div
+        style={{ position: 'relative', width: '48px', height: '48px' }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <a href={signedUrl} target="_blank" rel="noopener noreferrer">
+          <img
+            src={signedUrl}
+            alt={nombre}
+            style={{
+              width: '48px',
+              height: '48px',
+              objectFit: 'cover',
+              borderRadius: '6px',
+              border: '1px solid rgba(63, 63, 70, 0.5)',
+              transition: 'border-color 0.3s ease'
+            }}
           />
-          {isUploading && (
-            <span style={{
-              position: 'absolute',
-              bottom: -22,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              fontSize: 10,
-              color: '#b3d0ff',
-              background: 'rgba(30,32,36,0.8)',
-              borderRadius: 6,
-              padding: '2px 8px',
-              marginTop: 4,
-            }}>Subiendo...</span>
-          )}
-        </label>
+        </a>
+        {isHovered && (
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            borderRadius: '6px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '4px'
+          }}>
+            <button
+              onClick={handleDownload}
+              style={{
+                color: 'white',
+                fontSize: '10px',
+                background: 'rgba(39, 39, 42, 0.8)',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'background 0.3s ease'
+              }}
+            >
+              Ver
+            </button>
+            <button
+              onClick={handleDelete}
+              style={{
+                color: '#ef4444',
+                fontSize: '10px',
+                background: 'rgba(39, 39, 42, 0.8)',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'background 0.3s ease'
+              }}
+            >
+              X
+            </button>
+          </div>
+        )}
       </div>
     );
   }
 
-  if (!signedUrl) return <span>Cargando...</span>;
-
-  const isImage = filePath.match(/\.(jpg|jpeg|png|gif|svg)$/i);
-
   return (
-    <div 
-      style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center',
-        position: 'relative'
-      }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Previsualización del archivo */}
-      {isImage ? (
-        <a href={signedUrl} target="_blank" rel="noopener noreferrer">
-          <img 
-            src={signedUrl} 
-            alt={nombre} 
-            style={{ 
-              width: 60, 
-              height: 60, 
-              objectFit: 'cover',
-              borderRadius: '4px'
-            }} 
-          />
-        </a>
-      ) : (
-        <a 
-          href={signedUrl} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          style={{ 
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 60,
-            height: 60,
-            background: '#444',
-            borderRadius: '4px',
-            color: 'white',
-            textDecoration: 'none',
-            fontSize: '12px',
-            textAlign: 'center'
-          }}
-        >
-          📄<br/>Ver
-        </a>
-      )}
-
-      {/* Botones que aparecen al hacer hover */}
-      {isHovered && (
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          display: 'flex',
-          gap: '6px',
-          zIndex: 10,
-          background: 'rgba(0, 0, 0, 0.7)',
+    <div style={{ position: 'relative' }}>
+      <button
+        onClick={() => window.open(signedUrl, '_blank')}
+        style={{
+          color: '#a1a1aa',
+          background: 'transparent',
+          border: '1px solid rgba(63, 63, 70, 0.5)',
           borderRadius: '8px',
-          padding: '4px'
-        }}>
-          <button 
-            onClick={handleDownload}
-            style={{
-              padding: '4px 8px',
-              background: '#333',
-              color: 'white',
-              border: '1px solid #555',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '10px',
-              fontWeight: '500',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-              transition: 'background 0.2s'
-            }}
-            onMouseEnter={(e) => e.target.style.background = '#444'}
-            onMouseLeave={(e) => e.target.style.background = '#333'}
-          >
-            Descargar
-          </button>
-          <button 
-            onClick={handleDelete}
-            style={{
-              padding: '4px 8px',
-              background: '#333',
-              color: 'white',
-              border: '1px solid #555',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '10px',
-              fontWeight: '500',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-              transition: 'background 0.2s'
-            }}
-            onMouseEnter={(e) => e.target.style.background = '#444'}
-            onMouseLeave={(e) => e.target.style.background = '#333'}
-          >
-            Eliminar
-          </button>
-        </div>
-      )}
+          padding: '6px 12px',
+          fontSize: '12px',
+          cursor: 'pointer',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          transition: 'all 0.3s ease'
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.color = 'white';
+          e.target.style.background = 'rgba(39, 39, 42, 0.5)';
+          e.target.style.borderColor = 'rgba(96, 165, 250, 0.5)';
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.color = '#a1a1aa';
+          e.target.style.background = 'transparent';
+          e.target.style.borderColor = 'rgba(63, 63, 70, 0.5)';
+        }}
+      >
+        <Upload style={{ width: '12px', height: '12px' }} />
+        {field === 'foto_sello' ? 'Foto' : 'Ver'}
+      </button>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@stagewise-plugins/react": "^0.4.9",
-    "@stagewise/toolbar-react": "^0.4.9"
+    "@stagewise/toolbar-react": "^0.4.9",
+    "lucide-react": "^0.525.0"
   }
 }

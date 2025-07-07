@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import './AddPedidoModal.css';
+import {
+  User,
+  Phone,
+  FileText,
+  DollarSign,
+  Upload,
+  Settings
+} from 'lucide-react';
+import EstadoSelect from './EstadoSelect';
 
 const initialFormState = {
   // Campos de CLIENTES
@@ -111,105 +120,129 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded, filterOptions }) {
 
   if (!isOpen) return null;
 
+  // Opciones para los selects de estado
+  const opcionesFabricacion = filterOptions?.estado_fabricacion?.length
+    ? filterOptions.estado_fabricacion
+    : ['Sin Hacer', 'Haciendo', 'Hecho', 'Completar diseño'];
+  const opcionesVenta = filterOptions?.estado_venta?.length
+    ? filterOptions.estado_venta
+    : ['Foto', 'Transferido'];
+  const opcionesEnvio = filterOptions?.estado_envio?.length
+    ? filterOptions.estado_envio
+    : ['Sin Enviar', 'Hacer Etiqueta', 'Despachado'];
+
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <h2>Crear Nuevo Pedido</h2>
+        <h2>Crear Pedido</h2>
         {error && <p className="error-message">{error}</p>}
         <form onSubmit={handleSubmit}>
-          <div className="form-grid">
-            {/* Campos del Cliente */}
-            <div className="form-group">
-              <label htmlFor="nombre_cliente">Nombre</label>
-              <input type="text" name="nombre_cliente" value={formData.nombre_cliente} onChange={handleChange} required />
+          <div className="modal-grid-2col">
+            {/* Columna Izquierda */}
+            <div className="modal-col">
+              <div className="modal-section">
+                <div className="modal-section-title">
+                  <User size={18} style={{marginRight: 4}} /> Cliente
+                </div>
+                <div className="modal-row">
+                  <input type="text" name="nombre_cliente" placeholder="Nombre" value={formData.nombre_cliente} onChange={handleChange} required className="input-sm" />
+                  <input type="text" name="apellido_cliente" placeholder="Apellido" value={formData.apellido_cliente} onChange={handleChange} className="input-sm" />
+                </div>
+              </div>
+              <div className="modal-section">
+                <div className="modal-section-title">
+                  <Phone size={18} style={{marginRight: 4}} /> Contacto
+                </div>
+                <div className="modal-row">
+                  <input type="text" name="telefono_cliente" placeholder="Teléfono" value={formData.telefono_cliente} onChange={handleChange} required className="input-sm" />
+                  <select name="medio_contacto" value={formData.medio_contacto} onChange={handleChange} className="input-sm">
+                    <option value="">Medio</option>
+                    <option value="Whatsapp">Whatsapp</option>
+                    <option value="Instagram">Instagram</option>
+                    <option value="Facebook">Facebook</option>
+                    <option value="Mail">Mail</option>
+                  </select>
+                </div>
+              </div>
+              <div className="modal-section">
+                <div className="modal-section-title">
+                  <FileText size={18} style={{marginRight: 4}} /> Diseño
+                </div>
+                <textarea name="disenio" placeholder="Descripción del diseño..." value={formData.disenio} onChange={handleChange} className="input-sm" />
+                <div className="modal-row">
+                  <input type="text" name="medida_pedida" placeholder="Medidas (ej: 5x3 cm)" value={formData.medida_pedida} onChange={handleChange} className="input-sm" style={{flex: 1}} />
+                  <textarea name="notas" placeholder="Información adicional..." value={formData.notas} onChange={handleChange} className="input-sm" style={{flex: 1, minHeight: 32, maxHeight: 60}} />
+                </div>
+              </div>
             </div>
-            <div className="form-group">
-              <label htmlFor="apellido_cliente">Apellido</label>
-              <input type="text" name="apellido_cliente" value={formData.apellido_cliente} onChange={handleChange} />
-            </div>
-            <div className="form-group">
-              <label htmlFor="telefono_cliente">Teléfono</label>
-              <input type="text" name="telefono_cliente" value={formData.telefono_cliente} onChange={handleChange} required />
-            </div>
-            <div className="form-group">
-              <label htmlFor="medio_contacto">Medio de Contacto</label>
-              <select name="medio_contacto" value={formData.medio_contacto} onChange={handleChange}>
-                <option value="">-- Seleccionar --</option>
-                <option value="Whatsapp">Whatsapp</option>
-                <option value="Instagram">Instagram</option>
-                <option value="Facebook">Facebook</option>
-                <option value="Mail">Mail</option>
-              </select>
-            </div>
-
-            <div className="form-group" style={{ gridColumn: 'span 2' }}>
-              <label htmlFor="disenio">Diseño</label>
-              <textarea name="disenio" value={formData.disenio} onChange={handleChange}></textarea>
-            </div>
-
-            {/* Campos del Pedido */}
-            <div className="form-group">
-              <label htmlFor="fecha_compra">Fecha Compra</label>
-              <input type="date" name="fecha_compra" value={formData.fecha_compra} onChange={handleChange} required />
-            </div>
-            <div className="form-group">
-              <label htmlFor="valor_sello">Valor Sello</label>
-              <input type="number" name="valor_sello" value={formData.valor_sello} onChange={handleChange} />
-            </div>
-            <div className="form-group">
-              <label htmlFor="valor_envio">Valor Envío</label>
-              <input type="number" name="valor_envio" value={formData.valor_envio} onChange={handleChange} />
-            </div>
-            <div className="form-group">
-              <label htmlFor="valor_senia">Valor Seña</label>
-              <input type="number" name="valor_senia" value={formData.valor_senia} onChange={handleChange} />
-            </div>
-
-            <div className="form-group">
-              <label>Estado Fabricación</label>
-              <select name="estado_fabricacion" value={formData.estado_fabricacion} onChange={handleChange}>
-                {filterOptions?.estado_fabricacion?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                {!filterOptions?.estado_fabricacion?.length && ['Sin Hacer', 'Haciendo', 'Hecho', 'Completar diseño'].map(o => <option key={o} value={o}>{o}</option>)}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Estado Venta</label>
-              <select name="estado_venta" value={formData.estado_venta} onChange={handleChange}>
-                <option value={null}>Ninguno</option>
-                {filterOptions?.estado_venta?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                {!filterOptions?.estado_venta?.length && ['Foto', 'Transferido'].map(o => <option key={o} value={o}>{o}</option>)}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Estado Envío</label>
-              <select name="estado_envio" value={formData.estado_envio} onChange={handleChange}>
-                {filterOptions?.estado_envio?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                {!filterOptions?.estado_envio?.length && ['Sin enviar', 'Hacer Etiqueta', 'Despachado'].map(o => <option key={o} value={o}>{o}</option>)}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="medida_pedida">Medida</label>
-              <input type="text" name="medida_pedida" value={formData.medida_pedida} onChange={handleChange} />
-            </div>
-
-            <div className="form-group" style={{ gridColumn: 'span 2' }}>
-              <label htmlFor="archivo_base">Archivo Base (.jpg, .png, .jpeg)</label>
-              <input type="file" name="archivo_base" onChange={handleChange} accept=".jpg,.jpeg,.png" />
-            </div>
-            <div className="form-group" style={{ gridColumn: 'span 2' }}>
-              <label htmlFor="archivo_vector">Archivo Vector (.eps, .svg, .ai, .pdf)</label>
-              <input type="file" name="archivo_vector" onChange={handleChange} accept=".eps,.svg,.ai,.pdf" />
-            </div>
-            <div className="form-group" style={{ gridColumn: 'span 2' }}>
-              <label htmlFor="notas">Notas</label>
-              <textarea name="notas" value={formData.notas} onChange={handleChange}></textarea>
+            {/* Columna Derecha */}
+            <div className="modal-col">
+              <div className="modal-section">
+                <div className="modal-section-title align-center">
+                  <DollarSign size={18} style={{marginRight: 4}} /> Valores
+                </div>
+                <div className="modal-row">
+                  <input type="number" name="valor_sello" placeholder="Sello" value={formData.valor_sello} onChange={handleChange} className="input-xs" />
+                  <input type="number" name="valor_senia" placeholder="Seña" value={formData.valor_senia} onChange={handleChange} className="input-xs" />
+                  <input type="number" name="valor_envio" placeholder="Envío" value={formData.valor_envio} onChange={handleChange} className="input-xs" />
+                </div>
+              </div>
+              <div className="modal-section">
+                <div className="modal-section-title align-center">
+                  <Settings size={18} style={{marginRight: 4}} /> Estados
+                </div>
+                <div className="modal-row">
+                  <EstadoSelect
+                    value={formData.estado_fabricacion}
+                    onChange={val => setFormData(prev => ({ ...prev, estado_fabricacion: val }))}
+                    options={opcionesFabricacion}
+                    type="fabricacion"
+                  />
+                  <EstadoSelect
+                    value={formData.estado_venta}
+                    onChange={val => setFormData(prev => ({ ...prev, estado_venta: val }))}
+                    options={['Ninguno', ...opcionesVenta]}
+                    type="venta"
+                  />
+                  <EstadoSelect
+                    value={formData.estado_envio}
+                    onChange={val => setFormData(prev => ({ ...prev, estado_envio: val }))}
+                    options={opcionesEnvio}
+                    type="envio"
+                  />
+                </div>
+              </div>
+              <div className="modal-section">
+                <div className="modal-section-title">
+                  <Upload size={18} style={{marginRight: 4}} /> Archivos
+                </div>
+                <div className="modal-row">
+                  <div style={{display: 'flex', flexDirection: 'column', flex: 1}}>
+                    <label className="archivo-btn-modal">
+                      <Upload style={{ width: '14px', height: '14px', marginRight: 4 }} /> Subir Base
+                      <input type="file" name="archivo_base" onChange={handleChange} accept=".jpg,.jpeg,.png" style={{ display: 'none' }} />
+                    </label>
+                    {formData.archivo_base && (
+                      <span className="archivo-nombre-modal">{formData.archivo_base.name}</span>
+                    )}
+                  </div>
+                  <div style={{display: 'flex', flexDirection: 'column', flex: 1}}>
+                    <label className="archivo-btn-modal">
+                      <Upload style={{ width: '14px', height: '14px', marginRight: 4 }} /> Subir Vector
+                      <input type="file" name="archivo_vector" onChange={handleChange} accept=".eps,.svg,.ai,.pdf" style={{ display: 'none' }} />
+                    </label>
+                    {formData.archivo_vector && (
+                      <span className="archivo-nombre-modal">{formData.archivo_vector.name}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <div className="form-actions">
             <button type="button" className="btn-secondary" onClick={onClose} disabled={isSaving}>Cancelar</button>
             <button type="submit" className="btn-primary" disabled={isSaving}>
-              {isSaving ? 'Guardando...' : 'Guardar Pedido'}
+              {isSaving ? 'Guardando...' : 'Crear Pedido'}
             </button>
           </div>
         </form>

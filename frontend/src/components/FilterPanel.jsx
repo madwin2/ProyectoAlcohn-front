@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './FilterPanel.css';
 
-function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, onToggle }) {
+function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, onToggle, showHeader = true }) {
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
   const [activeFiltersChips, setActiveFiltersChips] = useState([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -210,46 +210,47 @@ function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, 
   return (
     <div className="filter-panel-container">
       {/* Botón de filtro y chips */}
-      <div className="filter-header">
-        <button 
-          className={`filter-toggle-btn ${activeFiltersCount > 0 ? 'has-filters' : ''}`}
-          onClick={onToggle}
-        >
-          <svg className="filter-icon" viewBox="0 0 24 24" fill="none">
-            <path d="M3 4.6C3 4.03995 3 3.75992 3.10899 3.54601C3.20487 3.35785 3.35785 3.20487 3.54601 3.10899C3.75992 3 4.03995 3 4.6 3H19.4C19.9601 3 20.2401 3 20.454 3.10899C20.6422 3.20487 20.7951 3.35785 20.891 3.54601C21 3.75992 21 4.03995 21 4.6V6.33726C21 6.58185 21 6.70414 20.9724 6.81923C20.9479 6.92127 20.9075 7.01881 20.8526 7.10828C20.7908 7.2092 20.7043 7.29568 20.5314 7.46863L14.4686 13.5314C14.2957 13.7043 14.2092 13.7908 14.1474 13.8917C14.0925 13.9812 14.0521 14.0787 14.0276 14.1808C14 14.2959 14 14.4182 14 14.6627V17L10 21V14.6627C10 14.4182 10 14.2959 9.97237 14.1808C9.94787 14.0787 9.90747 13.9812 9.85264 13.8917C9.7908 13.7908 9.70432 13.7043 9.53137 13.5314L3.46863 7.46863C3.29568 7.29568 3.2092 7.2092 3.14736 7.10828C3.09253 7.01881 3.05213 6.92127 3.02763 6.81923C3 6.70414 3 6.58185 3 6.33726V4.6Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          Filtro
-          {activeFiltersCount > 0 && (
-            <span className="filter-count">{activeFiltersCount}</span>
-          )}
-          <svg className={`chevron-icon ${isExpanded ? 'expanded' : ''}`} viewBox="0 0 24 24" fill="none">
-            <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
-
-        {/* Chips de filtros activos */}
-        {!isExpanded && activeFiltersChips.length > 0 && (
-          <div className="filter-chips">
-            {activeFiltersChips.map((chip) => (
-              <div key={chip.key} className="filter-chip">
-                <span className="chip-text">{chip.text}</span>
-                <button 
-                  className="chip-remove"
-                  onClick={() => removeFilter(chip.type)}
-                >
-                  ×
-                </button>
-              </div>
-            ))}
+      {showHeader && (
+        <div className="filter-header">
+          <button 
+            className={`filter-toggle-btn ${activeFiltersCount > 0 ? 'has-filters' : ''}`}
+            onClick={onToggle}
+          >
+            <svg className="filter-icon" viewBox="0 0 24 24" fill="none">
+              <path d="M3 4.6C3 4.03995 3 3.75992 3.10899 3.54601C3.20487 3.35785 3.35785 3.20487 3.54601 3.10899C3.75992 3 4.03995 3 4.6 3H19.4C19.9601 3 20.2401 3 20.454 3.10899C20.6422 3.20487 20.7951 3.35785 20.891 3.54601C21 3.75992 21 4.03995 21 4.6V6.33726C21 6.58185 21 6.70414 20.9724 6.81923C20.9479 6.92127 20.9075 7.01881 20.8526 7.10828C20.7908 7.2092 20.7043 7.29568 20.5314 7.46863L14.4686 13.5314C14.2957 13.7043 14.2092 13.7908 14.1474 13.8917C14.0925 13.9812 14.0521 14.0787 14.0276 14.1808C14 14.2959 14 14.4182 14 14.6627V17L10 21V14.6627C10 14.4182 10 14.2959 9.97237 14.1808C9.94787 14.0787 9.90747 13.9812 9.85264 13.8917C9.7908 13.7908 9.70432 13.7043 9.53137 13.5314L3.46863 7.46863C3.29568 7.29568 3.2092 7.2092 3.14736 7.10828C3.09253 7.01881 3.05213 6.92127 3.02763 6.81923C3 6.70414 3 6.58185 3 6.33726V4.6Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Filtro
             {activeFiltersCount > 0 && (
-              <button className="clear-all-btn" onClick={clearAllFilters}>
-                Limpiar todo
-              </button>
+              <span className="filter-count">{activeFiltersCount}</span>
             )}
-          </div>
-        )}
-      </div>
+            <svg className={`chevron-icon ${isExpanded ? 'expanded' : ''}`} viewBox="0 0 24 24" fill="none">
+              <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
 
+          {/* Chips de filtros activos */}
+          {!isExpanded && activeFiltersChips.length > 0 && (
+            <div className="filter-chips">
+              {activeFiltersChips.map((chip) => (
+                <div key={chip.key} className="filter-chip">
+                  <span className="chip-text">{chip.text}</span>
+                  <button 
+                    className="chip-remove"
+                    onClick={() => removeFilter(chip.type)}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              {activeFiltersCount > 0 && (
+                <button className="clear-all-btn" onClick={clearAllFilters}>
+                  Limpiar todo
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
       {/* Panel expandido */}
       {isExpanded && (
         <div className="filter-panel-expanded">
