@@ -1,0 +1,10 @@
+Bloqueo Segun Estado
+Ajustar Buscador
+Ajustar Modal Agregar Pedido
+Ajustar Filtro
+Ajustar Ordenar
+Sonidos
+Transiciones
+Colores
+Anadir Tarea
+Ajustar Editar
