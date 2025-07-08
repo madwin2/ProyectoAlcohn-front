@@ -403,8 +403,10 @@ function PedidosPage() {
         padding: '24px 32px'
       }}>
         <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
+          /* maxWidth: '1200px', */
+          /* margin: '0 auto', */
+          paddingLeft: '0',
+          paddingRight: '0',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between'
@@ -458,13 +460,13 @@ function PedidosPage() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 style={{
-                  paddingLeft: '48px',
+                  paddingLeft: undefined, // Elimino paddingLeft
                   width: '320px',
                   background: 'rgba(39, 39, 42, 0.5)',
                   border: '1px solid rgba(63, 63, 70, 0.5)',
                   color: 'white',
                   borderRadius: '8px',
-                  padding: '8px 16px',
+                  padding: '8px 16px 8px 44px',
                   outline: 'none',
                   fontSize: '14px',
                   transition: 'border-color 0.3s ease'
