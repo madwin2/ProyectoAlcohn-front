@@ -1207,7 +1207,7 @@ function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, ha
     >
       {/* Nombre/Apellido */}
       <td style={{ padding: '16px 12px', minWidth: '120px', verticalAlign: 'top' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', paddingLeft: '16px' }}>
           <span style={{ color: 'white', fontWeight: '500', fontSize: '15px', lineHeight: '1.1' }}>
             {pedido.clientes?.nombre_cliente || 'N/A'}
           </span>
@@ -1217,8 +1217,10 @@ function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, ha
         </div>
       </td>
       {/* Fecha */}
-      <td style={{ padding: '16px 12px', minWidth: '90px', verticalAlign: 'top', color: '#a1a1aa', fontSize: '13px' }}>
-        {pedido.fecha_compra ? new Date(pedido.fecha_compra).toLocaleDateString() : '-'}
+      <td>
+        <span style={{ color: '#a1a1aa', fontSize: '13px' }}>
+          {pedido.fecha_compra ? new Date(pedido.fecha_compra).toLocaleDateString() : '-'}
+        </span>
       </td>
       {/* Diseño/Notas */}
       <td>
@@ -1246,8 +1248,11 @@ function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, ha
       <td>
         <div>
           <p style={{ color: 'white', fontFamily: 'monospace', fontSize: '15px', margin: '0 0 2px 0' }}>
-            ${pedido.valor_sello?.toLocaleString()} <span style={{ color: '#71717a', fontSize: '10px' }}>(Resta: ${pedido.restante_pagar?.toLocaleString()})</span>
+            ${pedido.valor_sello?.toLocaleString()}
           </p>
+          <span style={{ color: '#71717a', fontSize: '12px', display: 'block', margin: 0 }}>
+            Resta: ${pedido.restante_pagar?.toLocaleString()}
+          </span>
         </div>
       </td>
       {/* Valor Seña/Envío */}
