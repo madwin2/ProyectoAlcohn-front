@@ -404,15 +404,15 @@ function NotionDropdownFilter({ label, options, selected, onChange }) {
   }, [open]);
 
   // Resumen de seleccionados
-  let summary = 'Todos';
+  let summary = 'Ninguno';
   if (selected.length === 1) summary = selected[0];
   else if (selected.length > 1) summary = `${selected.length} seleccionados`;
-  else summary = 'Ninguno';
 
   return (
     <div className="notion-dropdown-filter" ref={ref}>
+      {/* Solo el resumen, sin el título duplicado */}
       <button className="date-selector-btn" onClick={() => setOpen(o => !o)}>
-        <span className="date-selector-text">{label}: {summary}</span>
+        <span className="date-selector-text">{summary}</span>
         <svg className={`date-selector-icon ${open ? 'expanded' : ''}`} viewBox="0 0 24 24" fill="none">
           <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
