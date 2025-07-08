@@ -311,3 +311,55 @@ form {
   margin-left: 2px;
   word-break: break-all;
 } 
+
+/* Mejora visual para los selects */
+select, .modal-row select, .input-sm select {
+  background: #18181b;
+  color: #fff;
+  border: 1.5px solid #27272a;
+  border-radius: 10px;
+  padding: 7px 32px 7px 10px;
+  font-size: 0.95rem;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  position: relative;
+  min-width: 0;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+select:focus {
+  border: 1.5px solid #60a5fa;
+  box-shadow: 0 0 0 2px #60a5fa33;
+}
+
+select::-ms-expand {
+  display: none;
+}
+
+/* Flecha personalizada para el select */
+select {
+  background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='16' viewBox='0 0 20 20' width='16' xmlns='http://www.w3.org/2000/svg'><path d='M7.293 7.293a1 1 0 011.414 0L10 8.586l1.293-1.293a1 1 0 111.414 1.414l-2 2a1 1 0 01-1.414 0l-2-2a1 1 0 010-1.414z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 18px 18px;
+}
+
+/* Asegura que los inputs y selects ocupen el 100% del ancho de la columna */
+.modal-row input,
+.modal-row select,
+.modal-row .input-xs,
+.modal-row .input-sm {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  flex: 1 1 0;
+  box-sizing: border-box;
+}
+
+/* Opcional: para que los inputs de valores no sean tan pequeños */
+.input-xs {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+} 

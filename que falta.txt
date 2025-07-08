@@ -8,3 +8,4 @@ Transiciones
 Colores
 Anadir Tarea
 Ajustar Editar
+ajustar barra lateral

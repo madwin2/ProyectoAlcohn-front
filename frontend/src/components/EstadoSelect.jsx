@@ -89,7 +89,7 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
   const displayLabel = getLabelShort(value, type);
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative', width: '100%' }}>
       <button
         type="button"
         onClick={handleButtonClick}
@@ -138,7 +138,8 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
                         colorClass.includes('border-blue') ? 'rgba(59, 130, 246, 0.2)' :
                           colorClass.includes('border-green') ? 'rgba(34, 197, 94, 0.2)' :
                             colorClass.includes('border-orange') ? 'rgba(249, 115, 22, 0.2)' :
-                              colorClass.includes('border-violet') ? 'rgba(139, 92, 246, 0.2)' : 'rgba(100, 116, 139, 0.2)'
+                              colorClass.includes('border-violet') ? 'rgba(139, 92, 246, 0.2)' : 'rgba(100, 116, 139, 0.2)',
+          width: '100%'
         }}
       >
         <span style={{

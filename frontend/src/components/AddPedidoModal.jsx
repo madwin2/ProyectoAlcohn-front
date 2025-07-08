@@ -121,9 +121,16 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded, filterOptions }) {
   if (!isOpen) return null;
 
   // Opciones para los selects de estado
-  const opcionesFabricacion = filterOptions?.estado_fabricacion?.length
+  let opcionesFabricacion = filterOptions?.estado_fabricacion?.length
     ? filterOptions.estado_fabricacion
     : ['Sin Hacer', 'Haciendo', 'Hecho', 'Completar diseño'];
+
+  // Forzar orden específico para estado_fabricacion
+  const ordenFabricacion = ['Sin Hacer', 'Haciendo', 'Hecho'];
+  opcionesFabricacion = [
+    ...ordenFabricacion.filter(op => opcionesFabricacion.includes(op)),
+    ...opcionesFabricacion.filter(op => !ordenFabricacion.includes(op))
+  ];
   const opcionesVenta = filterOptions?.estado_venta?.length
     ? filterOptions.estado_venta
     : ['Foto', 'Transferido'];
@@ -201,7 +208,7 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded, filterOptions }) {
                   <EstadoSelect
                     value={formData.estado_venta}
                     onChange={val => setFormData(prev => ({ ...prev, estado_venta: val }))}
-                    options={['Ninguno', ...opcionesVenta]}
+                    options={opcionesVenta.includes('Ninguno') ? opcionesVenta : ['Ninguno', ...opcionesVenta]}
                     type="venta"
                   />
                   <EstadoSelect
