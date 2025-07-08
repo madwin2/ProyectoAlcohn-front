@@ -399,7 +399,7 @@ function PedidosPage() {
         backdropFilter: 'blur(16px)',
         position: 'sticky',
         top: 0,
-        zIndex: 50,
+        zIndex: 10,
         padding: '24px 32px'
       }}>
         <div style={{
@@ -762,6 +762,16 @@ function PedidosPage() {
                     letterSpacing: '0.05em',
                     textAlign: 'left'
                   }}>
+                    Fecha
+                  </th>
+                  <th style={{
+                    color: '#a1a1aa',
+                    fontWeight: '500',
+                    fontSize: '12px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    textAlign: 'left'
+                  }}>
                     Diseño
                   </th>
                   <th style={{
@@ -782,7 +792,17 @@ function PedidosPage() {
                     letterSpacing: '0.05em',
                     textAlign: 'left'
                   }}>
-                    Valores
+                    Valor
+                  </th>
+                  <th style={{
+                    color: '#a1a1aa',
+                    fontWeight: '500',
+                    fontSize: '12px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    textAlign: 'left'
+                  }}>
+                    Seña/Envío
                   </th>
                   <th style={{
                     color: '#a1a1aa',
@@ -1185,47 +1205,36 @@ function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, ha
         startEdit(pedido);
       }}
     >
-      <td style={{ padding: '24px 24px 24px 24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            background: '#27272a',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <span style={{ color: 'white', fontWeight: '600', fontSize: '14px' }}>
-              {(pedido.clientes?.nombre_cliente?.charAt(0) || '?')}{(pedido.clientes?.apellido_cliente?.charAt(0) || '?')}
-            </span>
-          </div>
-          <div>
-            <p style={{ fontWeight: '500', color: 'white', margin: 0, fontSize: '16px' }}>
-              {pedido.clientes?.nombre_cliente || 'N/A'} {pedido.clientes?.apellido_cliente || ''}
-            </p>
-            <p style={{ fontSize: '14px', color: '#71717a', margin: '2px 0 0 0' }}>
-              {new Date(pedido.fecha_compra).toLocaleDateString()}
-            </p>
-          </div>
+      {/* Nombre/Apellido */}
+      <td style={{ padding: '16px 12px', minWidth: '120px', verticalAlign: 'top' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+          <span style={{ color: 'white', fontWeight: '500', fontSize: '15px', lineHeight: '1.1' }}>
+            {pedido.clientes?.nombre_cliente || 'N/A'}
+          </span>
+          <span style={{ color: '#71717a', fontSize: '13px', fontWeight: 400, lineHeight: '1.1' }}>
+            {pedido.clientes?.apellido_cliente || ''}
+          </span>
         </div>
       </td>
-
+      {/* Fecha */}
+      <td style={{ padding: '16px 12px', minWidth: '90px', verticalAlign: 'top', color: '#a1a1aa', fontSize: '13px' }}>
+        {pedido.fecha_compra ? new Date(pedido.fecha_compra).toLocaleDateString() : '-'}
+      </td>
+      {/* Diseño/Notas */}
       <td>
         <div style={{ maxWidth: '192px' }}>
-          <p style={{ color: 'white', fontWeight: '500', margin: '0 0 4px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <p style={{ color: 'white', fontWeight: '500', margin: '0 0 2px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '15px' }}>
             {pedido.disenio || "Sin especificar"}
           </p>
-          <p style={{ fontSize: '14px', color: '#71717a', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {pedido.medida_pedida && `${pedido.medida_pedida} • `}
+          <p style={{ fontSize: '13px', color: '#71717a', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {pedido.notas || "Sin notas"}
           </p>
         </div>
       </td>
-
+      {/* Contacto */}
       <td>
         <div>
-          <p style={{ color: 'white', fontSize: '14px', margin: '0 0 4px 0' }}>
+          <p style={{ color: 'white', fontSize: '14px', margin: '0 0 2px 0' }}>
             {pedido.clientes?.medio_contacto || 'N/A'}
           </p>
           <p style={{ color: '#71717a', fontSize: '12px', margin: 0 }}>
@@ -1233,37 +1242,44 @@ function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, ha
           </p>
         </div>
       </td>
-
+      {/* Valor Sello/Restante */}
       <td>
         <div>
-          <p style={{ color: 'white', fontFamily: 'monospace', fontSize: '15px', margin: '0 0 4px 0' }}>
-            ${pedido.valor_sello?.toLocaleString()}{" "}
-            <span style={{ color: '#71717a', fontSize: '10px' }}>
-              ({pedido.valor_senia?.toLocaleString()})
-            </span>
-          </p>
-          <p style={{ color: '#71717a', fontSize: '12px', margin: 0 }}>
-            Resta: ${pedido.restante_pagar?.toLocaleString()}
+          <p style={{ color: 'white', fontFamily: 'monospace', fontSize: '15px', margin: '0 0 2px 0' }}>
+            ${pedido.valor_sello?.toLocaleString()} <span style={{ color: '#71717a', fontSize: '10px' }}>(Resta: ${pedido.restante_pagar?.toLocaleString()})</span>
           </p>
         </div>
       </td>
-
+      {/* Valor Seña/Envío */}
       <td>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div>
+          <p style={{ color: 'white', fontFamily: 'monospace', fontSize: '14px', margin: '0 0 2px 0' }}>
+            Seña: ${pedido.valor_senia?.toLocaleString() || 0}
+          </p>
+          <p style={{ color: '#71717a', fontSize: '13px', margin: 0 }}>
+            Envío: ${pedido.valor_envio?.toLocaleString() || 0}
+          </p>
+        </div>
+      </td>
+      {/* Estado */}
+      <td>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <EstadoSelect
             value={pedido.estado_fabricacion}
             onChange={val => handleEstadoChange('estado_fabricacion', val)}
             options={ESTADOS_FABRICACION}
             type="fabricacion"
             isDisabled={false}
+            size="small"
           />
-          <div style={{ display: 'flex', gap: '4px' }}>
+          <div style={{ display: 'flex', gap: '2px' }}>
             <EstadoSelect
               value={pedido.estado_venta}
               onChange={val => handleEstadoChange('estado_venta', val)}
               options={ESTADOS_VENTA}
               type="venta"
               isDisabled={false}
+              size="small"
             />
             <EstadoSelect
               value={pedido.estado_envio}
@@ -1271,11 +1287,12 @@ function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, ha
               options={ESTADOS_ENVIO}
               type="envio"
               isDisabled={false}
+              size="small"
             />
           </div>
         </div>
       </td>
-
+      {/* Base */}
       <td>
         <ArchivoCell
           filePath={pedido.archivo_base}
@@ -1286,7 +1303,7 @@ function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, ha
           onDelete={handleEliminarArchivo}
         />
       </td>
-
+      {/* Vector */}
       <td>
         <ArchivoCell
           filePath={pedido.archivo_vector}
@@ -1297,7 +1314,7 @@ function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, ha
           onDelete={handleEliminarArchivo}
         />
       </td>
-
+      {/* Foto Sello */}
       <td>
         <ArchivoCell
           filePath={pedido.foto_sello}
@@ -1308,14 +1325,9 @@ function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, ha
           onDelete={handleEliminarArchivo}
         />
       </td>
-
+      {/* Seguimiento */}
       <td>
-        <div style={{
-          fontFamily: 'monospace',
-          fontSize: '13px',
-          color: pedido.numero_seguimiento ? '#d4d4d8' : '#71717a',
-          fontStyle: pedido.numero_seguimiento ? 'normal' : 'italic'
-        }}>
+        <div style={{ fontFamily: 'monospace', fontSize: '13px', color: pedido.numero_seguimiento ? '#d4d4d8' : '#71717a', fontStyle: pedido.numero_seguimiento ? 'normal' : 'italic' }}>
           {pedido.numero_seguimiento || 'Sin asignar'}
         </div>
       </td>

@@ -97,14 +97,14 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '4px 8px',
+          padding: '2px 10px',
           borderRadius: '9999px',
           fontSize: '12px',
           fontWeight: '500',
           border: '1px solid',
           transition: 'all 0.3s ease',
           cursor: 'pointer',
-          minWidth: '80px',
+          minWidth: '130px',
           outline: 'none',
           background: colorClass.includes('bg-slate') ? 'rgba(100, 116, 139, 0.1)' :
             colorClass.includes('bg-cyan') ? 'rgba(6, 182, 212, 0.1)' :
