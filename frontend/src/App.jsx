@@ -2,9 +2,9 @@ import { Routes, Route, Outlet } from 'react-router-dom';
 import HomePage from "./pages/HomePage";
 import PedidosPage from "./pages/PedidosPage";
 import PedidosPrueba from "./pages/PedidosPrueba";
+import ProduccionPage from "./pages/ProduccionPage";
 import Sidebar from './components/Sidebar';
 import './App.css';
-import ProduccionPage from "./pages/ProduccionPage";
 
 function Layout() {
   return (

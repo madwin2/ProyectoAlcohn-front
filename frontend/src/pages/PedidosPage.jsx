@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+<<<<<<< HEAD
 import AddPedidoModal from '../components/AddPedidoModal';
 import PedidoRow from '../components/Pedidos/PedidoRow';
 import PageHeader from '../components/PageHeader';
@@ -9,6 +10,27 @@ import { usePedidosState } from '../hooks/usePedidosState';
 import { usePedidosApi } from '../hooks/usePedidosApi';
 import { getEstadoStyle } from '../utils/pedidosUtils';
 import { ESTADOS_FABRICACION, ESTADOS_VENTA, ESTADOS_ENVIO } from '../constants/estadosConstants';
+=======
+import FilterPanel from '../components/FilterPanel';
+import AddPedidoModal from '../components/Pedidos/AddPedidoModal';
+import ChipSelect from '../components/ChipSelect';
+import EstadoSelect from '../components/EstadoSelect';
+import {
+  Search,
+  Plus,
+  Upload,
+  Phone,
+  User,
+  FileText,
+  DollarSign,
+  Package,
+  Filter,
+  Calendar,
+  Settings,
+  Truck,
+  X
+} from 'lucide-react';
+>>>>>>> 21b6a60503fa18b27a9e636f16ebda6a5f2cc8f5
 import './PedidosPage.css';
 
 function PedidosPage() {

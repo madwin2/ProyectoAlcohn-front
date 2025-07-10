@@ -229,7 +229,7 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
                     transition: 'background 0.2s ease',
                     outline: 'none'
                   }}
-                  onMouseEnter={(e) => e.target.style.background = 'rgba(39, 39, 42, 0.8)'}
+                  onMouseEnter={(e) => e.target.style.background = 'rgba(39, 39, 42, 0.6)'}
                   onMouseLeave={(e) => e.target.style.background = 'transparent'}
                 >
                   <span style={{

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
-import AddPedidoModal from '../components/AddPedidoModal';
+import AddPedidoModal from '../components/Pedidos/AddPedidoModal';
 import EstadoSelect from '../components/EstadoSelect';
 import FilterPanel from '../components/FilterPanel';
 import {
