@@ -29,9 +29,9 @@ const PedidosTable = () => {
 
   return (
     // Wrapper para permitir scroll horizontal en pantallas chicas
-    <div className="pedidos-table-wrapper">
+    <div className="pedidos-table-wrapper" style={{ position: 'relative' }}>
 
-      {/* 🔘 Botón para agregar pedido */}
+      {/* �� Botón para agregar pedido */}
       <div className="pedidos-header">
         <button
           className="boton-agregar-pedido"
@@ -71,14 +71,13 @@ const PedidosTable = () => {
             <th>Vector</th>
             <th>F Sello</th>
             <th>Seguimiento</th>
-            <th></th> {/* Columna para el menú de acciones */}
           </tr>
         </thead>
 
         <tbody>
           {loading ? (
             <tr>
-              <td colSpan="13" style={{ textAlign: 'center', padding: '1rem' }}>
+              <td colSpan="12" style={{ textAlign: 'center', padding: '1rem' }}>
                 Cargando...
               </td>
             </tr>
