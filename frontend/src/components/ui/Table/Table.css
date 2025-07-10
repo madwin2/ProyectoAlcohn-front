@@ -1,0 +1,21 @@
+.table-container {
+  /* Base table container styles are handled in JSX for consistency */
+}
+
+.table-loading {
+  text-align: center;
+  color: #71717a;
+  padding: 32px;
+}
+
+.table-error {
+  text-align: center;
+  color: #ef4444;
+  padding: 32px;
+}
+
+.table-empty {
+  text-align: center;
+  color: #71717a;
+  padding: 32px;
+}

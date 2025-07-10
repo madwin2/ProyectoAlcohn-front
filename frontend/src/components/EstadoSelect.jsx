@@ -115,6 +115,7 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
           border: '1px solid',
           transition: 'all 0.3s ease',
           cursor: isDisabled ? 'not-allowed' : 'pointer',
+          maxWidth: '200px',
           minWidth: type === 'vectorizacion' ? '130px' : type === 'venta' ? 'unset' : '130px',
           width: type === 'vectorizacion' ? '130px' : type === 'venta' ? 'unset' : '100%',
           outline: 'none',
