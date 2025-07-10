@@ -19,7 +19,7 @@
   /* Celdas de encabezado y contenido */
   .pedidos-table th,
   .pedidos-table td {
-    padding: 12px 16px;
+    padding: 4px 12px;
     border-bottom: 1px solid #333;
     text-align: left;
   }
@@ -35,4 +35,27 @@
   .pedidos-table tr:last-child td {
     border-bottom: none;
   }
+
+  .pedidos-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+  }
+  
+  .boton-agregar-pedido {
+    background-color: #60a5fa; /* azul */
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .boton-agregar-pedido:hover {
+    background-color: #3b82f6; /* azul más fuerte */
+  }
+  
   

@@ -160,7 +160,6 @@ tr.pedido-row:hover,
   box-shadow: 0 0 0 0.125rem rgba(0, 123, 255, 0.25);
 }
 
-<<<<<<< HEAD
 /* Botones - En el área derecha */
 .top-bar-buttons {
   display: flex;
@@ -266,10 +265,11 @@ tr.pedido-row:hover,
   border-collapse: separate;
   border-spacing: 0 8px;
   table-layout: auto;
-=======
+  font-size: var(--font-sm);
+}
+
 .estado-short {
   font-weight: 700;
->>>>>>> e9f92d16cf1e125d8aac0f23e26bfaefa7e05515
   font-size: var(--font-xs);
 }
 
@@ -313,30 +313,8 @@ tr.pedido-row:hover,
   background: var(--bg-medium);
 }
 
-<<<<<<< HEAD
-/* Centrar encabezados y celdas de BASE, VECTOR y F SELLO */
-.pedidos-table th:nth-child(8),
-.pedidos-table th:nth-child(9),
-.pedidos-table th:nth-child(10),
-.pedidos-table td:nth-child(8),
-.pedidos-table td:nth-child(9),
-.pedidos-table td:nth-child(10) {
-  text-align: center;
-  vertical-align: middle;
-}
-
-/* MEDIA QUERIES MEJORADAS */
-
-/* Pantallas extra grandes (1440px+) */
-@media (min-width: 90rem) {
-  :root {
-    --container-max: min(90vw, 120rem);
-    --table-min: min(80rem, 85vw);
-  }
-=======
 .estado-option:first-child {
   border-radius: clamp(0.25rem, 1vw, 0.5rem) clamp(0.25rem, 1vw, 0.5rem) 0 0;
->>>>>>> e9f92d16cf1e125d8aac0f23e26bfaefa7e05515
 }
 
 .estado-option:last-child {
@@ -833,10 +811,6 @@ tr.pedido-row:hover,
 }
 
 /* ====== HOVER FILA PEDIDO ====== */
-tr.pedido-row:hover {
-  background: #ff0 !important;
-  transition: background 0.3s ease;
-}
 
 /* Reducir ancho columna ESTADO un 30% */
 th.estado-col, td.estado-col {

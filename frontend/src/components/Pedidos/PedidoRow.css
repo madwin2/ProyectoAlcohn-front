@@ -5,17 +5,21 @@
   
   /* 📄 Estilos para cada celda de la fila */
   .pedido-row td {
-    vertical-align: top;
-    font-size: 0.95rem;
-    color: #e4e4e7;
+    vertical-align: middle;
+    font-size: 0.92rem;
+    color: #272774;
     background-color: inherit; /* Igual al <tr> */
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 6px;
+    padding-right: 6px;
   }
   
   /* 🧍 Cliente */
   .cliente {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 0px;
   }
   .cliente .nombre {
     font-weight: 600;
@@ -30,7 +34,7 @@
   .diseno {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 0px;
   }
   .diseno .titulo {
     font-weight: 500;
@@ -45,7 +49,7 @@
   .contacto {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 0px;
   }
   .tipo-contacto {
     color: #ffffff;
@@ -80,7 +84,7 @@
   .envio-estado {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 0px;
   }
   
   .envio-estado .envio-valor {
@@ -93,11 +97,12 @@
     color: #ffffff;
     border: 1.5px solid #27272a;
     border-radius: 6px;
-    padding: 6px 10px;
-    font-size: 0.9rem;
+    padding: 2px 10px;
+    font-size: 0.92rem;
     appearance: none;
     outline: none;
     transition: border 0.2s;
+    min-height: unset;
   }
   
   .envio-estado select:focus {
@@ -109,7 +114,7 @@
   .estado-selects {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 0px;
   }
   
   .estado-selects select {
@@ -117,11 +122,12 @@
     color: #ffffff;
     border: 1.5px solid #27272a;
     border-radius: 6px;
-    padding: 6px 10px;
-    font-size: 0.9rem;
+    padding: 2px 10px;
+    font-size: 0.92rem;
     appearance: none;
     outline: none;
     transition: border 0.2s;
+    min-height: unset;
   }
   
   .estado-selects select:focus {
@@ -134,6 +140,31 @@
     font-size: 0.9rem;
     color: #94a3b8;
     word-break: break-word;
+
+    /* Evita cambio de fondo al hacer hover sobre los <select> */
+.envio-estado select:hover,
+.estado-selects select:hover {
+  background-color: #18181b;
+  border-color: #3f3f46; /* opcional: borde más claro en hover */
+}
   }
+  .pedido-row:hover {
+    background-color: #18181b !important; /* mismo que el fondo normal */
+  }
+  
+  .cliente, .diseno, .contacto, .valor, .envio-estado, .estado-selects {
+    gap: 0;
+    margin: 0;
+    justify-content: center;
+  }
+  
+  .envio-estado select,
+  .estado-selects select {
+    padding-top: 2px;
+    padding-bottom: 2px;
+    font-size: 0.92rem;
+    min-height: unset;
+  }
+  
   
   

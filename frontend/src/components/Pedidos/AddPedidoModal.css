@@ -1,0 +1,156 @@
+/* === Overlay === */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(24, 24, 27, 0.92);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+/* === Modal base === */
+.modal-content {
+  background: #18181b;
+  border-radius: 26px;
+  padding: 40px 48px;
+  max-width: 880px;
+  width: 96vw;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  border: none;
+}
+
+@media (max-width: 700px) {
+  .modal-content {
+    padding: 20px 16px;
+    max-width: 98vw;
+  }
+}
+
+/* === Título principal === */
+.modal-content h2 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 12px;
+  letter-spacing: 0.2px;
+  text-align: left;
+}
+
+/* === Subtítulos / secciones === */
+.modal-section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f4f4f5;
+  margin: 24px 0 12px 0;
+  border-bottom: 1px solid #2a2a2e;
+  padding-bottom: 4px;
+}
+
+/* === Etiquetas === */
+label {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #d4d4d8;
+  margin-bottom: 6px;
+  display: block;
+}
+
+/* === Inputs, selects y textarea más compactos === */
+.input-sm, .input-xs, textarea, select {
+  background: #23232b;
+  color: #f4f4f5;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 1.05rem;
+  margin-bottom: 14px;
+  width: 100%;
+  font-weight: 500;
+  outline: none;
+  box-sizing: border-box;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.input-sm:focus, .input-xs:focus, textarea:focus, select:focus {
+  background: #2c2c3a;
+  box-shadow: 0 0 0 2px #60a5fa44;
+}
+
+/* Textarea ajustado */
+textarea {
+  min-height: 44px;
+  max-height: 120px;
+  resize: vertical;
+}
+
+/* Scroll interno */
+.form-scrollable {
+  max-height: 65vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* === Botones === */
+.form-actions, .modal-buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.btn-secondary {
+  background: #23232b;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 30px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-secondary:hover {
+  background: #2a2a2e;
+  color: #60a5fa;
+}
+
+.btn-primary {
+  background: #ffffff;
+  color: #18181b;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 30px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-primary:hover {
+  background: #e5e7eb;
+  color: #18181b;
+}
+
+/* === Mensaje de error === */
+.error-message {
+  color: #fff;
+  background: #ef4444;
+  border-radius: 12px;
+  padding: 12px 20px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 1.13rem;
+  font-weight: 700;
+}
+
+
+
+
+
+
+

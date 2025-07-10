@@ -1,32 +1,61 @@
-import React from 'react';
-import PedidoRow from './PedidoRow'; // Componente que renderiza una fila de pedido
-import './PedidosTable.css'; // Estilos CSS para la tabla
-
-// Datos de ejemplo (mock), podés reemplazarlos con datos reales desde Supabase
-const pedidosMock = [
-  {
-    nombre: 'Joaquin',
-    apellido: 'Vai',
-    fecha: '29/6/2025',
-    disenoTitulo: 'Sin especificar',
-    disenoSubtitulo: 'Sin notas',
-    contacto: 'Whatsapp',
-    telefono: '0223153461733',
-    valor: 40000,
-    restante: 42000,
-    sena: 2000,
-    envio: 4000,
-    base: '',
-    vector: '',
-    fSello: '',
-    seguimiento: '0223153461733',
-  },
-];
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../../supabaseClient';
+import PedidoRow from './PedidoRow';
+import './PedidosTable.css';
+import AddPedidoModal from './AddPedidoModal';
 
 const PedidosTable = () => {
+  const [pedidos, setPedidos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  useEffect(() => {
+    const fetchPedidos = async () => {
+      const { data, error } = await supabase
+        .from('vista_pedidos')
+        .select('*');
+
+      if (error) {
+        console.error('Error al traer pedidos:', error.message);
+      } else {
+        setPedidos(data);
+      }
+
+      setLoading(false);
+    };
+
+    fetchPedidos();
+  }, []);
+
   return (
-    // Wrapper para hacer la tabla desplazable horizontalmente en pantallas chicas
+    // Wrapper para permitir scroll horizontal en pantallas chicas
     <div className="pedidos-table-wrapper">
+
+      {/* 🔘 Botón para agregar pedido */}
+      <div className="pedidos-header">
+        <button
+          className="boton-agregar-pedido"
+          onClick={() => setShowAddModal(true)}
+        >
+          + Agregar Pedido
+        </button>
+      </div>
+      {showAddModal && (
+        <AddPedidoModal
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          onPedidoAdded={() => {
+            setShowAddModal(false);
+            // Recargar pedidos después de agregar uno nuevo
+            setLoading(true);
+            supabase.from('vista_pedidos').select('*').then(({ data, error }) => {
+              if (!error) setPedidos(data);
+              setLoading(false);
+            });
+          }}
+        />
+      )}
+
       <table className="pedidos-table">
         <thead>
           <tr>
@@ -35,21 +64,29 @@ const PedidosTable = () => {
             <th>Diseño</th>
             <th>Contacto</th>
             <th>Valor</th>
-            <th>Seña</th>         {/* ✅ Columna separada */}
-            <th>Envío</th>         {/* ✅ Incluye valor + estado de envío */}
-            <th>Estado</th>        {/* ✅ Unificada: fabricación + venta */}
+            <th>Seña</th>
+            <th>Envío</th>
+            <th>Estado</th>
             <th>Base</th>
             <th>Vector</th>
             <th>F Sello</th>
             <th>Seguimiento</th>
+            <th></th> {/* Columna para el menú de acciones */}
           </tr>
         </thead>
 
         <tbody>
-          {/* Iteramos sobre los pedidos y renderizamos cada uno con el componente PedidoRow */}
-          {pedidosMock.map((pedido, idx) => (
-            <PedidoRow key={idx} pedido={pedido} />
-          ))}
+          {loading ? (
+            <tr>
+              <td colSpan="13" style={{ textAlign: 'center', padding: '1rem' }}>
+                Cargando...
+              </td>
+            </tr>
+          ) : (
+            pedidos.map((pedido) => (
+              <PedidoRow key={pedido.id_pedido} pedido={pedido} />
+            ))
+          )}
         </tbody>
       </table>
     </div>
