@@ -114,14 +114,10 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
           fontWeight: '500',
           border: '1px solid',
           transition: 'all 0.3s ease',
-<<<<<<< HEAD
-          cursor: 'pointer',
-          maxWidth: '200px',
-=======
           cursor: isDisabled ? 'not-allowed' : 'pointer',
+          maxWidth: '200px',
           minWidth: type === 'vectorizacion' ? '130px' : type === 'venta' ? 'unset' : '130px',
           width: type === 'vectorizacion' ? '130px' : type === 'venta' ? 'unset' : '100%',
->>>>>>> e9f92d16cf1e125d8aac0f23e26bfaefa7e05515
           outline: 'none',
           opacity: isDisabled ? 0.5 : 1,
           pointerEvents: isDisabled ? 'none' : 'auto',
