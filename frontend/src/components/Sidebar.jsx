@@ -15,7 +15,8 @@ export default function Sidebar() {
 
   const navItems = [
     { to: "/", label: "Inicio", icon: <FiHome /> },
-    { to: "/pedidos", label: "Pedidos", icon: <FiBox /> }
+    { to: "/pedidos", label: "Pedidos", icon: <FiBox /> },
+    { to: "/pedidos-prueba", label: "Pedidos Prueba", icon: <FiBox /> } // Nuevo ítem
   ];
 
   return (

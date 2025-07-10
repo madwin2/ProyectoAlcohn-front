@@ -1,6 +1,7 @@
 import { Routes, Route, Outlet } from 'react-router-dom';
 import HomePage from "./pages/HomePage";
 import PedidosPage from "./pages/PedidosPage";
+import PedidosPrueba from "./pages/PedidosPrueba";
 import Sidebar from './components/Sidebar';
 import './App.css';
 
@@ -21,6 +22,7 @@ function App() {
       <Route path="/" element={<Layout />}>
         <Route index element={<HomePage />} />
         <Route path="pedidos" element={<PedidosPage />} />
+        <Route path="pedidos-prueba" element={<PedidosPrueba />} />
       </Route>
     </Routes>
   )

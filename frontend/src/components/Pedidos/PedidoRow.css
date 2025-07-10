@@ -1,0 +1,139 @@
+/* 🔳 Fila completa: mismo color que el fondo del encabezado */
+.pedido-row {
+    background-color: #18181b;
+  }
+  
+  /* 📄 Estilos para cada celda de la fila */
+  .pedido-row td {
+    vertical-align: top;
+    font-size: 0.95rem;
+    color: #e4e4e7;
+    background-color: inherit; /* Igual al <tr> */
+  }
+  
+  /* 🧍 Cliente */
+  .cliente {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .cliente .nombre {
+    font-weight: 600;
+    color: #ffffff;
+  }
+  .cliente .apellido {
+    font-size: 0.92rem;
+    color: #b3b3c6;
+  }
+  
+  /* 🎨 Diseño del sello */
+  .diseno {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .diseno .titulo {
+    font-weight: 500;
+    color: #e4e4e7;
+  }
+  .diseno .subtitulo {
+    font-size: 0.88rem;
+    color: #a1a1aa;
+  }
+  
+  /* 📞 Contacto */
+  .contacto {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .tipo-contacto {
+    color: #ffffff;
+    font-weight: 500;
+  }
+  .telefono {
+    color: #ffffff;
+    font-size: 0.9rem;
+  }
+  
+  /* 💰 Valor total y restante */
+  .valor {
+    display: flex;
+    flex-direction: column;
+  }
+  .valor .principal {
+    font-weight: 600;
+    color: #ffffff;
+  }
+  .valor .restante {
+    font-size: 0.85rem;
+    color: #ffffff;
+  }
+  
+  /* 💵 Seña (ahora columna separada) */
+  .sena {
+    font-size: 0.9rem;
+    color: #d4d4d8;
+  }
+  
+  /* 🚚 Envío + estado de envío */
+  .envio-estado {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .envio-estado .envio-valor {
+    font-size: 0.9rem;
+    color: #d4d4d8;
+  }
+  
+  .envio-estado select {
+    background: #18181b;
+    color: #ffffff;
+    border: 1.5px solid #27272a;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.9rem;
+    appearance: none;
+    outline: none;
+    transition: border 0.2s;
+  }
+  
+  .envio-estado select:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 2px #60a5fa33;
+  }
+  
+  /* ⚙️ Estados de fabricación y venta */
+  .estado-selects {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .estado-selects select {
+    background: #18181b;
+    color: #ffffff;
+    border: 1.5px solid #27272a;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.9rem;
+    appearance: none;
+    outline: none;
+    transition: border 0.2s;
+  }
+  
+  .estado-selects select:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 2px #60a5fa33;
+  }
+  
+  /* 📦 Número de seguimiento */
+  .seguimiento {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    word-break: break-word;
+  }
+  
+  

@@ -194,7 +194,8 @@
 .pedidos-table {
   width: 100%;
   min-width: var(--table-min);
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0 8px;
   table-layout: auto;
   font-size: var(--font-xs);
 }
@@ -424,6 +425,17 @@ img {
 
 .pedidos-table th .resizer:hover {
   background: var(--primary-color);
+}
+
+/* Centrar encabezados y celdas de BASE, VECTOR y F SELLO */
+.pedidos-table th:nth-child(8),
+.pedidos-table th:nth-child(9),
+.pedidos-table th:nth-child(10),
+.pedidos-table td:nth-child(8),
+.pedidos-table td:nth-child(9),
+.pedidos-table td:nth-child(10) {
+  text-align: center;
+  vertical-align: middle;
 }
 
 /* MEDIA QUERIES MEJORADAS */
