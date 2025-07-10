@@ -1242,54 +1242,54 @@ function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, ha
           justifyContent: 'center',
           gap: '2px'
         }}>
-          <span style={{ color: 'white', fontWeight: '500', fontSize: '15px', lineHeight: '1.1' }}>
+          <span style={{ color: 'white', fontWeight: 500, fontSize: '15px', display: 'block' }}>
             {pedido.clientes?.nombre_cliente || 'N/A'}
           </span>
-          <span style={{ color: '#71717a', fontSize: '13px', fontWeight: 400, lineHeight: '1.1' }}>
+          <span style={{ color: '#71717a', fontWeight: 400, fontSize: '13px', display: 'block' }}>
             {pedido.clientes?.apellido_cliente || ''}
           </span>
         </div>
       </td>
-      {/* Diseño/Notas */}
+      {/* Diseño y notas */}
       <td style={{ padding: '16px 12px' }}>
-        <div style={{ maxWidth: '192px' }}>
-          <p style={{ color: 'white', fontWeight: '500', margin: '0 0 2px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '15px' }}>
+        <div>
+          <span style={{ color: 'white', fontWeight: 500, fontSize: '15px', margin: 0, display: 'block' }}>
             {pedido.disenio || "Sin especificar"}
-          </p>
-          <p style={{ fontSize: '13px', color: '#71717a', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {pedido.notas || "Sin notas"}
-          </p>
+          </span>
+          <span style={{ color: '#71717a', fontWeight: 400, fontSize: '13px', margin: 0, display: 'block' }}>
+            {(pedido.medida_pedida || "Sin medida") + " - " + (pedido.notas || "Sin notas")}
+          </span>
         </div>
       </td>
       {/* Contacto */}
       <td style={{ padding: '16px 12px' }}>
         <div>
-          <p style={{ color: 'white', fontSize: '14px', margin: '0 0 2px 0' }}>
+          <span style={{ color: 'white', fontWeight: 500, fontSize: '15px', margin: 0, display: 'block' }}>
             {pedido.clientes?.medio_contacto || 'N/A'}
-          </p>
-          <p style={{ color: '#71717a', fontSize: '12px', margin: 0 }}>
+          </span>
+          <span style={{ color: '#71717a', fontWeight: 400, fontSize: '13px', margin: 0, display: 'block' }}>
             {pedido.clientes?.telefono_cliente || 'N/A'}
-          </p>
+          </span>
         </div>
       </td>
       {/* Seña/Envío */}
       <td style={{ padding: '16px 12px' }}>
         <div>
-          <p style={{ color: 'white', fontFamily: 'monospace', fontSize: '14px', margin: '0 0 2px 0' }}>
+          <span style={{ color: 'white', fontWeight: 500, fontSize: '15px', margin: 0, display: 'block' }}>
             Seña: ${pedido.valor_senia?.toLocaleString() || 0}
-          </p>
-          <p style={{ color: '#71717a', fontSize: '13px', margin: 0 }}>
+          </span>
+          <span style={{ color: '#71717a', fontWeight: 400, fontSize: '13px', margin: 0, display: 'block' }}>
             Envío: ${pedido.valor_envio?.toLocaleString() || 0}
-          </p>
+          </span>
         </div>
       </td>
-      {/* Valor Sello/Restante */}
+      {/* Valor y resto */}
       <td style={{ padding: '16px 12px' }}>
         <div>
-          <p style={{ color: 'white', fontFamily: 'monospace', fontSize: '15px', margin: '0 0 2px 0' }}>
+          <span style={{ color: 'white', fontWeight: 500, fontSize: '15px', margin: 0, display: 'block' }}>
             ${pedido.valor_sello?.toLocaleString()}
-          </p>
-          <span style={{ color: '#71717a', fontSize: '12px', display: 'block', margin: 0 }}>
+          </span>
+          <span style={{ color: '#71717a', fontWeight: 400, fontSize: '13px', display: 'block', margin: 0 }}>
             Resta: ${pedido.restante_pagar?.toLocaleString()}
           </span>
         </div>
