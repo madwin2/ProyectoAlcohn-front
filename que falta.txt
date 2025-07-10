@@ -5,3 +5,5 @@ Transiciones
 Colores
 Anadir Tarea
 Ajustar Editar
+Añadir Usuarios
+Solucionar Error Cargar y Eliminar Foto Vector

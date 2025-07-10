@@ -1,3 +1,11 @@
+table tr.pedido-row:hover,
+tbody tr.pedido-row:hover,
+tr.pedido-row:hover,
+.pedido-row:hover {
+  background: rgba(39, 39, 42, 0.3) !important;
+  transition: background 0.3s ease;
+}
+
 /* ===== ESTILOS ADICIONALES PARA OPTIMIZACIÓN DE ESPACIO ===== */
 
 /* ✅ Iconos de búsqueda */
@@ -692,6 +700,12 @@
 
 .filter-panel-overlay {
   animation: slideIn 0.3s ease-out;
+}
+
+/* ====== HOVER FILA PEDIDO ====== */
+tr.pedido-row:hover {
+  background: #ff0 !important;
+  transition: background 0.3s ease;
 }
 
 /* Reducir ancho columna ESTADO un 30% */
