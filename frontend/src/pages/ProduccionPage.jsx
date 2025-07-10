@@ -94,6 +94,9 @@ function ProduccionPage() {
   });
   const [filters, setFilters] = useState(initialFiltersState);
   const [debouncedFilters, setDebouncedFilters] = useState(initialFiltersState);
+  // Estado local para el valor mockeado de programado
+  const [programadoValues, setProgramadoValues] = useState({});
+  const opcionesProgramado = ['No Programado', 'Programado', 'En Proceso'];
 
   useEffect(() => {
     const fetchFilterOptions = async () => {
@@ -357,7 +360,7 @@ function ProduccionPage() {
       <div style={{ maxWidth: '100%', margin: '0 auto', padding: '32px' }}>
         <div className="table-container" style={{ background: 'rgba(9, 9, 11, 0.5)', border: '1px solid rgba(39, 39, 42, 0.5)', borderRadius: '8px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', overflow: 'hidden' }}>
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1000px' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(39, 39, 42, 0.5)' }}>
                   <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', padding: '16px 12px', verticalAlign: 'middle' }}>Fecha</th>
@@ -366,6 +369,7 @@ function ProduccionPage() {
                   <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', padding: '16px 12px', verticalAlign: 'middle' }}>Notas</th>
                   <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', padding: '16px 12px', verticalAlign: 'middle' }}>Estado</th>
                   <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', padding: '16px 12px', verticalAlign: 'middle', minWidth: '140px' }}>Vectorización</th>
+                  <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', padding: '16px 12px', verticalAlign: 'middle', minWidth: '140px' }}>Programado</th>
                   <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center', padding: '16px 12px', verticalAlign: 'middle', minWidth: '220px' }}>Base</th>
                   <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center', padding: '16px 12px', verticalAlign: 'middle' }}>Vector</th>
                   <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center', padding: '16px 12px', verticalAlign: 'middle' }}>F Sello</th>
@@ -374,11 +378,11 @@ function ProduccionPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="6" style={{ textAlign: 'center', color: '#71717a', padding: '32px' }}>Cargando...</td>
+                    <td colSpan="7" style={{ textAlign: 'center', color: '#71717a', padding: '32px' }}>Cargando...</td>
                   </tr>
                 ) : error ? (
                   <tr>
-                    <td colSpan="6" style={{ textAlign: 'center', color: '#ef4444', padding: '32px' }}>Error: {error}</td>
+                    <td colSpan="7" style={{ textAlign: 'center', color: '#ef4444', padding: '32px' }}>Error: {error}</td>
                   </tr>
                 ) : pedidos.length > 0 ? (
                   pedidos.map((pedido) => (
@@ -425,6 +429,17 @@ function ProduccionPage() {
                           style={{ width: '60%' }}
                         />
                       </td>
+                      <td style={{ padding: '16px 12px', textAlign: 'left', verticalAlign: 'middle' }}>
+                        <EstadoSelect
+                          value={programadoValues[pedido.id_pedido] || 'No Programado'}
+                          onChange={val => setProgramadoValues(prev => ({ ...prev, [pedido.id_pedido]: val }))}
+                          options={opcionesProgramado}
+                          type="programado"
+                          isDisabled={false}
+                          size="small"
+                          style={{ width: '60%' }}
+                        />
+                      </td>
                       <td style={{ padding: '16px 12px', textAlign: 'center', verticalAlign: 'middle' }}>
                         <ArchivoCell
                           filePath={pedido.archivo_base}
@@ -453,7 +468,7 @@ function ProduccionPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" style={{ textAlign: 'center', color: '#71717a', padding: '32px' }}>No se encontraron pedidos.</td>
+                    <td colSpan="7" style={{ textAlign: 'center', color: '#71717a', padding: '32px' }}>No se encontraron pedidos.</td>
                   </tr>
                 )}
               </tbody>
