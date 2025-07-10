@@ -1304,23 +1304,26 @@ function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, ha
             type="fabricacion"
             isDisabled={false}
             size="small"
+            style={{ width: '75%' }}
           />
-          <div style={{ display: 'flex', gap: '4px' }}>
+          <div style={{ display: 'flex', width: '100%' }}>
             <EstadoSelect
               value={pedido.estado_venta}
               onChange={val => handleEstadoChange('estado_venta', val)}
               options={ESTADOS_VENTA}
               type="venta"
-              isDisabled={false}
+              isDisabled={pedido.estado_fabricacion !== "Hecho"}
               size="small"
+              style={{ width: '50%' }}
             />
             <EstadoSelect
               value={pedido.estado_envio}
               onChange={val => handleEstadoChange('estado_envio', val)}
               options={ESTADOS_ENVIO}
               type="envio"
-              isDisabled={false}
+              isDisabled={pedido.estado_venta !== "Transferido"}
               size="small"
+              style={{ width: '50%' }}
             />
           </div>
         </div>

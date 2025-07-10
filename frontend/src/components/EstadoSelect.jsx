@@ -68,6 +68,7 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
   };
 
   const handleButtonClick = (e) => {
+    if (isDisabled) return;
     e.preventDefault();
     e.stopPropagation();
     setIsOpen(!isOpen);
@@ -94,6 +95,7 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
         type="button"
         onClick={handleButtonClick}
         className={`estado-button${type === 'venta' ? ' venta' : ''}`}
+        disabled={isDisabled}
         style={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -104,10 +106,12 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
           fontWeight: '500',
           border: '1px solid',
           transition: 'all 0.3s ease',
-          cursor: 'pointer',
+          cursor: isDisabled ? 'not-allowed' : 'pointer',
           minWidth: type === 'venta' ? 'unset' : '130px',
           width: type === 'venta' ? 'unset' : '100%',
           outline: 'none',
+          opacity: isDisabled ? 0.5 : 1,
+          pointerEvents: isDisabled ? 'none' : 'auto',
           background: colorClass.includes('bg-slate') ? 'rgba(100, 116, 139, 0.1)' :
             colorClass.includes('bg-cyan') ? 'rgba(6, 182, 212, 0.1)' :
               colorClass.includes('bg-emerald') ? 'rgba(16, 185, 129, 0.1)' :
