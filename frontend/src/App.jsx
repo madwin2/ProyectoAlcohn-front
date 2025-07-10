@@ -3,6 +3,7 @@ import HomePage from "./pages/HomePage";
 import PedidosPage from "./pages/PedidosPage";
 import Sidebar from './components/Sidebar';
 import './App.css';
+import ProduccionPage from "./pages/ProduccionPage";
 
 function Layout() {
   return (
@@ -21,6 +22,7 @@ function App() {
       <Route path="/" element={<Layout />}>
         <Route index element={<HomePage />} />
         <Route path="pedidos" element={<PedidosPage />} />
+        <Route path="produccion" element={<ProduccionPage />} />
       </Route>
     </Routes>
   )

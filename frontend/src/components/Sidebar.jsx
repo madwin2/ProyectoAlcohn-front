@@ -5,6 +5,7 @@ import {
   FiHome, FiBox
 } from "react-icons/fi";
 import './Sidebar.css';
+import alcohnLogo from '../assets/alcohn isologo.svg';
 
 export default function Sidebar() {
   const location = useLocation();
@@ -15,7 +16,8 @@ export default function Sidebar() {
 
   const navItems = [
     { to: "/", label: "Inicio", icon: <FiHome /> },
-    { to: "/pedidos", label: "Pedidos", icon: <FiBox /> }
+    { to: "/pedidos", label: "Pedidos", icon: <FiBox /> },
+    { to: "/produccion", label: "Producción", icon: <FiBox /> }
   ];
 
   return (
@@ -37,7 +39,7 @@ export default function Sidebar() {
       <div className={`sidebar-content ${isExpanded ? 'scrollable' : ''}`}>
         {/* Logo o título */}
         <div className="sidebar-logo">
-          <span className="logo-icon">{navItems[0].icon}</span>
+          <span className="logo-icon"><img src={alcohnLogo} alt="Alcohn Logo" style={{ width: 32, height: 32 }} /></span>
           {isExpanded && <span className="logo-text">Alcohn AI</span>}
         </div>
         

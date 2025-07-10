@@ -145,6 +145,8 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
                           colorClass.includes('border-green') ? 'rgba(34, 197, 94, 0.2)' :
                             colorClass.includes('border-orange') ? 'rgba(249, 115, 22, 0.2)' :
                               colorClass.includes('border-violet') ? 'rgba(139, 92, 246, 0.2)' : 'rgba(100, 116, 139, 0.2)',
+          minHeight: '2rem',
+          height: '2rem',
         }}
       >
         <span style={{
