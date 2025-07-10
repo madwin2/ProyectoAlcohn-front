@@ -19,6 +19,7 @@ import {
   Truck,
   X
 } from 'lucide-react';
+import './PedidosPage.css';
 
 // Arrays fijos para los selects de estado
 const ESTADOS_FABRICACION = [
@@ -749,18 +750,9 @@ function PedidosPage() {
                     fontSize: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    padding: '24px 24px 24px 24px',
-                    textAlign: 'left'
-                  }}>
-                    Cliente
-                  </th>
-                  <th style={{
-                    color: '#a1a1aa',
-                    fontWeight: '500',
-                    fontSize: '12px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    textAlign: 'left'
+                    textAlign: 'left',
+                    padding: '16px 12px',
+                    verticalAlign: 'middle'
                   }}>
                     Fecha
                   </th>
@@ -770,7 +762,21 @@ function PedidosPage() {
                     fontSize: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    textAlign: 'left'
+                    textAlign: 'left',
+                    padding: '16px 12px',
+                    verticalAlign: 'middle'
+                  }}>
+                    Cliente
+                  </th>
+                  <th style={{
+                    color: '#a1a1aa',
+                    fontWeight: '500',
+                    fontSize: '12px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    textAlign: 'left',
+                    padding: '16px 12px',
+                    verticalAlign: 'middle'
                   }}>
                     Diseño
                   </th>
@@ -780,7 +786,9 @@ function PedidosPage() {
                     fontSize: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    textAlign: 'left'
+                    textAlign: 'left',
+                    padding: '16px 12px',
+                    verticalAlign: 'middle'
                   }}>
                     Contacto
                   </th>
@@ -790,17 +798,9 @@ function PedidosPage() {
                     fontSize: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    textAlign: 'left'
-                  }}>
-                    Valor
-                  </th>
-                  <th style={{
-                    color: '#a1a1aa',
-                    fontWeight: '500',
-                    fontSize: '12px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    textAlign: 'left'
+                    textAlign: 'left',
+                    padding: '16px 12px',
+                    verticalAlign: 'middle'
                   }}>
                     Seña/Envío
                   </th>
@@ -810,7 +810,22 @@ function PedidosPage() {
                     fontSize: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    textAlign: 'left'
+                    textAlign: 'left',
+                    padding: '16px 12px',
+                    verticalAlign: 'middle'
+                  }}>
+                    Valor
+                  </th>
+                  <th style={{
+                    color: '#a1a1aa',
+                    fontWeight: '500',
+                    fontSize: '12px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    textAlign: 'left',
+                    padding: '16px 12px',
+                    verticalAlign: 'middle',
+                    minWidth: '220px'
                   }}>
                     Estado
                   </th>
@@ -820,7 +835,9 @@ function PedidosPage() {
                     fontSize: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    textAlign: 'left'
+                    textAlign: 'center',
+                    padding: '16px 12px',
+                    verticalAlign: 'middle'
                   }}>
                     Base
                   </th>
@@ -830,7 +847,9 @@ function PedidosPage() {
                     fontSize: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    textAlign: 'left'
+                    textAlign: 'center',
+                    padding: '16px 12px',
+                    verticalAlign: 'middle'
                   }}>
                     Vector
                   </th>
@@ -840,7 +859,9 @@ function PedidosPage() {
                     fontSize: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    textAlign: 'left'
+                    textAlign: 'center',
+                    padding: '16px 12px',
+                    verticalAlign: 'middle'
                   }}>
                     F Sello
                   </th>
@@ -850,7 +871,9 @@ function PedidosPage() {
                     fontSize: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    textAlign: 'left'
+                    textAlign: 'left',
+                    padding: '16px 12px',
+                    verticalAlign: 'middle'
                   }}>
                     Seguimiento
                   </th>
@@ -879,38 +902,26 @@ function PedidosPage() {
                   </tr>
                 ) : pedidos.length > 0 ? (
                   pedidos.map((pedido) => (
-                    editingId === pedido.id_pedido ? (
-                      <EditingRow
-                        key={pedido.id_pedido}
-                        pedido={pedido}
-                        editForm={editForm}
-                        handleEditFormChange={handleEditFormChange}
-                        handleEditRowRightClick={handleEditRowRightClick}
-                        handlePedidoAdded={handlePedidoAdded}
-                        handleEliminarArchivo={handleEliminarArchivo}
-                        ESTADOS_FABRICACION={ESTADOS_FABRICACION}
-                        ESTADOS_VENTA={ESTADOS_VENTA}
-                        ESTADOS_ENVIO={ESTADOS_ENVIO}
-                        setEditForm={setEditForm}
-                        supabase={supabase}
-                        getPedidos={getPedidos}
-                      />
-                    ) : (
-                      <DisplayRow
-                        key={pedido.id_pedido}
-                        pedido={pedido}
-                        handleRowRightClick={handleRowRightClick}
-                        startEdit={startEdit}
-                        getEstadoStyle={getEstadoStyle}
-                        handlePedidoAdded={handlePedidoAdded}
-                        handleEliminarArchivo={handleEliminarArchivo}
-                        supabase={supabase}
-                        getPedidos={getPedidos}
-                        ESTADOS_FABRICACION={ESTADOS_FABRICACION}
-                        ESTADOS_VENTA={ESTADOS_VENTA}
-                        ESTADOS_ENVIO={ESTADOS_ENVIO}
-                      />
-                    )
+                    <Row
+                      key={pedido.id_pedido}
+                      pedido={pedido}
+                      editing={editingId === pedido.id_pedido}
+                      editForm={editForm}
+                      handleEditFormChange={handleEditFormChange}
+                      handleEditRowRightClick={handleEditRowRightClick}
+                      handleRowRightClick={handleRowRightClick}
+                      startEdit={startEdit}
+                      getEstadoStyle={getEstadoStyle}
+                      handlePedidoAdded={handlePedidoAdded}
+                      handleEliminarArchivo={handleEliminarArchivo}
+                      supabase={supabase}
+                      getPedidos={getPedidos}
+                      ESTADOS_FABRICACION={ESTADOS_FABRICACION}
+                      ESTADOS_VENTA={ESTADOS_VENTA}
+                      ESTADOS_ENVIO={ESTADOS_ENVIO}
+                      setEditForm={setEditForm}
+                      editingId={editingId}
+                    />
                   ))
                 ) : (
                   <tr>
@@ -932,8 +943,8 @@ function PedidosPage() {
   );
 }
 
-// Componente para fila en modo edición
-function EditingRow({ pedido, editForm, handleEditFormChange, handleEditRowRightClick, handlePedidoAdded, handleEliminarArchivo, ESTADOS_FABRICACION, ESTADOS_VENTA, ESTADOS_ENVIO, setEditForm, supabase, getPedidos }) {
+// Elimino los componentes EditingRow y DisplayRow y creo un solo componente Row:
+function Row({ pedido, editing, editForm, handleEditFormChange, handleEditRowRightClick, handleRowRightClick, startEdit, getEstadoStyle, handlePedidoAdded, handleEliminarArchivo, supabase, getPedidos, ESTADOS_FABRICACION, ESTADOS_VENTA, ESTADOS_ENVIO, setEditForm, editingId }) {
   // Estilo invisible para inputs
   const invisibleInput = {
     background: 'transparent',
@@ -950,218 +961,7 @@ function EditingRow({ pedido, editForm, handleEditFormChange, handleEditRowRight
     fontSize: 'inherit',
     fontWeight: 'inherit',
   };
-  return (
-    <tr
-      style={{
-        borderBottom: '1px solid rgba(39, 39, 42, 0.3)',
-        background: 'rgba(39, 39, 42, 0.3)',
-        transition: 'background 0.3s ease'
-      }}
-      onContextMenu={handleEditRowRightClick}
-    >
-      {/* Cliente */}
-      <td style={{ minWidth: '220px', width: '220px', maxWidth: '220px', padding: '24px 24px 24px 24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            background: '#27272a',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <span style={{ color: 'white', fontWeight: '600', fontSize: '14px' }}>
-              {(editForm.nombre_cliente?.charAt(0) || '?')}{(editForm.apellido_cliente?.charAt(0) || '?')}
-            </span>
-          </div>
-          <div style={{ width: '140px' }}>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-              <input
-                name="nombre_cliente"
-                value={editForm.nombre_cliente}
-                onChange={handleEditFormChange}
-                style={{ ...invisibleInput, width: '50%' }}
-                placeholder="Nombre"
-                autoFocus
-              />
-              <input
-                name="apellido_cliente"
-                value={editForm.apellido_cliente}
-                onChange={handleEditFormChange}
-                style={{ ...invisibleInput, width: '50%' }}
-                placeholder="Apellido"
-              />
-            </div>
-            <input
-              name="fecha_compra"
-              type="date"
-              value={editForm.fecha_compra}
-              onChange={handleEditFormChange}
-              style={invisibleInput}
-            />
-          </div>
-        </div>
-      </td>
 
-      {/* Diseño, medida, notas */}
-      <td style={{ minWidth: '192px', width: '192px', maxWidth: '192px' }}>
-        <div style={{ maxWidth: '192px' }}>
-          <input
-            name="disenio"
-            value={editForm.disenio}
-            onChange={handleEditFormChange}
-            style={invisibleInput}
-            placeholder="Diseño"
-          />
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <input
-              name="medida_pedida"
-              value={editForm.medida_pedida || ''}
-              onChange={handleEditFormChange}
-              style={{ ...invisibleInput, width: '70px' }}
-              placeholder="Medida"
-            />
-            <input
-              name="notas"
-              value={editForm.notas}
-              onChange={handleEditFormChange}
-              style={{ ...invisibleInput, flex: 1, minWidth: 0 }}
-              placeholder="Notas"
-            />
-          </div>
-        </div>
-      </td>
-
-      {/* Contacto */}
-      <td style={{ minWidth: '120px', width: '120px', maxWidth: '120px' }}>
-        <div>
-          <input
-            name="medio_contacto"
-            value={editForm.medio_contacto}
-            onChange={handleEditFormChange}
-            style={invisibleInput}
-            placeholder="Medio"
-          />
-          <input
-            name="telefono_cliente"
-            value={editForm.telefono_cliente}
-            onChange={handleEditFormChange}
-            style={invisibleInput}
-            placeholder="Teléfono"
-          />
-        </div>
-      </td>
-
-      {/* Valores */}
-      <td style={{ minWidth: '120px', width: '120px', maxWidth: '120px' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-            <input
-              name="valor_sello"
-              type="number"
-              value={editForm.valor_sello}
-              onChange={handleEditFormChange}
-              style={{ ...invisibleInput, width: '64px', fontFamily: 'monospace' }}
-              placeholder="Sello"
-            />
-            <span style={{ color: '#71717a', fontSize: '11px' }}>
-              (<input
-                name="valor_senia"
-                type="number"
-                value={editForm.valor_senia}
-                onChange={handleEditFormChange}
-                style={{ ...invisibleInput, width: '48px', fontFamily: 'monospace' }}
-                placeholder="Seña"
-              />)
-            </span>
-          </div>
-          <p style={{ color: '#71717a', fontSize: '12px', margin: 0 }}>
-            Resta: ${(Number(editForm.valor_sello || 0) - Number(editForm.valor_senia || 0)).toLocaleString()}
-          </p>
-        </div>
-      </td>
-
-      {/* Estado */}
-      <td style={{ minWidth: '160px', width: '160px', maxWidth: '160px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <EstadoSelect
-            value={editForm.estado_fabricacion}
-            onChange={val => setEditForm(prev => ({ ...prev, estado_fabricacion: val }))}
-            options={ESTADOS_FABRICACION}
-            type="fabricacion"
-            isDisabled={false}
-          />
-          <div style={{ display: 'flex', gap: '4px' }}>
-            <EstadoSelect
-              value={editForm.estado_venta}
-              onChange={val => setEditForm(prev => ({ ...prev, estado_venta: val }))}
-              options={ESTADOS_VENTA}
-              type="venta"
-              isDisabled={false}
-            />
-            <EstadoSelect
-              value={editForm.estado_envio}
-              onChange={val => setEditForm(prev => ({ ...prev, estado_envio: val }))}
-              options={ESTADOS_ENVIO}
-              type="envio"
-              isDisabled={false}
-            />
-          </div>
-        </div>
-      </td>
-
-      {/* Archivos */}
-      <td style={{ minWidth: '100px', width: '100px', maxWidth: '100px' }}>
-        <ArchivoCell
-          filePath={pedido.archivo_base}
-          nombre="Archivo Base"
-          pedidoId={pedido.id_pedido}
-          field="archivo_base"
-          onUpload={handlePedidoAdded}
-          onDelete={handleEliminarArchivo}
-          editing={true}
-        />
-      </td>
-      <td style={{ minWidth: '100px', width: '100px', maxWidth: '100px' }}>
-        <ArchivoCell
-          filePath={pedido.archivo_vector}
-          nombre="Archivo Vector"
-          pedidoId={pedido.id_pedido}
-          field="archivo_vector"
-          onUpload={handlePedidoAdded}
-          onDelete={handleEliminarArchivo}
-          editing={true}
-        />
-      </td>
-      <td style={{ minWidth: '100px', width: '100px', maxWidth: '100px' }}>
-        <ArchivoCell
-          filePath={pedido.foto_sello}
-          nombre="Foto Sello"
-          pedidoId={pedido.id_pedido}
-          field="foto_sello"
-          onUpload={handlePedidoAdded}
-          onDelete={handleEliminarArchivo}
-          editing={true}
-        />
-      </td>
-
-      {/* Seguimiento */}
-      <td style={{ minWidth: '110px', width: '110px', maxWidth: '110px' }}>
-        <input
-          name="numero_seguimiento"
-          value={editForm.numero_seguimiento}
-          onChange={handleEditFormChange}
-          style={{ ...invisibleInput, fontFamily: 'monospace' }}
-          placeholder="Seguimiento"
-        />
-      </td>
-    </tr>
-  );
-}
-
-// Componente para fila en modo display
-function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, handlePedidoAdded, handleEliminarArchivo, supabase, getPedidos, ESTADOS_FABRICACION, ESTADOS_VENTA, ESTADOS_ENVIO }) {
   // Función para actualizar un campo de estado en la base de datos
   const handleEstadoChange = async (campo, valor) => {
     try {
@@ -1189,152 +989,291 @@ function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, ha
     }
   };
 
+  // Render de la fila (idéntico al modo normal, pero con inputs invisibles si editing)
   return (
     <tr
+      className="pedido-row"
       style={{
         borderBottom: '1px solid rgba(39, 39, 42, 0.3)',
-        cursor: 'context-menu',
-        transition: 'background 0.3s ease'
+        ...(editing ? { background: 'rgba(39, 39, 42, 0.3)' } : {}),
+        transition: 'background 0.3s ease',
+        cursor: editing ? 'default' : 'context-menu',
       }}
-      onMouseEnter={(e) => e.target.closest('tr').style.background = 'rgba(39, 39, 42, 0.3)'}
-      onMouseLeave={(e) => e.target.closest('tr').style.background = 'transparent'}
-      onContextMenu={(e) => handleRowRightClick(e, pedido.id_pedido)}
+      onContextMenu={editing ? handleEditRowRightClick : (e) => handleRowRightClick(e, pedido.id_pedido)}
       onDoubleClick={e => {
-        e.preventDefault();
-        e.stopPropagation();
-        startEdit(pedido);
+        if (!editing) {
+          e.preventDefault();
+          e.stopPropagation();
+          startEdit(pedido);
+        }
       }}
     >
-      {/* Nombre/Apellido */}
-      <td style={{ padding: '16px 12px', minWidth: '120px', verticalAlign: 'top' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', paddingLeft: '16px' }}>
-          <span style={{ color: 'white', fontWeight: '500', fontSize: '15px', lineHeight: '1.1' }}>
-            {pedido.clientes?.nombre_cliente || 'N/A'}
-          </span>
-          <span style={{ color: '#71717a', fontSize: '13px', fontWeight: 400, lineHeight: '1.1' }}>
-            {pedido.clientes?.apellido_cliente || ''}
-          </span>
-        </div>
-      </td>
       {/* Fecha */}
-      <td>
-        <span style={{ color: '#a1a1aa', fontSize: '13px' }}>
-          {pedido.fecha_compra ? new Date(pedido.fecha_compra).toLocaleDateString() : '-'}
-        </span>
+      <td style={{ padding: '16px 12px' }}>
+        {editing ? (
+          <input
+            name="fecha_compra"
+            type="date"
+            value={editForm.fecha_compra}
+            onChange={handleEditFormChange}
+            style={invisibleInput}
+            autoFocus
+          />
+        ) : (
+          <span style={{ color: '#a1a1aa', fontSize: '13px' }}>
+            {pedido.fecha_compra ? new Date(pedido.fecha_compra).toLocaleDateString() : '-'}
+          </span>
+        )}
       </td>
-      {/* Diseño/Notas */}
-      <td>
-        <div style={{ maxWidth: '192px' }}>
-          <p style={{ color: 'white', fontWeight: '500', margin: '0 0 2px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '15px' }}>
-            {pedido.disenio || "Sin especificar"}
-          </p>
-          <p style={{ fontSize: '13px', color: '#71717a', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {pedido.notas || "Sin notas"}
-          </p>
+      {/* Nombre/Apellido */}
+      <td style={{ padding: '16px 12px', minWidth: '120px' }}>
+        <div style={{
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          gap: '2px'
+        }}>
+          {editing ? (
+            <>
+              <input
+                name="nombre_cliente"
+                value={editForm.nombre_cliente}
+                onChange={handleEditFormChange}
+                style={{ ...invisibleInput, color: 'white', fontWeight: 500, fontSize: '15px' }}
+                placeholder="Nombre"
+              />
+              <input
+                name="apellido_cliente"
+                value={editForm.apellido_cliente}
+                onChange={handleEditFormChange}
+                style={{ ...invisibleInput, color: '#71717a', fontWeight: 400, fontSize: '13px' }}
+                placeholder="Apellido"
+              />
+            </>
+          ) : (
+            <>
+              <span style={{ color: 'white', fontWeight: 500, fontSize: '15px', display: 'block' }}>
+                {pedido.clientes?.nombre_cliente || 'N/A'}
+              </span>
+              <span style={{ color: '#71717a', fontWeight: 400, fontSize: '13px', display: 'block' }}>
+                {pedido.clientes?.apellido_cliente || ''}
+              </span>
+            </>
+          )}
         </div>
+      </td>
+      {/* Diseño y notas */}
+      <td style={{ padding: '16px 12px' }}>
+        {editing ? (
+          <>
+            <input
+              name="disenio"
+              value={editForm.disenio}
+              onChange={handleEditFormChange}
+              style={{ ...invisibleInput, color: 'white', fontWeight: 500, fontSize: '15px', marginBottom: 0, display: 'block' }}
+              placeholder="Diseño"
+            />
+            <input
+              name="medida_pedida"
+              value={editForm.medida_pedida || ''}
+              onChange={handleEditFormChange}
+              style={{ ...invisibleInput, color: '#71717a', fontWeight: 400, fontSize: '13px', marginBottom: 0, display: 'block' }}
+              placeholder="Medida"
+            />
+            <input
+              name="notas"
+              value={editForm.notas}
+              onChange={handleEditFormChange}
+              style={{ ...invisibleInput, color: '#71717a', fontWeight: 400, fontSize: '13px', marginBottom: 0, display: 'block' }}
+              placeholder="Notas"
+            />
+          </>
+        ) : (
+          <div>
+            <span style={{ color: 'white', fontWeight: 500, fontSize: '15px', margin: 0, display: 'block' }}>
+              {pedido.disenio || "Sin especificar"}
+            </span>
+            <span style={{ color: '#71717a', fontWeight: 400, fontSize: '13px', margin: 0, display: 'block' }}>
+              {(pedido.medida_pedida || "Sin medida") + " - " + (pedido.notas || "Sin notas")}
+            </span>
+          </div>
+        )}
       </td>
       {/* Contacto */}
-      <td>
-        <div>
-          <p style={{ color: 'white', fontSize: '14px', margin: '0 0 2px 0' }}>
-            {pedido.clientes?.medio_contacto || 'N/A'}
-          </p>
-          <p style={{ color: '#71717a', fontSize: '12px', margin: 0 }}>
-            {pedido.clientes?.telefono_cliente || 'N/A'}
-          </p>
-        </div>
+      <td style={{ padding: '16px 12px' }}>
+        {editing ? (
+          <>
+            <input
+              name="medio_contacto"
+              value={editForm.medio_contacto}
+              onChange={handleEditFormChange}
+              style={{ ...invisibleInput, color: 'white', fontWeight: 500, fontSize: '15px', marginBottom: 0, display: 'block' }}
+              placeholder="Medio"
+            />
+            <input
+              name="telefono_cliente"
+              value={editForm.telefono_cliente}
+              onChange={handleEditFormChange}
+              style={{ ...invisibleInput, color: '#71717a', fontWeight: 400, fontSize: '13px', marginBottom: 0, display: 'block' }}
+              placeholder="Teléfono"
+            />
+          </>
+        ) : (
+          <div>
+            <span style={{ color: 'white', fontWeight: 500, fontSize: '15px', margin: 0, display: 'block' }}>
+              {pedido.clientes?.medio_contacto || 'N/A'}
+            </span>
+            <span style={{ color: '#71717a', fontWeight: 400, fontSize: '13px', margin: 0, display: 'block' }}>
+              {pedido.clientes?.telefono_cliente || 'N/A'}
+            </span>
+          </div>
+        )}
       </td>
-      {/* Valor Sello/Restante */}
-      <td>
-        <div>
-          <p style={{ color: 'white', fontFamily: 'monospace', fontSize: '15px', margin: '0 0 2px 0' }}>
-            ${pedido.valor_sello?.toLocaleString()}
-          </p>
-          <span style={{ color: '#71717a', fontSize: '12px', display: 'block', margin: 0 }}>
-            Resta: ${pedido.restante_pagar?.toLocaleString()}
-          </span>
-        </div>
+      {/* Seña/Envío */}
+      <td style={{ padding: '16px 12px' }}>
+        {editing ? (
+          <>
+            <input
+              name="valor_senia"
+              type="number"
+              value={editForm.valor_senia}
+              onChange={handleEditFormChange}
+              style={{ ...invisibleInput, color: 'white', fontWeight: 500, fontSize: '15px', marginBottom: 0, display: 'block' }}
+              placeholder="Seña"
+            />
+            <input
+              name="valor_envio"
+              type="number"
+              value={editForm.valor_envio}
+              onChange={handleEditFormChange}
+              style={{ ...invisibleInput, color: '#71717a', fontWeight: 400, fontSize: '13px', marginBottom: 0, display: 'block' }}
+              placeholder="Envío"
+            />
+          </>
+        ) : (
+          <div>
+            <span style={{ color: 'white', fontWeight: 500, fontSize: '15px', margin: 0, display: 'block' }}>
+              Seña: ${pedido.valor_senia?.toLocaleString() || 0}
+            </span>
+            <span style={{ color: '#71717a', fontWeight: 400, fontSize: '13px', margin: 0, display: 'block' }}>
+              Envío: ${pedido.valor_envio?.toLocaleString() || 0}
+            </span>
+          </div>
+        )}
       </td>
-      {/* Valor Seña/Envío */}
-      <td>
-        <div>
-          <p style={{ color: 'white', fontFamily: 'monospace', fontSize: '14px', margin: '0 0 2px 0' }}>
-            Seña: ${pedido.valor_senia?.toLocaleString() || 0}
-          </p>
-          <p style={{ color: '#71717a', fontSize: '13px', margin: 0 }}>
-            Envío: ${pedido.valor_envio?.toLocaleString() || 0}
-          </p>
-        </div>
+      {/* Valor y resto */}
+      <td style={{ padding: '16px 12px' }}>
+        {editing ? (
+          <>
+            <input
+              name="valor_sello"
+              type="number"
+              value={editForm.valor_sello}
+              onChange={handleEditFormChange}
+              style={{ ...invisibleInput, color: 'white', fontWeight: 500, fontSize: '15px', marginBottom: 0, display: 'block' }}
+              placeholder="Valor"
+            />
+            <span style={{ color: '#71717a', fontWeight: 400, fontSize: '13px', display: 'block', margin: 0 }}>
+              Resta: ${(Number(editForm.valor_sello || 0) - Number(editForm.valor_senia || 0)).toLocaleString()}
+            </span>
+          </>
+        ) : (
+          <div>
+            <span style={{ color: 'white', fontWeight: 500, fontSize: '15px', margin: 0, display: 'block' }}>
+              ${pedido.valor_sello?.toLocaleString()}
+            </span>
+            <span style={{ color: '#71717a', fontWeight: 400, fontSize: '13px', display: 'block', margin: 0 }}>
+              Resta: ${pedido.restante_pagar?.toLocaleString()}
+            </span>
+          </div>
+        )}
       </td>
       {/* Estado */}
-      <td>
+      <td style={{ minWidth: '220px', padding: '16px 12px', verticalAlign: 'middle' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <EstadoSelect
-            value={pedido.estado_fabricacion}
-            onChange={val => handleEstadoChange('estado_fabricacion', val)}
+            value={editing ? editForm.estado_fabricacion : pedido.estado_fabricacion}
+            onChange={val => editing ? setEditForm(prev => ({ ...prev, estado_fabricacion: val })) : handleEstadoChange('estado_fabricacion', val)}
             options={ESTADOS_FABRICACION}
             type="fabricacion"
             isDisabled={false}
             size="small"
+            style={{ width: '75%' }}
           />
-          <div style={{ display: 'flex', gap: '2px' }}>
+          <div style={{ display: 'flex', width: '100%' }}>
             <EstadoSelect
-              value={pedido.estado_venta}
-              onChange={val => handleEstadoChange('estado_venta', val)}
+              value={editing ? editForm.estado_venta : pedido.estado_venta}
+              onChange={val => editing ? setEditForm(prev => ({ ...prev, estado_venta: val })) : handleEstadoChange('estado_venta', val)}
               options={ESTADOS_VENTA}
               type="venta"
-              isDisabled={false}
+              isDisabled={editing ? false : pedido.estado_fabricacion !== "Hecho"}
               size="small"
+              style={{ width: '50%' }}
             />
             <EstadoSelect
-              value={pedido.estado_envio}
-              onChange={val => handleEstadoChange('estado_envio', val)}
+              value={editing ? editForm.estado_envio : pedido.estado_envio}
+              onChange={val => editing ? setEditForm(prev => ({ ...prev, estado_envio: val })) : handleEstadoChange('estado_envio', val)}
               options={ESTADOS_ENVIO}
               type="envio"
-              isDisabled={false}
+              isDisabled={editing ? false : pedido.estado_venta !== "Transferido"}
               size="small"
+              style={{ width: '50%' }}
             />
           </div>
         </div>
       </td>
       {/* Base */}
-      <td>
+      <td style={{ padding: '16px 12px', textAlign: 'center', verticalAlign: 'middle' }}>
         <ArchivoCell
-          filePath={pedido.archivo_base}
+          filePath={editing ? editForm.archivo_base : pedido.archivo_base}
           nombre="Archivo Base"
           pedidoId={pedido.id_pedido}
           field="archivo_base"
           onUpload={handlePedidoAdded}
           onDelete={handleEliminarArchivo}
+          editing={editing}
         />
       </td>
       {/* Vector */}
-      <td>
+      <td style={{ padding: '16px 12px', textAlign: 'center', verticalAlign: 'middle' }}>
         <ArchivoCell
-          filePath={pedido.archivo_vector}
+          filePath={editing ? editForm.archivo_vector : pedido.archivo_vector}
           nombre="Archivo Vector"
           pedidoId={pedido.id_pedido}
           field="archivo_vector"
           onUpload={handlePedidoAdded}
           onDelete={handleEliminarArchivo}
+          editing={editing}
         />
       </td>
       {/* Foto Sello */}
-      <td>
+      <td style={{ padding: '16px 12px', textAlign: 'center', verticalAlign: 'middle' }}>
         <ArchivoCell
-          filePath={pedido.foto_sello}
+          filePath={editing ? editForm.foto_sello : pedido.foto_sello}
           nombre="Foto Sello"
           pedidoId={pedido.id_pedido}
           field="foto_sello"
           onUpload={handlePedidoAdded}
           onDelete={handleEliminarArchivo}
+          editing={editing}
         />
       </td>
       {/* Seguimiento */}
-      <td>
-        <div style={{ fontFamily: 'monospace', fontSize: '13px', color: pedido.numero_seguimiento ? '#d4d4d8' : '#71717a', fontStyle: pedido.numero_seguimiento ? 'normal' : 'italic' }}>
-          {pedido.numero_seguimiento || 'Sin asignar'}
-        </div>
+      <td style={{ padding: '16px 12px' }}>
+        {editing ? (
+          <input
+            name="numero_seguimiento"
+            value={editForm.numero_seguimiento}
+            onChange={handleEditFormChange}
+            style={{ ...invisibleInput, fontFamily: 'monospace', color: 'white', fontSize: '13px' }}
+            placeholder="Seguimiento"
+          />
+        ) : (
+          <div style={{ fontFamily: 'monospace', fontSize: '13px', color: pedido.numero_seguimiento ? '#d4d4d8' : '#71717a', fontStyle: pedido.numero_seguimiento ? 'normal' : 'italic' }}>
+            {pedido.numero_seguimiento || 'Sin asignar'}
+          </div>
+        )}
       </td>
     </tr>
   );
@@ -1408,40 +1347,42 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, ed
 
   if (!filePath) {
     return (
-      <label style={{
-        color: '#a1a1aa',
-        background: 'transparent',
-        border: '1px solid rgba(63, 63, 70, 0.5)',
-        borderRadius: '8px',
-        padding: '6px 12px',
-        fontSize: '12px',
-        cursor: 'pointer',
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '4px',
-        transition: 'all 0.3s ease'
-      }}
-        onMouseEnter={(e) => {
-          e.target.style.color = 'white';
-          e.target.style.background = 'rgba(39, 39, 42, 0.5)';
-          e.target.style.borderColor = 'rgba(96, 165, 250, 0.5)';
+      <div style={{ height: '100%', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <label style={{
+          color: '#a1a1aa',
+          background: 'transparent',
+          border: '1px solid rgba(63, 63, 70, 0.5)',
+          borderRadius: '8px',
+          padding: '6px 12px',
+          fontSize: '12px',
+          cursor: 'pointer',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          transition: 'all 0.3s ease'
         }}
-        onMouseLeave={(e) => {
-          e.target.style.color = '#a1a1aa';
-          e.target.style.background = 'transparent';
-          e.target.style.borderColor = 'rgba(63, 63, 70, 0.5)';
-        }}
-      >
-        <Upload style={{ width: '12px', height: '12px' }} />
-        {field === 'foto_sello' ? 'Foto' : 'Subir'}
-        <input
-          type="file"
-          onChange={handleFileUpload}
-          style={{ display: 'none' }}
-          disabled={isUploading}
-          accept="image/*,.pdf,.doc,.docx,.txt"
-        />
-      </label>
+          onMouseEnter={(e) => {
+            e.target.style.color = 'white';
+            e.target.style.background = 'rgba(39, 39, 42, 0.5)';
+            e.target.style.borderColor = 'rgba(96, 165, 250, 0.5)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.color = '#a1a1aa';
+            e.target.style.background = 'transparent';
+            e.target.style.borderColor = 'rgba(63, 63, 70, 0.5)';
+          }}
+        >
+          <Upload style={{ width: '12px', height: '12px' }} />
+          {field === 'foto_sello' ? 'Foto' : 'Subir'}
+          <input
+            type="file"
+            onChange={handleFileUpload}
+            style={{ display: 'none' }}
+            disabled={isUploading}
+            accept="image/*,.pdf,.doc,.docx,.txt"
+          />
+        </label>
+      </div>
     );
   }
 
@@ -1451,69 +1392,78 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, ed
 
   if (isImage) {
     return (
-      <div
-        style={{ position: 'relative', width: '48px', height: '48px' }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        <a href={signedUrl} target="_blank" rel="noopener noreferrer">
-          <img
-            src={signedUrl}
-            alt={nombre}
-            style={{
-              width: '48px',
-              height: '48px',
-              objectFit: 'cover',
-              borderRadius: '6px',
-              border: '1px solid rgba(63, 63, 70, 0.5)',
-              transition: 'border-color 0.3s ease'
-            }}
-          />
-        </a>
-        {isHovered && (
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'rgba(0, 0, 0, 0.5)',
-            borderRadius: '6px',
+      <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: '48px', width: '48px' }}>
+        <div
+          style={{
+            position: 'relative',
+            width: '48px',
+            height: '48px',
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
-            gap: '4px'
-          }}>
-            <button
-              onClick={handleDownload}
+            justifyContent: 'center'
+          }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <a href={signedUrl} target="_blank" rel="noopener noreferrer">
+            <img
+              src={signedUrl}
+              alt={nombre}
               style={{
-                color: 'white',
-                fontSize: '10px',
-                background: 'rgba(39, 39, 42, 0.8)',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'background 0.3s ease'
+                width: '48px',
+                height: '48px',
+                objectFit: 'cover',
+                borderRadius: '6px',
+                border: '1px solid rgba(63, 63, 70, 0.5)',
+                transition: 'border-color 0.3s ease'
               }}
-            >
-              Ver
-            </button>
-            <button
-              onClick={handleDelete}
-              style={{
-                color: '#ef4444',
-                fontSize: '10px',
-                background: 'rgba(39, 39, 42, 0.8)',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'background 0.3s ease'
-              }}
-            >
-              X
-            </button>
-          </div>
-        )}
+            />
+          </a>
+          {isHovered && (
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.5)',
+              borderRadius: '6px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '4px'
+            }}>
+              <button
+                onClick={handleDownload}
+                style={{
+                  color: 'white',
+                  fontSize: '10px',
+                  background: 'rgba(39, 39, 42, 0.8)',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'background 0.3s ease'
+                }}
+              >
+                Ver
+              </button>
+              <button
+                onClick={handleDelete}
+                style={{
+                  color: '#ef4444',
+                  fontSize: '10px',
+                  background: 'rgba(39, 39, 42, 0.8)',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'background 0.3s ease'
+                }}
+              >
+                X
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     );
   }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './FilterPanel.css';
 
-function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, onToggle, showHeader = true }) {
+function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, onToggle, showHeader = true, visibleFilters }) {
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
   const [activeFiltersChips, setActiveFiltersChips] = useState([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -74,6 +74,9 @@ function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, 
     
     return `${filters.fecha_compra_gte} - ${filters.fecha_compra_lte}`;
   };
+
+  // Helper para saber si mostrar un filtro
+  const showFilter = (key) => !visibleFilters || visibleFilters.includes(key);
 
   useEffect(() => {
     // Calcular filtros activos y crear chips
@@ -255,123 +258,130 @@ function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, 
       {isExpanded && (
         <div className="filter-panel-expanded">
           <div className="filter-sections">
-            {/* Sección de Fecha estilo Notion */}
-            <div className="filter-section">
-              <h4>📅 Fecha</h4>
-              <div className="notion-date-filter">
-                <button 
-                  className="date-selector-btn"
-                  onClick={() => setShowDatePicker(!showDatePicker)}
-                >
-                  <span className="date-selector-text">
-                    {getActiveDatePreset() || 'Seleccionar fecha'}
-                  </span>
-                  <svg className="date-selector-icon" viewBox="0 0 24 24" fill="none">
-                    <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
+            {showFilter('fecha') && (
+              <div className="filter-section">
+                <h4>📅 Fecha</h4>
+                <div className="notion-date-filter">
+                  <button 
+                    className="date-selector-btn"
+                    onClick={() => setShowDatePicker(!showDatePicker)}
+                  >
+                    <span className="date-selector-text">
+                      {getActiveDatePreset() || 'Seleccionar fecha'}
+                    </span>
+                    <svg className="date-selector-icon" viewBox="0 0 24 24" fill="none">
+                      <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
 
-                {showDatePicker && (
-                  <div className="date-picker-dropdown">
-                    <div className="date-presets">
-                      {datePresets.map((preset) => (
-                        <button
-                          key={preset.label}
-                          className="date-preset-option"
-                          onClick={() => handleDatePresetSelect(preset)}
-                        >
-                          {preset.label}
-                        </button>
-                      ))}
-                    </div>
-                    
-                    <div className="date-custom-section">
-                      <div className="date-custom-header">Fechas personalizadas</div>
-                      <div className="date-custom-inputs">
-                        <div className="date-input-group">
-                          <label>Desde</label>
-                          <input 
-                            type="date"
-                            value={filters.fecha_compra_gte || ''}
-                            onChange={(e) => handleCustomDateChange('fecha_compra_gte', e.target.value)}
-                          />
-                        </div>
-                        <div className="date-input-group">
-                          <label>Hasta</label>
-                          <input 
-                            type="date"
-                            value={filters.fecha_compra_lte || ''}
-                            onChange={(e) => handleCustomDateChange('fecha_compra_lte', e.target.value)}
-                          />
+                  {showDatePicker && (
+                    <div className="date-picker-dropdown">
+                      <div className="date-presets">
+                        {datePresets.map((preset) => (
+                          <button
+                            key={preset.label}
+                            className="date-preset-option"
+                            onClick={() => handleDatePresetSelect(preset)}
+                          >
+                            {preset.label}
+                          </button>
+                        ))}
+                      </div>
+                      
+                      <div className="date-custom-section">
+                        <div className="date-custom-header">Fechas personalizadas</div>
+                        <div className="date-custom-inputs">
+                          <div className="date-input-group">
+                            <label>Desde</label>
+                            <input 
+                              type="date"
+                              value={filters.fecha_compra_gte || ''}
+                              onChange={(e) => handleCustomDateChange('fecha_compra_gte', e.target.value)}
+                            />
+                          </div>
+                          <div className="date-input-group">
+                            <label>Hasta</label>
+                            <input 
+                              type="date"
+                              value={filters.fecha_compra_lte || ''}
+                              onChange={(e) => handleCustomDateChange('fecha_compra_lte', e.target.value)}
+                            />
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {(filters.fecha_compra_gte || filters.fecha_compra_lte) && (
-                      <div className="date-actions">
-                        <button className="date-clear-btn" onClick={clearDateFilter}>
-                          Limpiar
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
+                      {(filters.fecha_compra_gte || filters.fecha_compra_lte) && (
+                        <div className="date-actions">
+                          <button className="date-clear-btn" onClick={clearDateFilter}>
+                            Limpiar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="filter-section">
-              <h4>🔨 Estado de Fabricación</h4>
-              <NotionDropdownFilter
-                label="Estado de Fabricación"
-                options={ESTADOS_FABRICACION}
-                selected={filters.estado_fabricacion}
-                onChange={(option, checked) => {
-                  setFilters(prev => {
-                    const arr = prev.estado_fabricacion || [];
-                    return {
-                      ...prev,
-                      estado_fabricacion: checked ? [...arr, option] : arr.filter(v => v !== option)
-                    };
-                  });
-                }}
-              />
-            </div>
+            {showFilter('estado_fabricacion') && (
+              <div className="filter-section">
+                <h4>🔨 Estado de Fabricación</h4>
+                <NotionDropdownFilter
+                  label="Estado de Fabricación"
+                  options={ESTADOS_FABRICACION}
+                  selected={filters.estado_fabricacion}
+                  onChange={(option, checked) => {
+                    setFilters(prev => {
+                      const arr = prev.estado_fabricacion || [];
+                      return {
+                        ...prev,
+                        estado_fabricacion: checked ? [...arr, option] : arr.filter(v => v !== option)
+                      };
+                    });
+                  }}
+                />
+              </div>
+            )}
             
-            <div className="filter-section">
-              <h4>💰 Estado de Venta</h4>
-              <NotionDropdownFilter
-                label="Estado de Venta"
-                options={ESTADOS_VENTA}
-                selected={filters.estado_venta}
-                onChange={(option, checked) => {
-                  setFilters(prev => {
-                    const arr = prev.estado_venta || [];
-                    return {
-                      ...prev,
-                      estado_venta: checked ? [...arr, option] : arr.filter(v => v !== option)
-                    };
-                  });
-                }}
-              />
-            </div>
+            {showFilter('estado_venta') && (
+              <div className="filter-section">
+                <h4>💰 Estado de Venta</h4>
+                <NotionDropdownFilter
+                  label="Estado de Venta"
+                  options={ESTADOS_VENTA}
+                  selected={filters.estado_venta}
+                  onChange={(option, checked) => {
+                    setFilters(prev => {
+                      const arr = prev.estado_venta || [];
+                      return {
+                        ...prev,
+                        estado_venta: checked ? [...arr, option] : arr.filter(v => v !== option)
+                      };
+                    });
+                  }}
+                />
+              </div>
+            )}
 
-            <div className="filter-section">
-              <h4>📦 Estado de Envío</h4>
-              <NotionDropdownFilter
-                label="Estado de Envío"
-                options={ESTADOS_ENVIO}
-                selected={filters.estado_envio}
-                onChange={(option, checked) => {
-                  setFilters(prev => {
-                    const arr = prev.estado_envio || [];
-                    return {
-                      ...prev,
-                      estado_envio: checked ? [...arr, option] : arr.filter(v => v !== option)
-                    };
-                  });
-                }}
-              />
-            </div>
+            {showFilter('estado_envio') && (
+              <div className="filter-section">
+                <h4>📦 Estado de Envío</h4>
+                <NotionDropdownFilter
+                  label="Estado de Envío"
+                  options={ESTADOS_ENVIO}
+                  selected={filters.estado_envio}
+                  onChange={(option, checked) => {
+                    setFilters(prev => {
+                      const arr = prev.estado_envio || [];
+                      return {
+                        ...prev,
+                        estado_envio: checked ? [...arr, option] : arr.filter(v => v !== option)
+                      };
+                    });
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           {/* Acciones simplificadas - solo limpiar */}

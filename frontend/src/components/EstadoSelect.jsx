@@ -28,6 +28,10 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
         'Despachado': 'bg-teal-500/10 text-teal-400 border-teal-500/20',
         'Seguimiento Enviado': 'bg-green-500/10 text-green-400 border-green-500/20',
       },
+      vectorizacion: {
+        'Para Vectorizar': 'bg-red-500/10 text-red-400 border-red-500/20',
+        'Vectorizado': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+      },
     };
 
     return colorMap[tipo]?.[estado] || 'bg-slate-500/10 text-slate-400 border-slate-500/20';
@@ -57,6 +61,10 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
         'Despachado': 'Despachado',
         'Seguimiento Enviado': 'Seguimiento Enviado',
       },
+      vectorizacion: {
+        'Para Vectorizar': 'Para Vectorizar',
+        'Vectorizado': 'Vectorizado',
+      },
     };
 
     return labelMap[tipo]?.[estado] || estado;
@@ -68,6 +76,7 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
   };
 
   const handleButtonClick = (e) => {
+    if (isDisabled) return;
     e.preventDefault();
     e.stopPropagation();
     setIsOpen(!isOpen);
@@ -93,6 +102,8 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
       <button
         type="button"
         onClick={handleButtonClick}
+        className={`estado-button${type === 'venta' ? ' venta' : ''}`}
+        disabled={isDisabled}
         style={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -103,9 +114,17 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
           fontWeight: '500',
           border: '1px solid',
           transition: 'all 0.3s ease',
+<<<<<<< HEAD
           cursor: 'pointer',
           maxWidth: '200px',
+=======
+          cursor: isDisabled ? 'not-allowed' : 'pointer',
+          minWidth: type === 'vectorizacion' ? '130px' : type === 'venta' ? 'unset' : '130px',
+          width: type === 'vectorizacion' ? '130px' : type === 'venta' ? 'unset' : '100%',
+>>>>>>> e9f92d16cf1e125d8aac0f23e26bfaefa7e05515
           outline: 'none',
+          opacity: isDisabled ? 0.5 : 1,
+          pointerEvents: isDisabled ? 'none' : 'auto',
           background: colorClass.includes('bg-slate') ? 'rgba(100, 116, 139, 0.1)' :
             colorClass.includes('bg-cyan') ? 'rgba(6, 182, 212, 0.1)' :
               colorClass.includes('bg-emerald') ? 'rgba(16, 185, 129, 0.1)' :
@@ -139,7 +158,8 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
                           colorClass.includes('border-green') ? 'rgba(34, 197, 94, 0.2)' :
                             colorClass.includes('border-orange') ? 'rgba(249, 115, 22, 0.2)' :
                               colorClass.includes('border-violet') ? 'rgba(139, 92, 246, 0.2)' : 'rgba(100, 116, 139, 0.2)',
-          width: '100%'
+          minHeight: '2rem',
+          height: '2rem',
         }}
       >
         <span style={{

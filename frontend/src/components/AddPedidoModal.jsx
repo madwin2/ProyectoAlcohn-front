@@ -202,20 +202,8 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded, filterOptions }) {
                   <EstadoSelect
                     value={formData.estado_fabricacion}
                     onChange={val => setFormData(prev => ({ ...prev, estado_fabricacion: val }))}
-                    options={opcionesFabricacion}
+                    options={['Sin Hacer', 'Haciendo', 'Rehacer', 'Retocar', 'Prioridad', 'Verificar', 'Hecho']}
                     type="fabricacion"
-                  />
-                  <EstadoSelect
-                    value={formData.estado_venta}
-                    onChange={val => setFormData(prev => ({ ...prev, estado_venta: val }))}
-                    options={opcionesVenta.includes('Ninguno') ? opcionesVenta : ['Ninguno', ...opcionesVenta]}
-                    type="venta"
-                  />
-                  <EstadoSelect
-                    value={formData.estado_envio}
-                    onChange={val => setFormData(prev => ({ ...prev, estado_envio: val }))}
-                    options={opcionesEnvio}
-                    type="envio"
                   />
                 </div>
               </div>
