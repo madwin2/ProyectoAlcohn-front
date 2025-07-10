@@ -1,705 +1,702 @@
-/* Variables CSS para consistencia y responsividad */
-:root {
-  --primary-color: #007bff;
-  --primary-hover: #0056b3;
-  --bg-dark: #1f1f1f;
-  --bg-medium: #2a2a2a;
-  --bg-light: #333;
-  --border-color: #333;
-  --text-color: white;
-  --shadow: 0 0.125rem 0.625rem rgba(0, 0, 0, 0.3);
-  --transition: 0.2s ease;
+/* ===== ESTILOS ADICIONALES PARA OPTIMIZACIÓN DE ESPACIO ===== */
 
-  /* Espaciados fluidos */
-  --spacing-xs: clamp(0.25rem, 1vw, 0.5rem);
-  --spacing-sm: clamp(0.5rem, 2vw, 1rem);
-  --spacing-md: clamp(1rem, 3vw, 1.5rem);
-  --spacing-lg: clamp(1.5rem, 4vw, 2.5rem);
-
-  /* Tamaños de fuente fluidos */
-  --font-xs: clamp(0.75rem, 2vw, 0.875rem);
-  --font-sm: clamp(0.875rem, 2.5vw, 1rem);
-  --font-md: clamp(1rem, 3vw, 1.125rem);
-  --font-lg: clamp(1.125rem, 3.5vw, 1.25rem);
-
-  /* Anchos máximos fluidos */
-  --container-max: min(95vw, 100rem);
-  --table-min: min(75rem, 90vw);
-
-  /* Alturas fluidas */
-  --header-height: clamp(3rem, 8vh, 5rem);
-  --table-height: clamp(40vh, 70vh, 80vh);
-}
-
-/* Contenedor principal - Layout fluido */
-.pedidos-page-container {
-  width: 100%;
-  max-width: var(--container-max);
-  margin: 0 auto;
-  padding: var(--spacing-md);
+/* ✅ Iconos de búsqueda */
+.search-icon {
+  position: absolute;
+  left: var(--spacing-md);
+  top: 50%;
+  transform: translateY(-50%);
+  width: clamp(1rem, 2vw, 1.25rem);
+  height: clamp(1rem, 2vw, 1.25rem);
   color: var(--text-color);
-  box-sizing: border-box;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
+  opacity: 0.5;
+  z-index: 1;
 }
 
-/* Barra superior - Alineada con la tabla */
-.top-bar-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  margin-bottom: var(--spacing-sm);
-  /* Alinear con los bordes de la tabla */
-  padding-left: 0;
-  padding-right: 0;
+/* ✅ Botones optimizados */
+.filter-button.active {
+  background-color: var(--primary-color);
+  color: white;
 }
 
-/* Área izquierda del header (título + icono + activos) */
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  flex-shrink: 0;
+.filter-badge {
+  color: var(--primary-color);
+  font-size: var(--font-lg);
+  margin-left: var(--spacing-xs);
 }
 
-/* Área derecha del header (buscador + filtros + botón) */
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  flex-shrink: 0;
+.button-text {
+  display: inline;
 }
 
-/* Input de búsqueda - En el área derecha */
-.search-input {
-  width: clamp(12rem, 25vw, 20rem);
-  padding: var(--spacing-sm);
-  border-radius: clamp(0.25rem, 1vw, 0.5rem);
+/* En móviles, ocultar texto de botones para ahorrar espacio */
+@media (max-width: 48rem) {
+  .button-text {
+    display: none;
+  }
+  
+  .filter-button,
+  .new-pedido-button {
+    min-width: clamp(3rem, 8vw, 4rem);
+    padding: var(--spacing-sm);
+  }
+}
+
+/* ✅ Panel de filtros optimizado */
+.filter-panel-overlay {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--spacing-sm));
+  width: clamp(20rem, 40vw, 25rem);
+  background: var(--bg-dark);
   border: 0.063rem solid var(--border-color);
-  background: var(--bg-medium);
-  color: var(--text-color);
-  font-size: var(--font-sm);
-  transition: border-color var(--transition), box-shadow var(--transition);
-  box-sizing: border-box;
+  border-radius: clamp(0.5rem, 2vw, 1rem);
+  box-shadow: var(--shadow);
+  z-index: 50;
+  padding: var(--spacing-md);
+  backdrop-filter: blur(1rem);
 }
 
-.search-input:focus {
-  outline: none;
+.filter-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+}
+
+.filter-panel-header h3 {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.clear-filters-btn {
+  color: #a1a1aa;
+  background: transparent;
+  border: none;
+  font-size: var(--font-xs);
+  cursor: pointer;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: clamp(0.25rem, 1vw, 0.5rem);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  transition: all var(--transition);
+}
+
+.clear-filters-btn:hover {
+  color: var(--text-color);
+  background: var(--bg-medium);
+}
+
+/* ✅ Estados compactos - OPTIMIZACIÓN CLAVE */
+.estado-select-container {
+  position: relative;
+  display: inline-block;
+  width: auto;
+}
+
+.estado-select-container.small {
+  width: clamp(3rem, 8vw, 4rem);
+}
+
+.estado-button {
+  background: var(--bg-light);
+  border: 0.063rem solid var(--border-color);
+  color: var(--text-color);
+  padding: var(--spacing-xs) 0.3rem;
+  border-radius: clamp(0.25rem, 1vw, 0.5rem);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  min-height: 2rem;
+  text-align: center;
+  min-width: 2.5rem;
+  max-width: 4.5rem;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  padding-left: 0.2rem;
+  padding-right: 0.2rem;
+}
+
+/* Colores para estados */
+.estado-button.slate { background: #475569; border-color: #64748b; }
+.estado-button.cyan { background: #0891b2; border-color: #06b6d4; }
+.estado-button.emerald { background: #059669; border-color: #10b981; }
+.estado-button.red { background: #dc2626; border-color: #ef4444; }
+.estado-button.amber { background: #d97706; border-color: #f59e0b; }
+.estado-button.purple { background: #7c3aed; border-color: #8b5cf6; }
+.estado-button.teal { background: #0d9488; border-color: #14b8a6; }
+.estado-button.blue { background: #2563eb; border-color: #3b82f6; }
+.estado-button.green { background: #16a34a; border-color: #22c55e; }
+.estado-button.orange { background: #ea580c; border-color: #f97316; }
+.estado-button.violet { background: #7c3aed; border-color: #8b5cf6; }
+
+.estado-button:hover {
+  transform: translateY(-0.063rem);
+  box-shadow: var(--shadow);
+}
+
+.estado-button.open {
   border-color: var(--primary-color);
   box-shadow: 0 0 0 0.125rem rgba(0, 123, 255, 0.25);
 }
 
-/* Botones - En el área derecha */
-.top-bar-buttons {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.filter-button,
-.new-pedido-button {
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: none;
-  border-radius: clamp(0.25rem, 1vw, 0.5rem);
-  cursor: pointer;
-  background: var(--bg-light);
-  color: var(--text-color);
-  font-weight: 600;
-  font-size: var(--font-sm);
-  transition: all var(--transition);
-  white-space: nowrap;
-  min-height: clamp(2.75rem, 6vh, 3.5rem);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-
-/* Estilos para el área del título */
-.page-title {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  font-size: var(--font-lg);
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.page-title-icon {
-  width: clamp(1.5rem, 4vw, 2rem);
-  height: clamp(1.5rem, 4vw, 2rem);
-  border-radius: 50%;
-  background: var(--primary-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-}
-
-.active-count {
-  font-size: var(--font-sm);
-  color: #888;
-  font-weight: normal;
-}
-
-.new-pedido-button {
-  background-color: var(--primary-color);
-}
-
-.new-pedido-button:hover {
-  background-color: var(--primary-hover);
-  transform: translateY(-0.063rem);
-}
-
-.filter-button:hover {
-  background-color: #444;
-  transform: translateY(-0.063rem);
-}
-
-/* Contenedor de tabla - Layout fluido */
-.table-container {
-  flex: 1;
-  overflow: auto;
-  border: 0.063rem solid var(--border-color);
-  border-radius: clamp(0.5rem, 2vw, 1rem);
-  width: 100%;
-  height: var(--table-height);
-  position: relative;
-  box-shadow: var(--shadow);
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: var(--primary-color) var(--bg-dark);
-}
-
-/* Estilos para scrollbar - Fluidos */
-.table-container::-webkit-scrollbar {
-  width: clamp(0.5rem, 1.5vw, 0.75rem);
-  height: clamp(0.5rem, 1.5vw, 0.75rem);
-}
-
-.table-container::-webkit-scrollbar-track {
-  background: var(--bg-dark);
-}
-
-.table-container::-webkit-scrollbar-thumb {
-  background: var(--primary-color);
-  border-radius: clamp(0.25rem, 1vw, 0.5rem);
-}
-
-/* Tabla base - Layout fluido */
-.pedidos-table {
-  width: 100%;
-  min-width: var(--table-min);
-  border-collapse: collapse;
-  table-layout: auto;
+.estado-short {
+  font-weight: 700;
   font-size: var(--font-xs);
 }
 
-.pedidos-table th,
-.pedidos-table td {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  text-align: left;
-  border-bottom: 0.063rem solid var(--border-color);
-  box-sizing: border-box;
-  line-height: 1.4;
-  vertical-align: middle;
-}
-
-/* Header fijo */
-.pedidos-table thead th {
-  background-color: var(--bg-dark);
-  color: var(--text-color);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  font-weight: 600;
-  text-transform: uppercase;
+.estado-label {
   font-size: var(--font-xs);
-  letter-spacing: 0.03em;
-  height: var(--header-height);
+  opacity: 0.9;
 }
 
-/* Anchos de columnas - Sistema fluido basado en contenido */
-.pedidos-table th:nth-child(1) {
-  width: clamp(6rem, 8%, 8.75rem);
-}
-
-/* Fecha Compra */
-.pedidos-table th:nth-child(2) {
-  width: clamp(5rem, 6%, 7.5rem);
-}
-
-/* Nombre */
-.pedidos-table th:nth-child(3) {
-  width: clamp(5rem, 6%, 7.5rem);
-}
-
-/* Apellido */
-.pedidos-table th:nth-child(4) {
-  width: clamp(7.5rem, 10%, 11.25rem);
-}
-
-/* Diseño */
-.pedidos-table th:nth-child(5) {
-  width: clamp(6rem, 8%, 8.75rem);
-}
-
-/* Teléfono */
-.pedidos-table th:nth-child(6) {
-  width: clamp(6rem, 8%, 8.75rem);
-}
-
-/* Medio Contacto */
-.pedidos-table th:nth-child(7) {
-  width: clamp(5rem, 6%, 7.5rem);
-}
-
-/* Valor Sello */
-.pedidos-table th:nth-child(8) {
-  width: clamp(5rem, 6%, 7.5rem);
-}
-
-/* Valor Envío */
-.pedidos-table th:nth-child(9) {
-  width: clamp(4.375rem, 5%, 6.875rem);
-}
-
-/* Restante */
-.pedidos-table th:nth-child(10) {
-  width: clamp(7.5rem, 9%, 10rem);
-}
-
-/* Estado Fabricación */
-.pedidos-table th:nth-child(11) {
-  width: clamp(6rem, 8%, 8.75rem);
-}
-
-/* Estado Venta */
-.pedidos-table th:nth-child(12) {
-  width: clamp(6rem, 8%, 8.75rem);
-}
-
-/* Estado Envío */
-.pedidos-table th:nth-child(13) {
-  width: clamp(7.5rem, 10%, 11.25rem);
-}
-
-/* Notas */
-.pedidos-table th:nth-child(14) {
-  width: clamp(6rem, 8%, 8.75rem);
-}
-
-/* Archivo Base */
-.pedidos-table th:nth-child(15) {
-  width: clamp(6rem, 8%, 8.75rem);
-}
-
-/* Archivo Vector */
-.pedidos-table th:nth-child(16) {
-  width: clamp(5rem, 6%, 7.5rem);
-}
-
-/* Foto Sello */
-.pedidos-table th:nth-child(17) {
-  width: clamp(7.5rem, 9%, 10rem);
-}
-
-/* Nro. Seguimiento */
-
-/* Filas responsive */
-.pedidos-table tbody tr {
-  transition: background-color var(--transition);
-}
-
-.pedidos-table tbody tr:hover {
-  background-color: var(--bg-medium);
-}
-
-/* Mejoras para texto */
-.pedidos-table td {
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  hyphens: auto;
-}
-
-/* Imágenes responsivas */
-.pedidos-table img,
-img {
-  max-width: 100%;
-  height: auto;
-  border-radius: clamp(0.25rem, 1vw, 0.5rem);
-}
-
-/* Menú contextual fluido */
-.context-menu {
+/* Dropdown de estados */
+.estado-dropdown {
   position: absolute;
-  background: var(--bg-light);
-  border: 0.063rem solid #555;
-  border-radius: clamp(0.5rem, 2vw, 1rem);
-  padding: var(--spacing-xs) 0;
-  z-index: 1000;
-  box-shadow: var(--shadow);
-  min-width: clamp(7.5rem, 20vw, 12.5rem);
-  backdrop-filter: blur(0.625rem);
-}
-
-.context-menu-item {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: none;
-  border: none;
-  color: var(--text-color);
-  cursor: pointer;
-  transition: background-color var(--transition);
-  font-size: var(--font-sm);
-  min-height: clamp(2.75rem, 6vh, 3rem);
-  text-align: left;
-}
-
-.context-menu-item:hover {
-  background-color: #444;
-}
-
-/* Estilos para fila de edición */
-.pedidos-table tr.editing-row {
-  background-color: var(--bg-medium) !important;
-  border: 0.125rem solid var(--primary-color);
-  box-shadow: 0 0 1.25rem rgba(0, 123, 255, 0.3);
-}
-
-.pedidos-table tr.editing-row td {
-  padding: var(--spacing-xs);
-}
-
-.pedidos-table tr.editing-row input,
-.pedidos-table tr.editing-row textarea,
-.pedidos-table tr.editing-row select {
-  background: #23272f;
-  color: #f5f5f7;
-  border: 0.094rem solid #3a3a3a;
-  border-radius: clamp(0.25rem, 1vw, 0.5rem);
-  padding: var(--spacing-xs);
-  font-size: var(--font-sm);
-  transition: border var(--transition), box-shadow var(--transition);
-  outline: none;
-  width: 100%;
-  box-sizing: border-box;
-  min-height: clamp(2.25rem, 5vh, 2.75rem);
-}
-
-.pedidos-table tr.editing-row input:focus,
-.pedidos-table tr.editing-row textarea:focus,
-.pedidos-table tr.editing-row select:focus {
-  border: 0.094rem solid var(--primary-color);
-  box-shadow: 0 0 0 0.125rem rgba(0, 123, 255, 0.25);
-}
-
-/* Columnas redimensionables */
-.pedidos-table th {
-  position: relative;
-  user-select: none;
-}
-
-.pedidos-table th:hover {
-  background-color: #2a2a2a;
-}
-
-.pedidos-table th .resizer {
-  position: absolute;
-  top: 0;
+  top: calc(100% + 0.25rem);
+  left: 0;
   right: 0;
-  width: clamp(0.5rem, 2vw, 1rem);
-  height: 100%;
-  cursor: col-resize;
+  background: var(--bg-dark);
+  border: 0.063rem solid var(--border-color);
+  border-radius: clamp(0.25rem, 1vw, 0.5rem);
+  box-shadow: var(--shadow);
+  z-index: 100;
+  max-height: clamp(12rem, 30vh, 16rem);
+  overflow-y: auto;
+  backdrop-filter: blur(1rem);
+}
+
+.estado-option {
+  width: 100%;
+  padding: var(--spacing-xs) var(--spacing-sm);
   background: transparent;
-  z-index: 1;
-  transition: background-color var(--transition);
+  border: none;
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: var(--font-xs);
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  transition: background var(--transition);
 }
 
-.pedidos-table th .resizer:hover {
-  background: var(--primary-color);
+.estado-option:hover {
+  background: var(--bg-medium);
 }
 
-/* MEDIA QUERIES MEJORADAS */
-
-/* Pantallas extra grandes (1440px+) */
-@media (min-width: 90rem) {
-  :root {
-    --container-max: min(90vw, 120rem);
-    --table-min: min(80rem, 85vw);
-  }
+.estado-option:first-child {
+  border-radius: clamp(0.25rem, 1vw, 0.5rem) clamp(0.25rem, 1vw, 0.5rem) 0 0;
 }
 
-/* Pantallas grandes (1200px - 1440px) */
-@media (max-width: 90rem) {
-  :root {
-    --table-min: min(70rem, 90vw);
-  }
-
-  .top-bar-container {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--spacing-md);
-  }
-
-  .header-left {
-    justify-content: center;
-  }
-
-  .header-right {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .search-input {
-    width: 100%;
-    max-width: none;
-  }
+.estado-option:last-child {
+  border-radius: 0 0 clamp(0.25rem, 1vw, 0.5rem) clamp(0.25rem, 1vw, 0.5rem);
 }
 
-/* Tablets grandes (1024px - 1200px) */
-@media (max-width: 75rem) {
-  :root {
-    --table-min: min(60rem, 95vw);
-    --font-xs: clamp(0.688rem, 2.5vw, 0.813rem);
-    --font-sm: clamp(0.813rem, 3vw, 0.938rem);
-  }
-
-  .pedidos-table th,
-  .pedidos-table td {
-    padding: var(--spacing-xs);
-  }
+/* ✅ Container de estados compactos */
+.estados-compact-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: clamp(8rem, 15vw, 12rem);
 }
 
-/* Tablets (768px - 1024px) */
-@media (max-width: 64rem) {
-  :root {
-    --table-min: min(50rem, 98vw);
-    --table-height: clamp(35vh, 60vh, 70vh);
-  }
-
-  .header-right {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--spacing-sm);
-  }
-
-  .top-bar-buttons {
-    flex-direction: row;
-    justify-content: space-between;
-  }
-
-  .search-input {
-    width: 100%;
-  }
+.estados-row {
+  display: flex;
+  gap: var(--spacing-xs);
 }
 
-/* Móviles grandes / Tablets pequeñas (480px - 768px) */
+/* ✅ Celdas de edición optimizadas */
+.client-edit-cell {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  min-width: clamp(12rem, 20vw, 16rem);
+}
+
+.client-avatar {
+  width: clamp(2.5rem, 6vw, 3rem);
+  height: clamp(2.5rem, 6vw, 3rem);
+  background: var(--bg-light);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color);
+  font-weight: 600;
+  font-size: var(--font-sm);
+  flex-shrink: 0;
+}
+
+.client-fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0;
+}
+
+.name-fields {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.name-fields input {
+  flex: 1;
+  min-width: 0;
+}
+
+.design-edit-cell {
+  max-width: clamp(10rem, 18vw, 14rem);
+}
+
+.design-details {
+  display: flex;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+}
+
+.small-input {
+  width: clamp(4rem, 8vw, 6rem);
+  flex-shrink: 0;
+}
+
+.flex-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.contact-edit-cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: clamp(8rem, 12vw, 10rem);
+}
+
+.values-edit-cell {
+  min-width: clamp(8rem, 12vw, 10rem);
+}
+
+.value-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-xs);
+}
+
+.money-input {
+  font-family: 'Courier New', monospace;
+  width: clamp(4rem, 8vw, 6rem);
+}
+
+.small-money-input {
+  font-family: 'Courier New', monospace;
+  width: clamp(3rem, 6vw, 4rem);
+}
+
+.value-label {
+  color: var(--text-color);
+  opacity: 0.7;
+  font-size: var(--font-xs);
+}
+
+.remaining-amount {
+  color: var(--text-color);
+  opacity: 0.7;
+  font-size: var(--font-xs);
+}
+
+.tracking-input {
+  font-family: 'Courier New', monospace;
+  width: 100%;
+  min-width: clamp(6rem, 10vw, 8rem);
+}
+
+/* ✅ Celdas de display optimizadas */
+.client-display-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.client-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.client-name {
+  color: var(--text-color);
+  font-weight: 500;
+  font-size: var(--font-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.client-date {
+  color: #71717a;
+  font-size: var(--font-xs);
+}
+
+.design-display-cell {
+  max-width: clamp(10rem, 18vw, 14rem);
+}
+
+.design-name {
+  color: var(--text-color);
+  font-weight: 500;
+  font-size: var(--font-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 0.125rem;
+}
+
+.design-notes {
+  color: #71717a;
+  font-size: var(--font-xs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.contact-display-cell {
+  min-width: clamp(8rem, 12vw, 10rem);
+}
+
+.contact-method {
+  color: var(--text-color);
+  font-size: var(--font-sm);
+  margin-bottom: 0.125rem;
+}
+
+.contact-phone {
+  color: #71717a;
+  font-size: var(--font-xs);
+}
+
+.value-display-cell {
+  min-width: clamp(8rem, 12vw, 10rem);
+}
+
+.main-value {
+  color: var(--text-color);
+  font-family: 'Courier New', monospace;
+  font-size: var(--font-sm);
+  margin-bottom: 0.125rem;
+}
+
+.remaining-value {
+  color: #71717a;
+  font-size: var(--font-xs);
+}
+
+.payment-display-cell {
+  min-width: clamp(8rem, 12vw, 10rem);
+}
+
+.payment-item {
+  color: var(--text-color);
+  font-family: 'Courier New', monospace;
+  font-size: var(--font-xs);
+  margin-bottom: 0.125rem;
+}
+
+.payment-item:last-child {
+  margin-bottom: 0;
+}
+
+.tracking-display-cell {
+  font-family: 'Courier New', monospace;
+  font-size: var(--font-xs);
+  color: var(--text-color);
+  min-width: clamp(6rem, 10vw, 8rem);
+}
+
+/* ✅ Archivos optimizados */
+.file-upload-button {
+  color: #a1a1aa;
+  background: transparent;
+  border: 0.063rem solid rgba(63, 63, 70, 0.5);
+  border-radius: clamp(0.25rem, 1vw, 0.5rem);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-xs);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  transition: all var(--transition);
+  text-decoration: none;
+}
+
+.file-upload-button:hover {
+  color: var(--text-color);
+  background: var(--bg-medium);
+  border-color: rgba(96, 165, 250, 0.5);
+}
+
+.file-view-button {
+  color: #a1a1aa;
+  background: transparent;
+  border: 0.063rem solid rgba(63, 63, 70, 0.5);
+  border-radius: clamp(0.25rem, 1vw, 0.5rem);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-xs);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  transition: all var(--transition);
+}
+
+.file-view-button:hover {
+  color: var(--text-color);
+  background: var(--bg-medium);
+  border-color: rgba(96, 165, 250, 0.5);
+}
+
+.file-image-container {
+  position: relative;
+  width: clamp(3rem, 8vw, 4rem);
+  height: clamp(3rem, 8vw, 4rem);
+}
+
+.file-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: clamp(0.25rem, 1vw, 0.5rem);
+  border: 0.063rem solid rgba(63, 63, 70, 0.5);
+  transition: border-color var(--transition);
+}
+
+.file-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: clamp(0.25rem, 1vw, 0.5rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.file-image-container:hover .file-overlay {
+  opacity: 1;
+}
+
+.file-action-btn {
+  color: var(--text-color);
+  font-size: var(--font-xs);
+  background: var(--bg-dark);
+  padding: var(--spacing-xs);
+  border-radius: clamp(0.25rem, 1vw, 0.5rem);
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition);
+  min-width: 2rem;
+}
+
+.file-action-btn:hover {
+  background: var(--bg-light);
+}
+
+.file-action-btn.delete {
+  color: #ef4444;
+}
+
+.loading-text {
+  color: #71717a;
+  font-size: var(--font-xs);
+  font-style: italic;
+}
+
+/* ✅ Estados de tabla */
+.loading-state,
+.error-state,
+.empty-state {
+  text-align: center;
+  padding: var(--spacing-lg);
+  color: #71717a;
+  font-size: var(--font-sm);
+}
+
+.error-state {
+  color: #ef4444;
+}
+
+/* ✅ Menú contextual mejorado */
+.context-menu-item.delete {
+  color: #ef4444;
+}
+
+/* ✅ Optimizaciones para móviles */
 @media (max-width: 48rem) {
-  :root {
-    --spacing-xs: clamp(0.188rem, 1vw, 0.375rem);
-    --spacing-sm: clamp(0.375rem, 2vw, 0.75rem);
-    --spacing-md: clamp(0.75rem, 3vw, 1.125rem);
-    --table-min: min(40rem, 100vw);
-    --table-height: clamp(30vh, 55vh, 65vh);
+  .estados-compact-container {
+    min-width: clamp(6rem, 12vw, 8rem);
   }
-
-  .pedidos-page-container {
-    padding: var(--spacing-sm);
+  
+  .estado-button {
+    padding: var(--spacing-xs);
+    min-height: clamp(2rem, 5vh, 2.5rem);
   }
-
-  .top-bar-container {
+  
+  .estado-label {
+    display: none; /* Solo mostrar códigos cortos en móvil */
+  }
+  
+  .client-edit-cell,
+  .client-display-cell {
     flex-direction: column;
-    align-items: stretch;
-    gap: var(--spacing-sm);
-  }
-
-  .header-left {
-    justify-content: center;
-  }
-
-  .header-right {
-    flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
     gap: var(--spacing-xs);
   }
-
-  .top-bar-buttons {
+  
+  .client-avatar {
+    width: 2rem;
+    height: 2rem;
+  }
+  
+  .name-fields {
     flex-direction: column;
-    gap: var(--spacing-xs);
   }
-
-  .filter-button,
-  .new-pedido-button {
-    width: 100%;
+  
+  .design-details {
+    flex-direction: column;
   }
-
-  /* Simplificar columnas en móviles */
-  .pedidos-table th:nth-child(n+10) {
-    display: none;
+  
+  .estados-row {
+    flex-direction: column;
   }
-
-  .pedidos-table td:nth-child(n+10) {
-    display: none;
+  
+  .file-image-container {
+    width: 2.5rem;
+    height: 2.5rem;
   }
 }
 
-/* Móviles pequeños (320px - 480px) */
-@media (max-width: 30rem) {
-  :root {
-    --table-min: min(32rem, 100vw);
-    --table-height: clamp(25vh, 50vh, 60vh);
+/* ✅ Optimizaciones para tablets */
+@media (max-width: 64rem) and (min-width: 48rem) {
+  .estado-label {
+    display: none; /* En tablets también usar códigos cortos */
   }
-
-  .search-input {
-    font-size: 1rem;
-    /* Evitar zoom en iOS */
-  }
-
-  /* Mostrar solo columnas esenciales */
-  .pedidos-table th:nth-child(n+7) {
-    display: none;
-  }
-
-  .pedidos-table td:nth-child(n+7) {
-    display: none;
-  }
-
-  .pedidos-table th .resizer {
-    width: clamp(0.75rem, 3vw, 1rem);
+  
+  .estados-compact-container {
+    min-width: clamp(7rem, 14vw, 10rem);
   }
 }
 
-/* Dispositivos táctiles */
-@media (hover: none) and (pointer: coarse) {
-
-  .filter-button,
-  .new-pedido-button {
-    min-height: clamp(3rem, 8vh, 4rem);
-  }
-
-  .context-menu-item {
-    min-height: clamp(3rem, 8vh, 4rem);
-    padding: var(--spacing-md);
-  }
-
-  .pedidos-table tr.editing-row input,
-  .pedidos-table tr.editing-row textarea,
-  .pedidos-table tr.editing-row select {
-    min-height: clamp(2.75rem, 7vh, 3.5rem);
-    font-size: 1rem;
-    /* Evitar zoom en iOS */
-  }
-}
-
-/* Modo landscape en móviles */
+/* ✅ Modo landscape móvil */
 @media (max-width: 48rem) and (orientation: landscape) {
-  :root {
-    --table-height: clamp(25vh, 40vh, 50vh);
-  }
-
-  .top-bar-container {
-    flex-direction: row;
-    justify-content: space-between;
-  }
-
-  .header-right {
+  .client-edit-cell,
+  .client-display-cell {
     flex-direction: row;
     align-items: center;
   }
+  
+  .name-fields {
+    flex-direction: row;
+  }
+  
+  .design-details {
+    flex-direction: row;
+  }
+  
+  .estados-row {
+    flex-direction: row;
+  }
 }
 
-/* Accesibilidad */
+/* ✅ Accesibilidad mejorada */
 @media (prefers-reduced-motion: reduce) {
-  * {
-    transition: none !important;
-    animation: none !important;
+  .estado-button,
+  .file-upload-button,
+  .file-view-button {
+    transition: none;
   }
 }
 
+/* ✅ Contraste alto */
 @media (prefers-contrast: high) {
-  :root {
-    --border-color: #666;
-    --bg-light: #444;
-    --bg-medium: #333;
+  .estado-button {
+    border-width: 0.125rem;
   }
-
-  .pedidos-table th,
-  .pedidos-table td {
-    border-bottom: 0.125rem solid var(--border-color);
+  
+  .file-upload-button,
+  .file-view-button {
+    border-width: 0.125rem;
   }
 }
 
-/* Modo oscuro nativo del sistema */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-dark: #0a0a0a;
-    --bg-medium: #1a1a1a;
-    --bg-light: #2a2a2a;
-  }
+/* ✅ Utilidades adicionales */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-/* Contenedor para elementos flotantes (botones, modales) */
-.floating-elements {
-  position: fixed;
-  bottom: var(--spacing-md);
-  right: var(--spacing-md);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-  z-index: 100;
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* Utilidades de layout fluido */
-.fluid-container {
-  width: 100%;
-  max-width: var(--container-max);
-  margin: 0 auto;
-  padding: 0 var(--spacing-md);
-}
-
-.flex-responsive {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-sm);
-  align-items: center;
-}
-
-.grid-responsive {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-  gap: var(--spacing-md);
-}
-
-/* Estados de carga responsivos */
-.loading-state {
+.flex-center {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: clamp(10rem, 30vh, 20rem);
-  font-size: var(--font-md);
-  color: var(--text-color);
 }
 
-/* Animaciones fluidas */
-@keyframes fadeIn {
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ✅ Animaciones suaves */
+@keyframes slideIn {
   from {
     opacity: 0;
-    transform: translateY(1rem);
+    transform: translateY(-0.5rem);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-.fade-in {
-  animation: fadeIn 0.3s ease-out;
+.estado-dropdown {
+  animation: slideIn 0.2s ease-out;
+}
+
+.filter-panel-overlay {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Reducir ancho columna ESTADO un 30% */
+th.estado-col, td.estado-col {
+  width: 70px;
+  max-width: 70px;
+  min-width: 50px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

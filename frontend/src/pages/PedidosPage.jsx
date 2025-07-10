@@ -810,7 +810,13 @@ function PedidosPage() {
                     fontSize: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    textAlign: 'left'
+                    textAlign: 'left',
+                    width: '290px',
+                    maxWidth: '290px',
+                    minWidth: '50px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
                   }}>
                     Estado
                   </th>
@@ -1267,7 +1273,7 @@ function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, ha
         </div>
       </td>
       {/* Estado */}
-      <td>
+      <td style={{ minWidth: '70px', width: '70px', maxWidth: '70px', whiteSpace: 'nowrap' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <EstadoSelect
             value={pedido.estado_fabricacion}
