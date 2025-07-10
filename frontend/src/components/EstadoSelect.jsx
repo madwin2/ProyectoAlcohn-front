@@ -28,6 +28,10 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
         'Despachado': 'bg-teal-500/10 text-teal-400 border-teal-500/20',
         'Seguimiento Enviado': 'bg-green-500/10 text-green-400 border-green-500/20',
       },
+      vectorizacion: {
+        'Para Vectorizar': 'bg-red-500/10 text-red-400 border-red-500/20',
+        'Vectorizado': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+      },
     };
 
     return colorMap[tipo]?.[estado] || 'bg-slate-500/10 text-slate-400 border-slate-500/20';
@@ -56,6 +60,10 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
         'Etiqueta Lista': 'Etiqueta Lista',
         'Despachado': 'Despachado',
         'Seguimiento Enviado': 'Seguimiento Enviado',
+      },
+      vectorizacion: {
+        'Para Vectorizar': 'Para Vectorizar',
+        'Vectorizado': 'Vectorizado',
       },
     };
 
@@ -107,8 +115,8 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
           border: '1px solid',
           transition: 'all 0.3s ease',
           cursor: isDisabled ? 'not-allowed' : 'pointer',
-          minWidth: type === 'venta' ? 'unset' : '130px',
-          width: type === 'venta' ? 'unset' : '100%',
+          minWidth: type === 'vectorizacion' ? '130px' : type === 'venta' ? 'unset' : '130px',
+          width: type === 'vectorizacion' ? '130px' : type === 'venta' ? 'unset' : '100%',
           outline: 'none',
           opacity: isDisabled ? 0.5 : 1,
           pointerEvents: isDisabled ? 'none' : 'auto',

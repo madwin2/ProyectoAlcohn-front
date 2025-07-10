@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import AddPedidoModal from '../components/AddPedidoModal';
 import EstadoSelect from '../components/EstadoSelect';
+import FilterPanel from '../components/FilterPanel';
 import {
   Plus,
   Filter,
@@ -85,6 +86,40 @@ function ProduccionPage() {
   const [error, setError] = useState(null);
   const [sortOrder, setSortOrder] = useState('desc');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [filterOptions, setFilterOptions] = useState({
+    estado_fabricacion: [],
+  });
+  const [filters, setFilters] = useState(initialFiltersState);
+  const [debouncedFilters, setDebouncedFilters] = useState(initialFiltersState);
+
+  useEffect(() => {
+    const fetchFilterOptions = async () => {
+      const { data } = await supabase.from('pedidos').select('estado_fabricacion');
+      if (data) {
+        setFilterOptions({
+          estado_fabricacion: [...new Set(data.map(item => item.estado_fabricacion).filter(Boolean))],
+        });
+      }
+    };
+    fetchFilterOptions();
+  }, []);
+
+  useEffect(() => {
+    const timerId = setTimeout(() => setDebouncedSearchTerm(searchTerm), 500);
+    return () => clearTimeout(timerId);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    const timerId = setTimeout(() => setDebouncedFilters(filters), 300);
+    return () => clearTimeout(timerId);
+  }, [filters]);
+
+  const onClearFilters = () => {
+    setFilters(initialFiltersState);
+  };
 
   useEffect(() => {
     const getPedidos = async () => {
@@ -92,6 +127,20 @@ function ProduccionPage() {
         setLoading(true);
         setError(null);
         let query = supabase.from('pedidos').select('*');
+        // Filtros de búsqueda
+        if (debouncedSearchTerm) {
+          query = query.ilike('disenio', `%${debouncedSearchTerm}%`);
+        }
+        if (debouncedFilters.fecha_compra_gte) {
+          query = query.gte('fecha_compra', debouncedFilters.fecha_compra_gte);
+        }
+        if (debouncedFilters.fecha_compra_lte) {
+          const isoEndOfDay = getInclusiveEndDateISOString(debouncedFilters.fecha_compra_lte);
+          query = query.lte('fecha_compra', isoEndOfDay);
+        }
+        if (debouncedFilters.estado_fabricacion.length > 0) {
+          query = query.in('estado_fabricacion', debouncedFilters.estado_fabricacion);
+        }
         query = query.order('fecha_compra', { ascending: sortOrder === 'asc' });
         const { data, error: fetchError } = await query;
         if (fetchError) throw fetchError;
@@ -103,7 +152,7 @@ function ProduccionPage() {
       }
     };
     getPedidos();
-  }, [sortOrder]);
+  }, [sortOrder, debouncedSearchTerm, debouncedFilters]);
 
   const handlePedidoAdded = () => {
     setIsModalOpen(false);
@@ -132,6 +181,36 @@ function ProduccionPage() {
     }
   };
 
+  const handleMaquinaChange = async (pedido, nuevaMaquina) => {
+    try {
+      await supabase.rpc('editar_pedido', {
+        p_id: pedido.id_pedido,
+        p_tipo_maquina: nuevaMaquina
+      });
+      // Refrescar pedidos
+      const { data } = await supabase.from('pedidos').select('*');
+      setPedidos(data || []);
+    } catch (err) {
+      alert('Error al actualizar la máquina');
+    }
+  };
+
+  const handleVectorizacionChange = async (pedido, nuevaVectorizacion) => {
+    try {
+      await supabase.rpc('editar_pedido', {
+        p_id: pedido.id_pedido,
+        p_vectorizacion: nuevaVectorizacion
+      });
+      // Refrescar pedidos
+      const { data } = await supabase.from('pedidos').select('*');
+      setPedidos(data || []);
+    } catch (err) {
+      alert('Error al actualizar la vectorización');
+    }
+  };
+
+  const hayFiltrosActivos = Object.values(filters).some((filtro) => filtro !== "" && filtro !== null && (!Array.isArray(filtro) || filtro.length > 0));
+
   return (
     <div style={{ background: '#000', minHeight: '100vh', color: 'white' }}>
       <div style={{ borderBottom: '1px solid rgba(39, 39, 42, 0.5)', background: 'rgba(9, 9, 11, 0.8)', position: 'sticky', top: 0, zIndex: 10, padding: '24px 32px' }}>
@@ -151,15 +230,127 @@ function ProduccionPage() {
               </div>
             </div>
           </div>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            style={{ background: 'white', color: 'black', border: 'none', fontWeight: '500', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', transition: 'background 0.3s ease' }}
-            onMouseEnter={e => e.target.style.background = '#e5e7eb'}
-            onMouseLeave={e => e.target.style.background = 'white'}
-          >
-            <Plus style={{ width: '16px', height: '16px' }} />
-            Nuevo
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ position: 'relative' }}>
+              <Search style={{
+                position: 'absolute',
+                left: '16px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '16px',
+                height: '16px',
+                color: '#71717a'
+              }} />
+              <input
+                placeholder="Buscar..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  width: '320px',
+                  background: 'rgba(39, 39, 42, 0.5)',
+                  border: '1px solid rgba(63, 63, 70, 0.5)',
+                  color: 'white',
+                  borderRadius: '8px',
+                  padding: '8px 16px 8px 44px',
+                  outline: 'none',
+                  fontSize: '14px',
+                  transition: 'border-color 0.3s ease'
+                }}
+                onFocus={(e) => e.target.style.borderColor = 'rgba(96, 165, 250, 0.5)'}
+                onBlur={(e) => e.target.style.borderColor = 'rgba(63, 63, 70, 0.5)'}
+              />
+            </div>
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowFilterPanel(!showFilterPanel)}
+                style={{
+                  color: hayFiltrosActivos ? 'white' : '#a1a1aa',
+                  background: hayFiltrosActivos ? 'rgba(39, 39, 42, 0.5)' : 'transparent',
+                  border: 'none',
+                  padding: '8px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.color = 'white';
+                  e.target.style.background = 'rgba(39, 39, 42, 0.5)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.color = hayFiltrosActivos ? 'white' : '#a1a1aa';
+                  e.target.style.background = hayFiltrosActivos ? 'rgba(39, 39, 42, 0.5)' : 'transparent';
+                }}
+              >
+                <Filter style={{ width: '16px', height: '16px' }} />
+              </button>
+              {showFilterPanel && (
+                <div style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: '48px',
+                  width: '384px',
+                  background: 'rgba(9, 9, 11, 0.95)',
+                  backdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(39, 39, 42, 0.5)',
+                  borderRadius: '8px',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                  zIndex: 50,
+                  padding: '24px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{
+                        width: '4px',
+                        height: '24px',
+                        background: 'linear-gradient(to bottom, #3b82f6, #8b5cf6)',
+                        borderRadius: '9999px'
+                      }}></div>
+                      <h3 style={{ fontSize: '18px', fontWeight: '500', color: 'white', margin: 0 }}>Filtros</h3>
+                    </div>
+                    {hayFiltrosActivos && (
+                      <button
+                        onClick={onClearFilters}
+                        style={{
+                          color: '#a1a1aa',
+                          background: 'transparent',
+                          border: 'none',
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          transition: 'all 0.3s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.color = 'white';
+                          e.target.style.background = 'rgba(39, 39, 42, 0.5)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.color = '#a1a1aa';
+                          e.target.style.background = 'transparent';
+                        }}
+                      >
+                        <X style={{ width: '12px', height: '12px' }} />
+                        Limpiar
+                      </button>
+                    )}
+                  </div>
+                  <FilterPanel
+                    filterOptions={filterOptions}
+                    filters={filters}
+                    setFilters={setFilters}
+                    onClear={onClearFilters}
+                    isExpanded={showFilterPanel}
+                    onToggle={() => setShowFilterPanel(!showFilterPanel)}
+                    showHeader={false}
+                    visibleFilters={['fecha', 'estado_fabricacion']}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
       <AddPedidoModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onPedidoAdded={handlePedidoAdded} />
@@ -174,7 +365,8 @@ function ProduccionPage() {
                   <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', padding: '16px 12px', verticalAlign: 'middle' }}>Medida</th>
                   <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', padding: '16px 12px', verticalAlign: 'middle' }}>Notas</th>
                   <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', padding: '16px 12px', verticalAlign: 'middle' }}>Estado</th>
-                  <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', padding: '16px 12px', verticalAlign: 'middle', minWidth: '220px' }}>Base</th>
+                  <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', padding: '16px 12px', verticalAlign: 'middle', minWidth: '140px' }}>Vectorización</th>
+                  <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center', padding: '16px 12px', verticalAlign: 'middle', minWidth: '220px' }}>Base</th>
                   <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center', padding: '16px 12px', verticalAlign: 'middle' }}>Vector</th>
                   <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center', padding: '16px 12px', verticalAlign: 'middle' }}>F Sello</th>
                 </tr>
@@ -220,27 +412,18 @@ function ProduccionPage() {
                             size="small"
                             style={{ width: '75%' }}
                           />
-                          <div style={{ display: 'flex', width: '100%' }}>
-                            <EstadoSelect
-                              value={pedido.estado_venta}
-                              onChange={val => handleEstadoChange(pedido, 'estado_venta', val)}
-                              options={ESTADOS_VENTA}
-                              type="venta"
-                              isDisabled={pedido.estado_fabricacion !== "Hecho"}
-                              size="small"
-                              style={{ width: '50%' }}
-                            />
-                            <EstadoSelect
-                              value={pedido.estado_envio}
-                              onChange={val => handleEstadoChange(pedido, 'estado_envio', val)}
-                              options={ESTADOS_ENVIO}
-                              type="envio"
-                              isDisabled={pedido.estado_venta !== "Transferido"}
-                              size="small"
-                              style={{ width: '50%' }}
-                            />
-                          </div>
                         </div>
+                      </td>
+                      <td style={{ padding: '16px 12px', textAlign: 'left', verticalAlign: 'middle' }}>
+                        <EstadoSelect
+                          value={pedido.vectorizacion || 'Para Vectorizar'}
+                          onChange={val => handleVectorizacionChange(pedido, val)}
+                          options={['Para Vectorizar', 'Vectorizado']}
+                          type="vectorizacion"
+                          isDisabled={false}
+                          size="small"
+                          style={{ width: '60%' }}
+                        />
                       </td>
                       <td style={{ padding: '16px 12px', textAlign: 'center', verticalAlign: 'middle' }}>
                         <ArchivoCell
@@ -502,6 +685,33 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, ed
         <Upload style={{ width: '12px', height: '12px' }} />
         {field === 'foto_sello' ? 'Foto' : 'Ver'}
       </button>
+    </div>
+  );
+}
+
+function MaquinaSelect({ value, onChange }) {
+  return (
+    <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+      {['G', 'C'].map(opt => (
+        <button
+          key={opt}
+          onClick={() => onChange(opt)}
+          style={{
+            background: value === opt ? '#3b82f6' : 'transparent',
+            color: value === opt ? 'white' : '#a1a1aa',
+            border: '1px solid #3b82f6',
+            borderRadius: '6px',
+            padding: '4px 12px',
+            fontWeight: 600,
+            fontSize: '15px',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            outline: 'none',
+          }}
+        >
+          {opt}
+        </button>
+      ))}
     </div>
   );
 }

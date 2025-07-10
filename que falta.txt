@@ -1,11 +1,7 @@
-Bloqueo Segun Estado
-Ajustar Buscador
-Ajustar Modal Agregar Pedido
 Ajustar Filtro
-Ajustar Ordenar
+Ajustar Ordenar en ambas paginas
 Sonidos
 Transiciones
 Colores
 Anadir Tarea
 Ajustar Editar
-ajustar barra lateral
