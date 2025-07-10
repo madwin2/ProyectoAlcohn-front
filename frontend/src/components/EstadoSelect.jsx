@@ -93,6 +93,7 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
       <button
         type="button"
         onClick={handleButtonClick}
+        className={`estado-button${type === 'venta' ? ' venta' : ''}`}
         style={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -104,7 +105,8 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
           border: '1px solid',
           transition: 'all 0.3s ease',
           cursor: 'pointer',
-          minWidth: '130px',
+          minWidth: type === 'venta' ? 'unset' : '130px',
+          width: type === 'venta' ? 'unset' : '100%',
           outline: 'none',
           background: colorClass.includes('bg-slate') ? 'rgba(100, 116, 139, 0.1)' :
             colorClass.includes('bg-cyan') ? 'rgba(6, 182, 212, 0.1)' :
@@ -139,7 +141,6 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
                           colorClass.includes('border-green') ? 'rgba(34, 197, 94, 0.2)' :
                             colorClass.includes('border-orange') ? 'rgba(249, 115, 22, 0.2)' :
                               colorClass.includes('border-violet') ? 'rgba(139, 92, 246, 0.2)' : 'rgba(100, 116, 139, 0.2)',
-          width: '100%'
         }}
       >
         <span style={{

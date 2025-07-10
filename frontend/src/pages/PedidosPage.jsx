@@ -749,18 +749,9 @@ function PedidosPage() {
                     fontSize: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    padding: '24px 24px 24px 24px',
-                    textAlign: 'left'
-                  }}>
-                    Cliente
-                  </th>
-                  <th style={{
-                    color: '#a1a1aa',
-                    fontWeight: '500',
-                    fontSize: '12px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    textAlign: 'left'
+                    textAlign: 'left',
+                    padding: '16px 12px',
+                    verticalAlign: 'middle'
                   }}>
                     Fecha
                   </th>
@@ -770,7 +761,21 @@ function PedidosPage() {
                     fontSize: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    textAlign: 'left'
+                    textAlign: 'left',
+                    padding: '16px 12px',
+                    verticalAlign: 'middle'
+                  }}>
+                    Cliente
+                  </th>
+                  <th style={{
+                    color: '#a1a1aa',
+                    fontWeight: '500',
+                    fontSize: '12px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    textAlign: 'left',
+                    padding: '16px 12px',
+                    verticalAlign: 'middle'
                   }}>
                     Diseño
                   </th>
@@ -780,7 +785,9 @@ function PedidosPage() {
                     fontSize: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    textAlign: 'left'
+                    textAlign: 'left',
+                    padding: '16px 12px',
+                    verticalAlign: 'middle'
                   }}>
                     Contacto
                   </th>
@@ -790,17 +797,9 @@ function PedidosPage() {
                     fontSize: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    textAlign: 'left'
-                  }}>
-                    Valor
-                  </th>
-                  <th style={{
-                    color: '#a1a1aa',
-                    fontWeight: '500',
-                    fontSize: '12px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    textAlign: 'left'
+                    textAlign: 'left',
+                    padding: '16px 12px',
+                    verticalAlign: 'middle'
                   }}>
                     Seña/Envío
                   </th>
@@ -811,12 +810,21 @@ function PedidosPage() {
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
                     textAlign: 'left',
-                    width: '290px',
-                    maxWidth: '290px',
-                    minWidth: '50px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
+                    padding: '16px 12px',
+                    verticalAlign: 'middle'
+                  }}>
+                    Valor
+                  </th>
+                  <th style={{
+                    color: '#a1a1aa',
+                    fontWeight: '500',
+                    fontSize: '12px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    textAlign: 'left',
+                    padding: '16px 12px',
+                    verticalAlign: 'middle',
+                    minWidth: '220px'
                   }}>
                     Estado
                   </th>
@@ -826,7 +834,9 @@ function PedidosPage() {
                     fontSize: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    textAlign: 'left'
+                    textAlign: 'center',
+                    padding: '16px 12px',
+                    verticalAlign: 'middle'
                   }}>
                     Base
                   </th>
@@ -836,7 +846,9 @@ function PedidosPage() {
                     fontSize: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    textAlign: 'left'
+                    textAlign: 'center',
+                    padding: '16px 12px',
+                    verticalAlign: 'middle'
                   }}>
                     Vector
                   </th>
@@ -846,7 +858,9 @@ function PedidosPage() {
                     fontSize: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    textAlign: 'left'
+                    textAlign: 'center',
+                    padding: '16px 12px',
+                    verticalAlign: 'middle'
                   }}>
                     F Sello
                   </th>
@@ -856,7 +870,9 @@ function PedidosPage() {
                     fontSize: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    textAlign: 'left'
+                    textAlign: 'left',
+                    padding: '16px 12px',
+                    verticalAlign: 'middle'
                   }}>
                     Seguimiento
                   </th>
@@ -1211,9 +1227,21 @@ function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, ha
         startEdit(pedido);
       }}
     >
+      {/* Fecha */}
+      <td style={{ padding: '16px 12px' }}>
+        <span style={{ color: '#a1a1aa', fontSize: '13px' }}>
+          {pedido.fecha_compra ? new Date(pedido.fecha_compra).toLocaleDateString() : '-'}
+        </span>
+      </td>
       {/* Nombre/Apellido */}
-      <td style={{ padding: '16px 12px', minWidth: '120px', verticalAlign: 'top' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', paddingLeft: '16px' }}>
+      <td style={{ padding: '16px 12px', minWidth: '120px' }}>
+        <div style={{
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          gap: '2px'
+        }}>
           <span style={{ color: 'white', fontWeight: '500', fontSize: '15px', lineHeight: '1.1' }}>
             {pedido.clientes?.nombre_cliente || 'N/A'}
           </span>
@@ -1222,14 +1250,8 @@ function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, ha
           </span>
         </div>
       </td>
-      {/* Fecha */}
-      <td>
-        <span style={{ color: '#a1a1aa', fontSize: '13px' }}>
-          {pedido.fecha_compra ? new Date(pedido.fecha_compra).toLocaleDateString() : '-'}
-        </span>
-      </td>
       {/* Diseño/Notas */}
-      <td>
+      <td style={{ padding: '16px 12px' }}>
         <div style={{ maxWidth: '192px' }}>
           <p style={{ color: 'white', fontWeight: '500', margin: '0 0 2px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '15px' }}>
             {pedido.disenio || "Sin especificar"}
@@ -1240,7 +1262,7 @@ function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, ha
         </div>
       </td>
       {/* Contacto */}
-      <td>
+      <td style={{ padding: '16px 12px' }}>
         <div>
           <p style={{ color: 'white', fontSize: '14px', margin: '0 0 2px 0' }}>
             {pedido.clientes?.medio_contacto || 'N/A'}
@@ -1250,19 +1272,8 @@ function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, ha
           </p>
         </div>
       </td>
-      {/* Valor Sello/Restante */}
-      <td>
-        <div>
-          <p style={{ color: 'white', fontFamily: 'monospace', fontSize: '15px', margin: '0 0 2px 0' }}>
-            ${pedido.valor_sello?.toLocaleString()}
-          </p>
-          <span style={{ color: '#71717a', fontSize: '12px', display: 'block', margin: 0 }}>
-            Resta: ${pedido.restante_pagar?.toLocaleString()}
-          </span>
-        </div>
-      </td>
-      {/* Valor Seña/Envío */}
-      <td>
+      {/* Seña/Envío */}
+      <td style={{ padding: '16px 12px' }}>
         <div>
           <p style={{ color: 'white', fontFamily: 'monospace', fontSize: '14px', margin: '0 0 2px 0' }}>
             Seña: ${pedido.valor_senia?.toLocaleString() || 0}
@@ -1272,8 +1283,19 @@ function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, ha
           </p>
         </div>
       </td>
+      {/* Valor Sello/Restante */}
+      <td style={{ padding: '16px 12px' }}>
+        <div>
+          <p style={{ color: 'white', fontFamily: 'monospace', fontSize: '15px', margin: '0 0 2px 0' }}>
+            ${pedido.valor_sello?.toLocaleString()}
+          </p>
+          <span style={{ color: '#71717a', fontSize: '12px', display: 'block', margin: 0 }}>
+            Resta: ${pedido.restante_pagar?.toLocaleString()}
+          </span>
+        </div>
+      </td>
       {/* Estado */}
-      <td style={{ minWidth: '70px', width: '70px', maxWidth: '70px', whiteSpace: 'nowrap' }}>
+      <td style={{ minWidth: '220px', padding: '16px 12px', verticalAlign: 'middle' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <EstadoSelect
             value={pedido.estado_fabricacion}
@@ -1283,7 +1305,7 @@ function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, ha
             isDisabled={false}
             size="small"
           />
-          <div style={{ display: 'flex', gap: '2px' }}>
+          <div style={{ display: 'flex', gap: '4px' }}>
             <EstadoSelect
               value={pedido.estado_venta}
               onChange={val => handleEstadoChange('estado_venta', val)}
@@ -1304,7 +1326,7 @@ function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, ha
         </div>
       </td>
       {/* Base */}
-      <td>
+      <td style={{ padding: '16px 12px', textAlign: 'center', verticalAlign: 'middle' }}>
         <ArchivoCell
           filePath={pedido.archivo_base}
           nombre="Archivo Base"
@@ -1315,7 +1337,7 @@ function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, ha
         />
       </td>
       {/* Vector */}
-      <td>
+      <td style={{ padding: '16px 12px', textAlign: 'center', verticalAlign: 'middle' }}>
         <ArchivoCell
           filePath={pedido.archivo_vector}
           nombre="Archivo Vector"
@@ -1326,7 +1348,7 @@ function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, ha
         />
       </td>
       {/* Foto Sello */}
-      <td>
+      <td style={{ padding: '16px 12px', textAlign: 'center', verticalAlign: 'middle' }}>
         <ArchivoCell
           filePath={pedido.foto_sello}
           nombre="Foto Sello"
@@ -1337,7 +1359,7 @@ function DisplayRow({ pedido, handleRowRightClick, startEdit, getEstadoStyle, ha
         />
       </td>
       {/* Seguimiento */}
-      <td>
+      <td style={{ padding: '16px 12px' }}>
         <div style={{ fontFamily: 'monospace', fontSize: '13px', color: pedido.numero_seguimiento ? '#d4d4d8' : '#71717a', fontStyle: pedido.numero_seguimiento ? 'normal' : 'italic' }}>
           {pedido.numero_seguimiento || 'Sin asignar'}
         </div>
@@ -1414,40 +1436,42 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, ed
 
   if (!filePath) {
     return (
-      <label style={{
-        color: '#a1a1aa',
-        background: 'transparent',
-        border: '1px solid rgba(63, 63, 70, 0.5)',
-        borderRadius: '8px',
-        padding: '6px 12px',
-        fontSize: '12px',
-        cursor: 'pointer',
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '4px',
-        transition: 'all 0.3s ease'
-      }}
-        onMouseEnter={(e) => {
-          e.target.style.color = 'white';
-          e.target.style.background = 'rgba(39, 39, 42, 0.5)';
-          e.target.style.borderColor = 'rgba(96, 165, 250, 0.5)';
+      <div style={{ height: '100%', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <label style={{
+          color: '#a1a1aa',
+          background: 'transparent',
+          border: '1px solid rgba(63, 63, 70, 0.5)',
+          borderRadius: '8px',
+          padding: '6px 12px',
+          fontSize: '12px',
+          cursor: 'pointer',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          transition: 'all 0.3s ease'
         }}
-        onMouseLeave={(e) => {
-          e.target.style.color = '#a1a1aa';
-          e.target.style.background = 'transparent';
-          e.target.style.borderColor = 'rgba(63, 63, 70, 0.5)';
-        }}
-      >
-        <Upload style={{ width: '12px', height: '12px' }} />
-        {field === 'foto_sello' ? 'Foto' : 'Subir'}
-        <input
-          type="file"
-          onChange={handleFileUpload}
-          style={{ display: 'none' }}
-          disabled={isUploading}
-          accept="image/*,.pdf,.doc,.docx,.txt"
-        />
-      </label>
+          onMouseEnter={(e) => {
+            e.target.style.color = 'white';
+            e.target.style.background = 'rgba(39, 39, 42, 0.5)';
+            e.target.style.borderColor = 'rgba(96, 165, 250, 0.5)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.color = '#a1a1aa';
+            e.target.style.background = 'transparent';
+            e.target.style.borderColor = 'rgba(63, 63, 70, 0.5)';
+          }}
+        >
+          <Upload style={{ width: '12px', height: '12px' }} />
+          {field === 'foto_sello' ? 'Foto' : 'Subir'}
+          <input
+            type="file"
+            onChange={handleFileUpload}
+            style={{ display: 'none' }}
+            disabled={isUploading}
+            accept="image/*,.pdf,.doc,.docx,.txt"
+          />
+        </label>
+      </div>
     );
   }
 
@@ -1457,69 +1481,78 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, ed
 
   if (isImage) {
     return (
-      <div
-        style={{ position: 'relative', width: '48px', height: '48px' }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        <a href={signedUrl} target="_blank" rel="noopener noreferrer">
-          <img
-            src={signedUrl}
-            alt={nombre}
-            style={{
-              width: '48px',
-              height: '48px',
-              objectFit: 'cover',
-              borderRadius: '6px',
-              border: '1px solid rgba(63, 63, 70, 0.5)',
-              transition: 'border-color 0.3s ease'
-            }}
-          />
-        </a>
-        {isHovered && (
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'rgba(0, 0, 0, 0.5)',
-            borderRadius: '6px',
+      <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: '48px', width: '48px' }}>
+        <div
+          style={{
+            position: 'relative',
+            width: '48px',
+            height: '48px',
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
-            gap: '4px'
-          }}>
-            <button
-              onClick={handleDownload}
+            justifyContent: 'center'
+          }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <a href={signedUrl} target="_blank" rel="noopener noreferrer">
+            <img
+              src={signedUrl}
+              alt={nombre}
               style={{
-                color: 'white',
-                fontSize: '10px',
-                background: 'rgba(39, 39, 42, 0.8)',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'background 0.3s ease'
+                width: '48px',
+                height: '48px',
+                objectFit: 'cover',
+                borderRadius: '6px',
+                border: '1px solid rgba(63, 63, 70, 0.5)',
+                transition: 'border-color 0.3s ease'
               }}
-            >
-              Ver
-            </button>
-            <button
-              onClick={handleDelete}
-              style={{
-                color: '#ef4444',
-                fontSize: '10px',
-                background: 'rgba(39, 39, 42, 0.8)',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'background 0.3s ease'
-              }}
-            >
-              X
-            </button>
-          </div>
-        )}
+            />
+          </a>
+          {isHovered && (
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.5)',
+              borderRadius: '6px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '4px'
+            }}>
+              <button
+                onClick={handleDownload}
+                style={{
+                  color: 'white',
+                  fontSize: '10px',
+                  background: 'rgba(39, 39, 42, 0.8)',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'background 0.3s ease'
+                }}
+              >
+                Ver
+              </button>
+              <button
+                onClick={handleDelete}
+                style={{
+                  color: '#ef4444',
+                  fontSize: '10px',
+                  background: 'rgba(39, 39, 42, 0.8)',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'background 0.3s ease'
+                }}
+              >
+                X
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     );
   }

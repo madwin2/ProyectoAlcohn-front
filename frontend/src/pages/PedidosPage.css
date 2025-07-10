@@ -138,6 +138,9 @@
 .estado-button.green { background: #16a34a; border-color: #22c55e; }
 .estado-button.orange { background: #ea580c; border-color: #f97316; }
 .estado-button.violet { background: #7c3aed; border-color: #8b5cf6; }
+.estado-button.venta {
+  max-width: 3rem;
+}
 
 .estado-button:hover {
   transform: translateY(-0.063rem);
