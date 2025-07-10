@@ -1,0 +1,61 @@
+/* Contenedor externo que permite hacer scroll horizontal en pantallas chicas */
+.pedidos-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+  }
+  
+  /* Tabla principal */
+  .pedidos-table {
+    width: 100%;
+    min-width: 900px; /* asegura que no se colapsen columnas en pantallas chicas */
+    color: white;
+    border-collapse: collapse;
+    background: #23232b;
+    margin-top: 24px;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  /* Celdas de encabezado y contenido */
+  .pedidos-table th,
+  .pedidos-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #333;
+    text-align: left;
+  }
+  
+  /* Estilos del encabezado */
+  .pedidos-table th {
+    background: #18181b;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  
+  /* Eliminamos el borde inferior de la última fila */
+  .pedidos-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .pedidos-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+  }
+  
+  .boton-agregar-pedido {
+    background-color: #60a5fa; /* azul */
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .boton-agregar-pedido:hover {
+    background-color: #3b82f6; /* azul más fuerte */
+  }
+  
+  

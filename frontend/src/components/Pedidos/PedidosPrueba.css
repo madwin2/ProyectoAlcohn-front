@@ -1,0 +1,19 @@
+.pedidos-prueba-container {
+    padding: 40px;
+    color: white;
+    background: #000000; /* fondo negro */
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  
+.pedidos-prueba-container h1 {
+  font-size: 2rem;
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+.pedidos-prueba-container p {
+  color: #71717a;
+  margin-bottom: 24px;
+  font-size: 1.1rem;
+} 
