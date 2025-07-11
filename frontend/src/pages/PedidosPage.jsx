@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import AddPedidoModal from '../components/Pedidos/AddPedidoModal';
-// import PedidoRow from '../components/Pedidos/PedidoRow';
+import PedidoRow from '../components/Pedidos/PedidoRow';
 import PageHeader from '../components/PageHeader';
 import { PedidoContextMenu, EditContextMenu } from '../components/PedidoContextMenus';
 import { Table, TableHeader, TableHeaderCell } from '../components/ui/Table';
@@ -42,7 +42,12 @@ function PedidosPage() {
     api.getPedidos();
     // Return cleanup function
     return () => {};
-  }, [api.getPedidos]);
+  }, []); // Solo ejecutar al montar el componente
+
+  // Actualizar pedidos cuando cambien los filtros o búsqueda
+  useEffect(() => {
+    api.getPedidos();
+  }, [debouncedSearchTerm, debouncedFilters, state.sortOrder, api.getPedidos]);
 
   useEffect(() => {
     const handleClickOutside = () => {
@@ -62,7 +67,7 @@ function PedidosPage() {
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [editingId, api.saveEdit, api.cancelEdit]);
+  }, [editingId, api.cancelEdit, api.saveEdit]);
 
   useEffect(() => {
     if (!editingId) return () => {}; // Return empty cleanup function
@@ -140,14 +145,17 @@ function PedidosPage() {
             ) : error ? (
               <tr><td colSpan="11" className="table-error">Error: {error}</td></tr>
             ) : pedidos.length > 0 ? (
-              // pedidos.map((pedido) => (
-              //   <PedidoRow ... />
-              // ))
-              <tr>
-                <td colSpan="11" style={{ textAlign: 'center', color: 'yellow' }}>
-                  (Componente PedidoRow deshabilitado temporalmente)
-                </td>
-              </tr>
+              pedidos.map((pedido) => (
+                <PedidoRow
+                  key={pedido.id_pedido} pedido={pedido} editing={editingId === pedido.id_pedido}
+                  editForm={editForm} handleEditFormChange={api.handleEditFormChange}
+                  handleEditRowRightClick={handleEditRowRightClick} handleRowRightClick={handleRowRightClick}
+                  startEdit={api.startEdit} getEstadoStyle={getEstadoStyle} handlePedidoAdded={handlePedidoAdded}
+                  handleEliminarArchivo={api.handleEliminarArchivo} supabase={supabase} getPedidos={api.getPedidos}
+                  ESTADOS_FABRICACION={ESTADOS_FABRICACION} ESTADOS_VENTA={ESTADOS_VENTA}
+                  ESTADOS_ENVIO={ESTADOS_ENVIO} setEditForm={state.setEditForm} editingId={editingId}
+                />
+              ))
             ) : (
               <tr><td colSpan="11" className="table-empty">No se encontraron pedidos.</td></tr>
             )}

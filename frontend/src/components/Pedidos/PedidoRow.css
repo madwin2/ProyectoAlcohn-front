@@ -145,6 +145,125 @@
   .pedido-row:hover {
     background-color: #18181b !important; /* mismo que el fondo normal */
   }
+
+  /* 🖊️ Estilos para modo edición */
+  .pedido-row.editing {
+    background-color: #1e293b !important;
+    outline: 2px solid #3b82f6;
+    outline-offset: -2px;
+  }
+
+  .pedido-row.editing td {
+    background-color: inherit;
+  }
+
+  /* Input styles for editing mode */
+  .edit-input,
+  .edit-textarea,
+  .edit-select {
+    background: #0f172a;
+    color: #ffffff;
+    border: 1px solid #475569;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+    margin-bottom: 4px;
+  }
+
+  .edit-input:focus,
+  .edit-textarea:focus,
+  .edit-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  }
+
+  .edit-textarea {
+    resize: vertical;
+    min-height: 40px;
+  }
+
+  /* Layout for editing fields */
+  .cliente-edit,
+  .contacto-edit,
+  .sena-envio-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .estado-selects-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .estado-selects-edit select {
+    min-width: 120px;
+  }
+
+  /* Estados display mode */
+  .estado-selects .estado {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    margin-bottom: 4px;
+    text-align: center;
+    font-weight: 500;
+  }
+
+  .estado-selects .estado.fabricacion {
+    background-color: #1e40af;
+    color: #dbeafe;
+  }
+
+  .estado-selects .estado.venta {
+    background-color: #059669;
+    color: #d1fae5;
+  }
+
+  .estado-selects .estado.envio {
+    background-color: #dc2626;
+    color: #fecaca;
+  }
+
+  /* Seña/Envío display mode */
+  .sena-envio {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .sena-envio .sena,
+  .sena-envio .envio {
+    font-size: 0.875rem;
+    color: #d4d4d8;
+  }
+
+  /* Archive indicators */
+  .archivo-base,
+  .archivo-vector,
+  .foto-sello {
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+
+  .archivo-base:contains('✓'),
+  .archivo-vector:contains('✓'),
+  .foto-sello:contains('✓') {
+    color: #22c55e;
+  }
+
+  /* Cursor styles */
+  .pedido-row:not(.editing) {
+    cursor: pointer;
+  }
+
+  .pedido-row:not(.editing):hover {
+    background-color: #262626 !important;
+  }
   
   
   

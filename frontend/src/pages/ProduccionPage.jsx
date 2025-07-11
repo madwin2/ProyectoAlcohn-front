@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import AddPedidoModal from '../components/Pedidos/AddPedidoModal';
 import EstadoSelect from '../components/EstadoSelect';
@@ -30,29 +30,8 @@ const initialFiltersState = {
   estado_envio: [],
 };
 
-const estadosFabricacion = [
-  { value: "Sin Hacer", label: "Sin Hacer", color: "slate", glow: "shadow-slate-500/20" },
-  { value: "Haciendo", label: "Haciendo", color: "cyan", glow: "shadow-cyan-500/20" },
-  { value: "Hecho", label: "Hecho", color: "emerald", glow: "shadow-emerald-500/20" },
-  { value: "Rehacer", label: "Rehacer", color: "red", glow: "shadow-red-500/20" },
-  { value: "Retocar", label: "Retocar", color: "amber", glow: "shadow-amber-500/20" },
-  { value: "Prioridad", label: "Prioridad", color: "purple", glow: "shadow-purple-500/20" },
-  { value: "Verificar", label: "Verificar", color: "teal", glow: "shadow-teal-500/20" },
-];
 
-const estadosVenta = [
-  { value: "Ninguno", label: "Ninguno", color: "slate", glow: "shadow-slate-500/20" },
-  { value: "Foto", label: "Foto", color: "blue", glow: "shadow-blue-500/20" },
-  { value: "Transferido", label: "Transferido", color: "green", glow: "shadow-green-500/20" },
-];
 
-const estadosEnvio = [
-  { value: "Sin enviar", label: "Sin Enviar", color: "slate", glow: "shadow-slate-500/20" },
-  { value: "Hacer Etiqueta", label: "Hacer Etiqueta", color: "orange", glow: "shadow-orange-500/20" },
-  { value: "Etiqueta Lista", label: "Etiqueta Lista", color: "violet", glow: "shadow-violet-500/20" },
-  { value: "Despachado", label: "Despachado", color: "teal", glow: "shadow-teal-500/20" },
-  { value: "Seguimiento Enviado", label: "Seguimiento Enviado", color: "green", glow: "shadow-green-500/20" },
-];
 
 const getInclusiveEndDateISOString = (dateStr) => {
   if (!dateStr) return null;
@@ -84,7 +63,7 @@ function ProduccionPage() {
   const [pedidos, setPedidos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [sortOrder] = useState('desc');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
@@ -179,24 +158,24 @@ function ProduccionPage() {
       // Refrescar pedidos
       const { data } = await supabase.from('pedidos').select('*');
       setPedidos(data || []);
-    } catch (err) {
+    } catch {
       alert('Error al actualizar el estado');
     }
   };
 
-  const handleMaquinaChange = async (pedido, nuevaMaquina) => {
-    try {
-      await supabase.rpc('editar_pedido', {
-        p_id: pedido.id_pedido,
-        p_tipo_maquina: nuevaMaquina
-      });
-      // Refrescar pedidos
-      const { data } = await supabase.from('pedidos').select('*');
-      setPedidos(data || []);
-    } catch (err) {
-      alert('Error al actualizar la máquina');
-    }
-  };
+  // const handleMaquinaChange = async (pedido, nuevaMaquina) => {
+  //   try {
+  //     await supabase.rpc('editar_pedido', {
+  //       p_id: pedido.id_pedido,
+  //       p_tipo_maquina: nuevaMaquina
+  //     });
+  //     // Refrescar pedidos
+  //     const { data } = await supabase.from('pedidos').select('*');
+  //     setPedidos(data || []);
+  //   } catch {
+  //     alert('Error al actualizar la máquina');
+  //   }
+  // };
 
   const handleVectorizacionChange = async (pedido, nuevaVectorizacion) => {
     try {
@@ -207,7 +186,7 @@ function ProduccionPage() {
       // Refrescar pedidos
       const { data } = await supabase.from('pedidos').select('*');
       setPedidos(data || []);
-    } catch (err) {
+    } catch {
       alert('Error al actualizar la vectorización');
     }
   };
@@ -481,7 +460,7 @@ function ProduccionPage() {
 }
 
 // Componente para gestión de archivos estilo estetica.txt
-function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, editing }) {
+function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, _editing }) {
   const [signedUrl, setSignedUrl] = React.useState(null);
   const [isHovered, setIsHovered] = React.useState(false);
   const [isUploading, setIsUploading] = React.useState(false);
@@ -501,7 +480,7 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, ed
       const timestamp = Date.now();
       const fileExtension = file.name.split('.').pop();
       const fileName = `${field}_${pedidoId}_${timestamp}.${fileExtension}`;
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from('archivos-ventas')
         .upload(fileName, file);
       if (error) throw error;
@@ -535,7 +514,7 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, ed
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch {
       alert('No se pudo descargar el archivo');
     }
   };

@@ -1,7 +1,7 @@
 import React from 'react';
 import './Table.css';
 
-const Table = ({ children, loading, error, className = "", style = {} }) => {
+const Table = ({ children, _loading, _error, className = "", style = {} }) => {
   const baseStyle = {
     background: 'rgba(9, 9, 11, 0.5)',
     backdropFilter: 'blur(16px)',

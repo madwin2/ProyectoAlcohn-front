@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import './FilterPanel.css';
 
-function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, onToggle, showHeader = true, visibleFilters }) {
+function FilterPanel({ _filterOptions, filters, setFilters, onClear, isExpanded, onToggle, showHeader = true, visibleFilters }) {
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
   const [activeFiltersChips, setActiveFiltersChips] = useState([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Opciones de fecha predefinidas tipo Notion
-  const datePresets = [
+  const datePresets = useMemo(() => [
     { label: 'Hoy', getValue: () => ({ gte: getTodayString(), lte: getTodayString() }) },
     { label: 'Ayer', getValue: () => ({ gte: getDateString(-1), lte: getDateString(-1) }) },
     { label: 'Esta semana', getValue: () => ({ gte: getWeekStart(), lte: getWeekEnd() }) },
@@ -16,7 +16,7 @@ function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, 
     { label: 'El mes pasado', getValue: () => ({ gte: getMonthStart(-1), lte: getMonthEnd(-1) }) },
     { label: 'Últimos 7 días', getValue: () => ({ gte: getDateString(-7), lte: getTodayString() }) },
     { label: 'Últimos 30 días', getValue: () => ({ gte: getDateString(-30), lte: getTodayString() }) },
-  ];
+  ], []);
 
   // Funciones de utilidad para fechas
   const getTodayString = () => new Date().toISOString().split('T')[0];
@@ -58,7 +58,7 @@ function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, 
   };
 
   // Detectar qué preset está activo
-  const getActiveDatePreset = () => {
+  const getActiveDatePreset = useCallback(() => {
     if (!filters.fecha_compra_gte || !filters.fecha_compra_lte) return null;
     
     for (const preset of datePresets) {
@@ -73,7 +73,7 @@ function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, 
     }
     
     return `${filters.fecha_compra_gte} - ${filters.fecha_compra_lte}`;
-  };
+  }, [filters.fecha_compra_gte, filters.fecha_compra_lte, datePresets]);
 
   // Helper para saber si mostrar un filtro
   const showFilter = (key) => !visibleFilters || visibleFilters.includes(key);
@@ -126,7 +126,7 @@ function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, 
 
     setActiveFiltersCount(count);
     setActiveFiltersChips(chips);
-  }, [filters]);
+  }, [filters, getActiveDatePreset]);
 
   // Cerrar dropdown al hacer click fuera
   useEffect(() => {
@@ -168,17 +168,6 @@ function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, 
     setShowDatePicker(false);
   };
 
-  const handleCheckboxChange = (e) => {
-    const { name, value, checked } = e.target;
-    setFilters(prev => {
-      const currentValues = prev[name] || [];
-      if (checked) {
-        return { ...prev, [name]: [...currentValues, value] };
-      } else {
-        return { ...prev, [name]: currentValues.filter(v => v !== value) };
-      }
-    });
-  };
 
   const removeFilter = (filterKey) => {
     if (filterKey === 'date') {
@@ -398,7 +387,7 @@ function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, 
   );
 }
 
-function NotionDropdownFilter({ label, options, selected, onChange }) {
+function NotionDropdownFilter({ _label, options, selected, onChange }) {
   const [open, setOpen] = useState(false);
   const ref = React.useRef();
 

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FiChevronRight, FiHome, FiBox } from "react-icons/fi";
 import './Sidebar.css';
-import alcohnLogo from '../assets/alcohn isologo.svg';
 
 export default function Sidebar() {
   const location = useLocation();
@@ -14,7 +13,6 @@ export default function Sidebar() {
   const navItems = [
     { to: "/", label: "Inicio", icon: <FiHome /> },
     { to: "/pedidos", label: "Pedidos", icon: <FiBox /> },
-    { to: "/pedidos-prueba", label: "Pedidos Prueba", icon: <FiBox /> },
     { to: "/produccion", label: "Producción", icon: <FiBox /> }
   ];
 

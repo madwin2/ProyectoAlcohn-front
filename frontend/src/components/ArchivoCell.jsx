@@ -20,7 +20,7 @@ const getSignedUrl = async (filePath) => {
   return data.signedUrl;
 };
 
-function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, editing }) {
+function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, _editing }) {
   const [signedUrl, setSignedUrl] = React.useState(null);
   const [isHovered, setIsHovered] = React.useState(false);
   const [isUploading, setIsUploading] = React.useState(false);
@@ -40,7 +40,7 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, ed
       const timestamp = Date.now();
       const fileExtension = file.name.split('.').pop();
       const fileName = `${field}_${pedidoId}_${timestamp}.${fileExtension}`;
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from('archivos-ventas')
         .upload(fileName, file);
       if (error) throw error;
@@ -74,7 +74,7 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, ed
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch {
       alert('No se pudo descargar el archivo');
     }
   };
