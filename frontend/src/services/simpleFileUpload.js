@@ -84,7 +84,7 @@ export class SimpleFileUploadService {
 
       return {
         fileName,
-        publicUrl: publicData.publicUrl,
+        publicUrl: fileName, // Guardar solo el path relativo
         path: uploadData.path
       };
 
@@ -100,7 +100,18 @@ export class SimpleFileUploadService {
   async updatePedidoWithFile(pedidoId, field, fileUrl) {
     try {
       const updateData = {};
-      updateData[field] = fileUrl;
+      
+      // Solo guardar el path relativo, no la URL completa
+      if (fileUrl && fileUrl.includes(this.bucketName)) {
+        const pathIndex = fileUrl.indexOf(`/${this.bucketName}/`);
+        if (pathIndex !== -1) {
+          updateData[field] = fileUrl.substring(pathIndex + `/${this.bucketName}/`.length);
+        } else {
+          updateData[field] = fileUrl;
+        }
+      } else {
+        updateData[field] = fileUrl;
+      }
 
       const { data, error } = await supabase
         .from('pedidos')

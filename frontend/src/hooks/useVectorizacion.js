@@ -67,7 +67,7 @@ export const useVectorizacion = () => {
     setOpcionesEscalado(nuevasOpc);
   };
 
-  // Vectorizar con IA
+  // Vectorizar con IA (simulado)
   const handleVectorizar = async (pedido) => {
     if (!pedido.archivo_base || procesando[pedido.id_pedido]) return;
     
@@ -80,18 +80,34 @@ export const useVectorizacion = () => {
     setSvgLoading(true);
     
     try {
-      const vectorizeResponse = await fetch('/api/vectorize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl: baseUrl })
-      });
-
-      if (!vectorizeResponse.ok) {
-        throw new Error('Error en la vectorización');
-      }
-
-      const { svg } = await vectorizeResponse.json();
-      setSvgPreview(svg);
+      // Simular proceso de vectorización
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Generar SVG simulado basado en el pedido
+      const svgSimulado = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+          <defs>
+            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <rect width="400" height="300" fill="url(#grad1)" rx="20"/>
+          <text x="200" y="120" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="24" font-weight="bold">
+            ${pedido.disenio || 'Diseño Vectorizado'}
+          </text>
+          <text x="200" y="160" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16">
+            ID: ${pedido.id_pedido}
+          </text>
+          <text x="200" y="200" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14">
+            Vectorizado con IA
+          </text>
+          <circle cx="200" cy="240" r="20" fill="white" opacity="0.8"/>
+          <path d="M190 240 L200 250 L210 230" stroke="#2563eb" stroke-width="3" fill="none"/>
+        </svg>
+      `;
+      
+      setSvgPreview(svgSimulado);
       setSvgPedido(pedido);
     } catch (error) {
       console.error('Error vectorizando:', error);

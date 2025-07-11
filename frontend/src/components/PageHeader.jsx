@@ -21,15 +21,15 @@ const PageHeader = ({
     <div style={{
       borderBottom: '1px solid rgba(39, 39, 42, 0.5)',
       background: 'rgba(9, 9, 11, 0.8)',
-      backdropFilter: 'blur(16px)',
+      backdropFilter: 'blur(24px)',
       position: 'sticky',
       top: 0,
       zIndex: 10,
       padding: '24px 32px'
     }}>
       <div style={{
-        paddingLeft: '0',
-        paddingRight: '0',
+        maxWidth: '1280px',
+        margin: '0 auto',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between'
@@ -49,7 +49,7 @@ const PageHeader = ({
             </div>
             <div>
               <h1 style={{
-                fontSize: '32px',
+                fontSize: '24px',
                 fontWeight: '300',
                 letterSpacing: '-0.025em',
                 margin: 0

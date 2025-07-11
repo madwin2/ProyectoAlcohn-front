@@ -97,7 +97,7 @@ function PedidosPage() {
 
   return (
     <div style={{
-      background: '#000000', minHeight: '100vh', color: 'white',
+      background: 'black', minHeight: '100vh', color: 'white',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
       <PageHeader
@@ -122,7 +122,7 @@ function PedidosPage() {
         editingId={editingId} setEditContextMenu={setEditContextMenu}
       />
 
-      <div style={{ maxWidth: '100%', margin: '0 auto', padding: '32px' }}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px' }}>
         <Table>
           <TableHeader>
             <tr>
