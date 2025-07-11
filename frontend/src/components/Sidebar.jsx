@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FiChevronRight, FiHome, FiBox } from "react-icons/fi";
+import { Shapes } from "lucide-react";
 import './Sidebar.css';
 
 export default function Sidebar() {
@@ -13,6 +14,7 @@ export default function Sidebar() {
   const navItems = [
     { to: "/", label: "Inicio", icon: <FiHome /> },
     { to: "/pedidos", label: "Pedidos", icon: <FiBox /> },
+    { to: "/vectorizacion", label: "Vectorización", icon: <Shapes /> },
     { to: "/produccion", label: "Producción", icon: <FiBox /> }
   ];
 

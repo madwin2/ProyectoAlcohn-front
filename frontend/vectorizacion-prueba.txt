@@ -1,0 +1,786 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Search,
+  Upload,
+  Download,
+  Clock,
+  Ruler,
+  CheckCircle,
+  AlertTriangle,
+  Zap,
+  FileImage,
+  VideoIcon as Vector,
+  ArrowRight,
+  Package,
+  X,
+  Loader2,
+  Sparkles,
+  Eye,
+  Settings,
+} from "lucide-react"
+
+// Mock de supabase para el ejemplo
+const supabase = {
+  from: (table: string) => ({
+    select: () => ({
+      not: (column: string, operator: string, value: string) => ({
+        then: (callback: (result: { data: any[]; error: null }) => void) => {
+          callback({ data: mockPedidos, error: null })
+        },
+      }),
+    }),
+    update: (data: any) => ({
+      eq: (column: string, value: any) => Promise.resolve({ data: null, error: null }),
+    }),
+  }),
+  storage: {
+    from: (bucket: string) => ({
+      getPublicUrl: (path: string) => ({
+        data: { publicUrl: `/placeholder.svg?height=300&width=300&text=${encodeURIComponent(path)}` },
+      }),
+      upload: (path: string, file: File) => Promise.resolve({ data: { path: `uploads/${file.name}` }, error: null }),
+    }),
+  },
+}
+
+// Datos mock con más variedad
+const mockPedidos = [
+  {
+    id: "1",
+    diseno: "Logo Corporativo Minimalista",
+    medida: "5x3",
+    archivo_base: ["logo-base.eps"],
+    archivo_vector: null,
+    medida_real: null,
+    estado_de_fabricacion: "Sin hacer",
+    tiempo_estimado: null,
+    tiempo_estimado_ultrafino: null,
+    tipo_planchuela: null,
+    largo_planchuela: null,
+    prioridad: "alta",
+  },
+  {
+    id: "2",
+    diseno: "Sello Empresarial Elegante",
+    medida: "4x4",
+    archivo_base: ["sello-base.eps"],
+    archivo_vector: "sello-vector.svg",
+    medida_real: null,
+    estado_de_fabricacion: "Sin hacer",
+    tiempo_estimado: null,
+    tiempo_estimado_ultrafino: null,
+    tipo_planchuela: null,
+    largo_planchuela: null,
+    prioridad: "normal",
+  },
+  {
+    id: "3",
+    diseno: "Kit Completo de Branding",
+    medida: "6x4",
+    archivo_base: ["branding-base.eps"],
+    archivo_vector: "branding-vector.svg",
+    medida_real: "6.2x3.8",
+    estado_de_fabricacion: "Sin hacer",
+    tiempo_estimado: 104.3,
+    tiempo_estimado_ultrafino: 23.6,
+    tipo_planchuela: 25,
+    largo_planchuela: 6.2,
+    prioridad: "urgente",
+  },
+  {
+    id: "4",
+    diseno: "Tarjetas Personales Premium",
+    medida: "8.5x5.5",
+    archivo_base: ["tarjetas-base.eps"],
+    archivo_vector: null,
+    medida_real: null,
+    estado_de_fabricacion: "Sin hacer",
+    tiempo_estimado: null,
+    tiempo_estimado_ultrafino: null,
+    tipo_planchuela: null,
+    largo_planchuela: null,
+    prioridad: "normal",
+  },
+]
+
+interface Pedido {
+  id: string
+  diseno: string
+  medida: string
+  archivo_base?: string[]
+  archivo_vector?: string
+  medida_real?: string
+  estado_de_fabricacion: string
+  tiempo_estimado?: number
+  tiempo_estimado_ultrafino?: number
+  tipo_planchuela?: number
+  largo_planchuela?: number
+  prioridad?: string
+}
+
+function publicUrl(path: string | string[] | null): string | null {
+  if (!path) return null
+  if (Array.isArray(path)) path = path[0]
+  if (!path) return null
+  return supabase.storage.from("archivos-ventas").getPublicUrl(path).data.publicUrl
+}
+
+// Componente ComparadorSlider refinado
+function ComparadorSlider({
+  baseUrl,
+  svgString,
+  width = 500,
+  height = 400,
+}: {
+  baseUrl: string | null
+  svgString: string
+  width?: number
+  height?: number
+}) {
+  const [sliderValue, setSliderValue] = useState(50)
+
+  return (
+    <div className="flex flex-col items-center w-full space-y-6">
+      <div
+        className="relative rounded-xl overflow-hidden shadow-2xl shadow-black/50 border border-zinc-800/50 bg-zinc-950"
+        style={{ width, height }}
+      >
+        {/* Imagen base */}
+        {baseUrl && (
+          <img
+            src={baseUrl || "/placeholder.svg"}
+            alt="base"
+            className="absolute inset-0 w-full h-full object-contain opacity-30 transition-opacity duration-500"
+            style={{ zIndex: 1 }}
+            draggable={false}
+          />
+        )}
+
+        {/* SVG vectorizado */}
+        <div
+          className="absolute inset-0 transition-all duration-300"
+          style={{
+            clipPath: `inset(0 ${100 - sliderValue}% 0 0)`,
+            zIndex: 2,
+          }}
+        >
+          <img
+            src={`data:image/svg+xml;utf8,${encodeURIComponent(svgString)}`}
+            alt="vector"
+            className="w-full h-full object-contain"
+            draggable={false}
+          />
+        </div>
+
+        {/* Línea divisoria elegante */}
+        <div
+          className="absolute top-0 bottom-0 w-0.5 bg-white shadow-lg shadow-white/20 transition-all duration-300"
+          style={{
+            left: `calc(${sliderValue}% - 1px)`,
+            zIndex: 3,
+          }}
+        />
+
+        {/* Labels minimalistas */}
+        <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-sm rounded-md px-2 py-1 text-xs text-zinc-300 border border-zinc-700/50">
+          Original
+        </div>
+        <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm rounded-md px-2 py-1 text-xs text-white border border-zinc-600/50">
+          Vectorizado
+        </div>
+      </div>
+
+      {/* Slider minimalista */}
+      <div className="w-full max-w-md relative">
+        <input
+          type="range"
+          min={0}
+          max={100}
+          value={sliderValue}
+          onChange={(e) => setSliderValue(Number(e.target.value))}
+          className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer slider-minimal"
+        />
+        <div className="flex justify-between text-xs text-zinc-500 mt-2">
+          <span>0%</span>
+          <span className="text-white font-medium">{sliderValue}%</span>
+          <span>100%</span>
+        </div>
+      </div>
+
+      <style jsx>{`
+        .slider-minimal::-webkit-slider-thumb {
+          appearance: none;
+          height: 16px;
+          width: 16px;
+          border-radius: 50%;
+          background: white;
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+          border: none;
+        }
+        .slider-minimal::-moz-range-thumb {
+          height: 16px;
+          width: 16px;
+          border-radius: 50%;
+          background: white;
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+          border: none;
+        }
+      `}</style>
+    </div>
+  )
+}
+
+export default function Vectorizacion() {
+  const [pedidos, setPedidos] = useState<Pedido[]>([])
+  const [loading, setLoading] = useState(true)
+  const [dimensionesSVG, setDimensionesSVG] = useState<Record<string, any>>({})
+  const [opcionesEscalado, setOpcionesEscalado] = useState<Record<string, any>>({})
+  const [procesando, setProcesando] = useState<Record<string, boolean>>({})
+  const [svgPreview, setSvgPreview] = useState<string | null>(null)
+  const [svgPedido, setSvgPedido] = useState<Pedido | null>(null)
+  const [svgLoading, setSvgLoading] = useState(false)
+  const [verificadoExpandido, setVerificadoExpandido] = useState<Pedido | null>(null)
+  const [busqueda, setBusqueda] = useState("")
+  const [activeTab, setActiveTab] = useState("pendientes")
+
+  useEffect(() => {
+    async function fetchPedidos() {
+      setLoading(true)
+      setTimeout(() => {
+        setPedidos(mockPedidos)
+        setLoading(false)
+      }, 1200)
+    }
+    fetchPedidos()
+  }, [])
+
+  // Separar en grupos
+  const grupoVerificados = pedidos.filter((p) => p.medida_real)
+  const grupoVector = pedidos.filter((p) => p.archivo_vector && !p.medida_real)
+  const grupoBase = pedidos.filter(
+    (p) => !p.archivo_vector && p.archivo_base && p.archivo_base.length > 0 && !p.medida_real,
+  )
+
+  const getPrioridadColor = (prioridad?: string) => {
+    switch (prioridad) {
+      case "urgente":
+        return "bg-red-500/10 text-red-400 border-red-500/20"
+      case "alta":
+        return "bg-orange-500/10 text-orange-400 border-orange-500/20"
+      default:
+        return "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"
+    }
+  }
+
+  const getEstadoColor = (pedido: Pedido) => {
+    if (pedido.medida_real) return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+    if (pedido.archivo_vector) return "bg-amber-500/10 text-amber-400 border-amber-500/20"
+    return "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"
+  }
+
+  const handleVectorizacionAutomatica = async (pedido: Pedido) => {
+    setSvgLoading(true)
+    setSvgPreview(null)
+    setSvgPedido(pedido)
+
+    try {
+      setTimeout(() => {
+        const mockSVG = `<svg width="300" height="300" xmlns="http://www.w3.org/2000/svg">
+          <rect x="50" y="50" width="200" height="150" fill="#ffffff" stroke="#000000" strokeWidth="2" rx="8" />
+          <text x="150" y="135" textAnchor="middle" fill="#000000" fontSize="14" fontFamily="Arial, sans-serif">${pedido.diseno}</text>
+          <circle cx="150" cy="180" r="15" fill="#000000" />
+        </svg>`
+        setSvgPreview(mockSVG)
+        setSvgLoading(false)
+      }, 2500)
+    } catch (e) {
+      alert("Error al vectorizar automáticamente: " + (e as Error).message)
+      setSvgLoading(false)
+    }
+  }
+
+  const handleGuardarSVG = async () => {
+    if (!svgPreview || !svgPedido) return
+
+    try {
+      const updatedPedidos = pedidos.map((p) =>
+        p.id === svgPedido.id ? { ...p, archivo_vector: `vector-${p.id}.svg` } : p,
+      )
+      setPedidos(updatedPedidos)
+      setSvgPreview(null)
+      setSvgPedido(null)
+    } catch (e) {
+      alert("Error al guardar SVG: " + (e as Error).message)
+    }
+  }
+
+  const handleDescargar = (url: string | null, nombre: string) => {
+    if (!url) return
+    const link = document.createElement("a")
+    link.href = url
+    link.download = nombre
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const handleSubirVector = async (pedido: Pedido, file: File | null) => {
+    if (!file) return
+    const updatedPedidos = pedidos.map((p) => (p.id === pedido.id ? { ...p, archivo_vector: `vector-${p.id}.svg` } : p))
+    setPedidos(updatedPedidos)
+  }
+
+  const ItemCard = ({ pedido, tipo }: { pedido: Pedido; tipo: "base" | "vector" | "verificado" }) => {
+    const url = tipo === "vector" ? publicUrl(pedido.archivo_vector || null) : publicUrl(pedido.archivo_base || null)
+    const isProcessing = procesando[pedido.id]
+    const [isHovered, setIsHovered] = useState(false)
+
+    return (
+      <Card
+        className="group relative bg-zinc-950/80 backdrop-blur-xl border-zinc-800/50 hover:border-zinc-700/50 transition-all duration-300 cursor-pointer overflow-hidden hover:shadow-2xl hover:shadow-black/50"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {/* Efecto de brillo sutil */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.02] to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+
+        <CardContent className="p-0 relative">
+          {/* Preview de imagen - área principal */}
+          <div className="aspect-[4/3] relative overflow-hidden bg-zinc-900/50">
+            <div className="absolute inset-0 flex items-center justify-center p-6">
+              {url ? (
+                <div className="relative w-full h-full">
+                  <img
+                    src={url || "/placeholder.svg"}
+                    alt="preview"
+                    className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
+                  />
+                  {/* Overlay de vista previa */}
+                  <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                    <div className="text-center space-y-2">
+                      <Eye className="w-6 h-6 text-white mx-auto" />
+                      <p className="text-white text-sm font-medium">Ver detalles</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center space-y-3">
+                  <div className="w-12 h-12 bg-zinc-800 rounded-lg flex items-center justify-center mx-auto">
+                    <FileImage className="w-6 h-6 text-zinc-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-white font-medium">{pedido.diseno}</p>
+                    <p className="text-xs text-zinc-500 mt-1">Listo para vectorizar</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Overlays informativos */}
+            <div className="absolute top-3 left-3 right-3 flex justify-between items-start z-10">
+              <Badge className={`${getPrioridadColor(pedido.prioridad)} text-xs`}>
+                {pedido.prioridad === "urgente" ? "Urgente" : pedido.prioridad === "alta" ? "Alta" : "Normal"}
+              </Badge>
+              <div className="bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1 border border-zinc-700/50">
+                <div className="flex items-center gap-1 text-xs text-zinc-300">
+                  <Ruler className="w-3 h-3" />
+                  <span>{pedido.medida}</span>
+                  {pedido.medida_real && (
+                    <>
+                      <ArrowRight className="w-2 h-2 text-zinc-500" />
+                      <span className="text-white">{pedido.medida_real}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Estado overlay */}
+            <div className="absolute bottom-3 left-3 right-3 z-10">
+              <Badge className={`${getEstadoColor(pedido)} w-full justify-center py-1.5 text-xs font-medium`}>
+                {!pedido.archivo_vector && (
+                  <>
+                    <FileImage className="w-3 h-3 mr-1" />
+                    Pendiente
+                  </>
+                )}
+                {pedido.archivo_vector && !pedido.medida_real && (
+                  <>
+                    <AlertTriangle className="w-3 h-3 mr-1" />
+                    Verificar
+                  </>
+                )}
+                {pedido.medida_real && (
+                  <>
+                    <CheckCircle className="w-3 h-3 mr-1" />
+                    Completado
+                  </>
+                )}
+              </Badge>
+            </div>
+
+            {/* Indicador de procesamiento */}
+            {isProcessing && (
+              <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-20">
+                <div className="text-center space-y-2">
+                  <Loader2 className="w-6 h-6 animate-spin text-white mx-auto" />
+                  <p className="text-white text-sm">Procesando...</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Información del pedido */}
+          <div className="p-4 space-y-3 bg-zinc-950/50">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-zinc-800 rounded-lg flex items-center justify-center flex-shrink-0">
+                <span className="text-xs font-medium text-white">{pedido.diseno.charAt(0)}</span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-white text-sm truncate">{pedido.diseno}</p>
+                <div className="flex items-center gap-2 text-xs text-zinc-500">
+                  <span>{pedido.medida} cm</span>
+                  {pedido.tiempo_estimado && (
+                    <>
+                      <span>•</span>
+                      <Clock className="w-3 h-3" />
+                      <span>{pedido.tiempo_estimado}min</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Botones de acción */}
+            {tipo === "base" && !pedido.archivo_vector && (
+              <div className="space-y-2">
+                <Button
+                  size="sm"
+                  onClick={() => handleVectorizacionAutomatica(pedido)}
+                  disabled={svgLoading && svgPedido?.id === pedido.id}
+                  className="w-full bg-white text-black hover:bg-zinc-200 transition-all duration-300 h-8 font-medium"
+                >
+                  {svgLoading && svgPedido?.id === pedido.id ? (
+                    <>
+                      <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                      Vectorizando...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3 h-3 mr-2" />
+                      Vectorización IA
+                    </>
+                  )}
+                </Button>
+                <label className="block">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full bg-zinc-900/50 border-zinc-700/50 text-zinc-300 hover:bg-zinc-800/50 hover:text-white h-8 font-medium transition-all duration-300"
+                    asChild
+                  >
+                    <span>
+                      <Upload className="w-3 h-3 mr-2" />
+                      Subir Vector
+                    </span>
+                  </Button>
+                  <input
+                    type="file"
+                    accept=".svg"
+                    className="hidden"
+                    onChange={(e) => handleSubirVector(pedido, e.target.files?.[0] || null)}
+                  />
+                </label>
+              </div>
+            )}
+
+            {tipo === "vector" && (
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 bg-zinc-800/50 border-zinc-700/50 text-zinc-300 hover:bg-zinc-700/50 hover:text-white h-8 text-xs transition-all duration-300"
+                  disabled={isProcessing}
+                >
+                  <Settings className="w-3 h-3 mr-1" />
+                  Original
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 bg-zinc-800/50 border-zinc-700/50 text-zinc-300 hover:bg-zinc-700/50 hover:text-white h-8 text-xs transition-all duration-300"
+                  disabled={isProcessing}
+                >
+                  <Settings className="w-3 h-3 mr-1" />
+                  Ajustado
+                </Button>
+              </div>
+            )}
+
+            {tipo === "verificado" && (
+              <div className="space-y-3">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full bg-zinc-900/50 border-zinc-700/50 text-zinc-300 hover:bg-zinc-800/50 hover:text-white h-8 font-medium transition-all duration-300"
+                  onClick={() => handleDescargar(publicUrl(pedido.archivo_vector || null), `vector-${pedido.id}.svg`)}
+                >
+                  <Download className="w-3 h-3 mr-2" />
+                  Descargar
+                </Button>
+                {pedido.tiempo_estimado && (
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="text-center p-2 bg-zinc-800/30 rounded-lg border border-zinc-700/50">
+                      <div className="flex items-center justify-center gap-1 text-zinc-400 mb-1">
+                        <Clock className="w-3 h-3" />
+                        <span>CNC</span>
+                      </div>
+                      <div className="text-white font-medium">{pedido.tiempo_estimado}min</div>
+                    </div>
+                    {pedido.tiempo_estimado_ultrafino && (
+                      <div className="text-center p-2 bg-zinc-800/30 rounded-lg border border-zinc-700/50">
+                        <div className="flex items-center justify-center gap-1 text-zinc-400 mb-1">
+                          <Zap className="w-3 h-3" />
+                          <span>Ultra</span>
+                        </div>
+                        <div className="text-white font-medium">{pedido.tiempo_estimado_ultrafino}min</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const renderSVGPreview = () => {
+    if (!svgPreview || !svgPedido) return null
+
+    let archivoBase = svgPedido.archivo_base
+    if (Array.isArray(archivoBase)) archivoBase = archivoBase[0]
+    const baseUrl = publicUrl(archivoBase || null)
+
+    return (
+      <Dialog open={!!svgPreview} onOpenChange={() => setSvgPreview(null)}>
+        <DialogContent className="max-w-4xl bg-zinc-950/98 backdrop-blur-xl border-zinc-800/50 shadow-2xl shadow-black/80">
+          <DialogHeader className="pb-6 border-b border-zinc-800/50">
+            <DialogTitle className="text-2xl font-light tracking-tight text-white flex items-center gap-3">
+              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                <Vector className="w-5 h-5 text-black" />
+              </div>
+              <div>
+                <div>Previsualización SVG</div>
+                <div className="text-sm text-zinc-400 font-normal">{svgPedido.diseno}</div>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="py-6">
+            <div className="flex flex-col items-center space-y-6">
+              <ComparadorSlider baseUrl={baseUrl} svgString={svgPreview} width={500} height={400} />
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleGuardarSVG}
+                  className="bg-white text-black hover:bg-zinc-200 px-6 py-2 font-medium transition-all duration-300"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Aprobar
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const blob = new Blob([svgPreview], { type: "image/svg+xml" })
+                    const url = URL.createObjectURL(blob)
+                    handleDescargar(url, `vectorAI-${svgPedido.id}.svg`)
+                  }}
+                  className="bg-zinc-900/50 border-zinc-700/50 text-zinc-300 hover:bg-zinc-800/50 hover:text-white px-6 py-2 font-medium transition-all duration-300"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Descargar
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setSvgPreview(null)}
+                  className="bg-zinc-900/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-300 px-6 py-2 font-medium transition-all duration-300"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-black text-white">
+      {renderSVGPreview()}
+
+      {/* Header */}
+      <div className="border-b border-zinc-800/50 bg-zinc-950/80 backdrop-blur-xl sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                  <Vector className="w-5 h-5 text-black" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-light tracking-tight">Vectorización</h1>
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    {grupoBase.length} pendientes • {grupoVector.length} para verificar • {grupoVerificados.length}{" "}
+                    completados
+                  </p>
+                </div>
+              </div>
+
+              {/* Navegación */}
+              <nav className="flex items-center gap-1 ml-8">
+                <Button
+                  variant="ghost"
+                  onClick={() => (window.location.href = "/")}
+                  className="text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-all duration-300"
+                >
+                  <Package className="w-4 h-4 mr-2" />
+                  Pedidos
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="text-white bg-zinc-800/50 hover:bg-zinc-700/50 transition-all duration-300"
+                >
+                  <Vector className="w-4 h-4 mr-2" />
+                  Vectorización
+                </Button>
+              </nav>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                <Input
+                  placeholder="Buscar diseños..."
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  className="pl-12 w-80 bg-zinc-900/50 border-zinc-700/50 text-white placeholder:text-zinc-500 focus:border-zinc-600 transition-all duration-300"
+                />
+              </div>
+
+              <Button className="bg-white text-black hover:bg-zinc-200 transition-all duration-300 font-medium">
+                <Upload className="w-4 h-4 mr-2" />
+                Subir Imagen
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="max-w-7xl mx-auto px-8 py-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+          <TabsList className="bg-zinc-900/50 border border-zinc-800/50 p-1">
+            <TabsTrigger
+              value="pendientes"
+              className="data-[state=active]:bg-zinc-800 data-[state=active]:text-white text-zinc-400 transition-all duration-300"
+            >
+              <FileImage className="w-4 h-4 mr-2" />A Vectorizar ({grupoBase.length})
+            </TabsTrigger>
+            <TabsTrigger
+              value="verificar"
+              className="data-[state=active]:bg-zinc-800 data-[state=active]:text-white text-zinc-400 transition-all duration-300"
+            >
+              <AlertTriangle className="w-4 h-4 mr-2" />
+              Verificar Medidas ({grupoVector.length})
+            </TabsTrigger>
+            <TabsTrigger
+              value="completados"
+              className="data-[state=active]:bg-zinc-800 data-[state=active]:text-white text-zinc-400 transition-all duration-300"
+            >
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Verificados ({grupoVerificados.length})
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="pendientes" className="space-y-6">
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="text-center space-y-4">
+                  <Loader2 className="w-8 h-8 animate-spin text-zinc-500 mx-auto" />
+                  <div className="space-y-1">
+                    <p className="text-lg text-zinc-300">Cargando pedidos...</p>
+                    <p className="text-sm text-zinc-500">Preparando la interfaz de vectorización</p>
+                  </div>
+                </div>
+              </div>
+            ) : grupoBase.length === 0 ? (
+              <Card className="bg-zinc-950/50 backdrop-blur-xl border-zinc-800/50">
+                <CardContent className="p-12 text-center">
+                  <FileImage className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
+                  <h3 className="text-xl font-medium text-zinc-400 mb-2">No hay imágenes para vectorizar</h3>
+                  <p className="text-zinc-500">Los pedidos con archivos base aparecerán aquí</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {grupoBase.map((pedido) => (
+                  <ItemCard key={pedido.id} pedido={pedido} tipo="base" />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="verificar" className="space-y-6">
+            {grupoVector.length === 0 ? (
+              <Card className="bg-zinc-950/50 backdrop-blur-xl border-zinc-800/50">
+                <CardContent className="p-12 text-center">
+                  <Ruler className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
+                  <h3 className="text-xl font-medium text-zinc-400 mb-2">No hay medidas para verificar</h3>
+                  <p className="text-zinc-500">Los diseños vectorizados aparecerán aquí para verificación</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {grupoVector.map((pedido) => (
+                  <ItemCard key={pedido.id} pedido={pedido} tipo="vector" />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="completados" className="space-y-6">
+            {grupoVerificados.length === 0 ? (
+              <Card className="bg-zinc-950/50 backdrop-blur-xl border-zinc-800/50">
+                <CardContent className="p-12 text-center">
+                  <CheckCircle className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
+                  <h3 className="text-xl font-medium text-zinc-400 mb-2">No hay vectorizaciones completadas</h3>
+                  <p className="text-zinc-500">Los diseños finalizados aparecerán aquí</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {grupoVerificados.map((pedido) => (
+                  <ItemCard key={pedido.id} pedido={pedido} tipo="verificado" />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  )
+}

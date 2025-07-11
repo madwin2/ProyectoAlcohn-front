@@ -1,0 +1,641 @@
+import React, { useEffect, useState } from "react";
+import { supabase } from "../supabaseClient";
+import { computeSealTimes } from "../utils/bronzeSealUtils";
+
+function publicUrl(path) {
+  if (!path) return null;
+  // Si es array (archivo_base), tomar el primero
+  if (Array.isArray(path)) path = path[0];
+  if (!path) return null;
+  return supabase.storage.from("archivos-ventas").getPublicUrl(path).data.publicUrl;
+}
+
+// --- Lógica para medir SVG y calcular opciones de escalado ---
+const medirSVG = async (url) => {
+  try {
+    const response = await fetch(url);
+    const svgText = await response.text();
+    const parser = new DOMParser();
+    const svgDoc = parser.parseFromString(svgText, "image/svg+xml");
+    const tempSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    tempSvg.style.visibility = "hidden";
+    document.body.appendChild(tempSvg);
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    const elementos = svgDoc.querySelectorAll("path, rect, circle, ellipse, line, polyline, polygon");
+    elementos.forEach(elemento => {
+      const clon = elemento.cloneNode(true);
+      tempSvg.appendChild(clon);
+      const bbox = clon.getBBox();
+      minX = Math.min(minX, bbox.x);
+      minY = Math.min(minY, bbox.y);
+      maxX = Math.max(maxX, bbox.x + bbox.width);
+      maxY = Math.max(maxY, bbox.y + bbox.height);
+      tempSvg.removeChild(clon);
+    });
+    document.body.removeChild(tempSvg);
+    const width = maxX - minX;
+    const height = maxY - minY;
+    return { width, height };
+  } catch (error) {
+    return { width: 0, height: 0 };
+  }
+};
+
+const dimensionarSVG = async (url, medidaDeseada) => {
+  try {
+    const [cmW, cmH] = medidaDeseada.split("x").map(parseFloat);
+    const targetW = cmW * 10;
+    const targetH = cmH * 10;
+    const resp = await fetch(url);
+    const svgText = await resp.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svgText, "image/svg+xml");
+    const svg = doc.documentElement;
+    const tempSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    tempSvg.style.visibility = "hidden";
+    document.body.appendChild(tempSvg);
+    const elementos = svg.querySelectorAll("path, rect, circle, ellipse, line, polyline, polygon");
+    const tempG = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    tempSvg.appendChild(tempG);
+    elementos.forEach(el => {
+      const clon = el.cloneNode(true);
+      clon.removeAttribute('transform');
+      tempG.appendChild(clon);
+    });
+    const bbox = tempG.getBBox();
+    document.body.removeChild(tempSvg);
+    const g = doc.createElementNS("http://www.w3.org/2000/svg", "g");
+    elementos.forEach(el => {
+      if (el.parentNode) el.parentNode.removeChild(el);
+      el.removeAttribute('transform');
+      g.appendChild(el);
+    });
+    const scale = Math.min(targetW / bbox.width, targetH / bbox.height);
+    const canvasWidth = targetW + 20;
+    const canvasHeight = targetH + 20;
+    const tx = (canvasWidth - bbox.width * scale) / 2 - bbox.x * scale;
+    const ty = (canvasHeight - bbox.height * scale) / 2 - bbox.y * scale;
+    g.setAttribute("transform", `translate(${tx}, ${ty}) scale(${scale})`);
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    svg.appendChild(g);
+    svg.setAttribute("width", `${canvasWidth}mm`);
+    svg.setAttribute("height", `${canvasHeight}mm`);
+    svg.setAttribute("viewBox", `0 0 ${canvasWidth} ${canvasHeight}`);
+    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+    return new XMLSerializer().serializeToString(doc);
+  } catch (error) {
+    return null;
+  }
+};
+
+const guardarSVGModificado = async (svgString, nombreOriginal) => {
+  try {
+    const blob = new Blob([svgString], { type: "image/svg+xml" });
+    const file = new File([blob], nombreOriginal, { type: "image/svg+xml" });
+    const { data, error } = await supabase.storage.from("archivos-ventas").upload(`vector/${Date.now()}-${nombreOriginal}`, file);
+    if (error) return null;
+    return data.path;
+  } catch (error) {
+    return null;
+  }
+};
+
+// Componente ComparadorSlider para comparar imagen base y SVG con slider
+function ComparadorSlider({ baseUrl, svgString, width = 400, height = 400 }) {
+  const [sliderValue, setSliderValue] = React.useState(50);
+  return (
+    <div className="flex flex-col items-center w-full">
+      <div
+        className="relative border bg-[#eee]"
+        style={{ width, height }}
+      >
+        {/* Imagen base */}
+        {baseUrl && (
+          <img
+            src={baseUrl}
+            alt="base"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: width,
+              height: height,
+              objectFit: 'contain',
+              zIndex: 1,
+              pointerEvents: 'none',
+              userSelect: 'none',
+              opacity: 0.3,
+            }}
+            draggable={false}
+          />
+        )}
+        {/* SVG vectorizado, como imagen, recortado por el slider */}
+        <img
+          src={`data:image/svg+xml;utf8,${encodeURIComponent(svgString)}`}
+          alt="vector"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: width,
+            height: height,
+            objectFit: 'contain',
+            zIndex: 2,
+            pointerEvents: 'none',
+            userSelect: 'none',
+            clipPath: `inset(0 ${100 - sliderValue}% 0 0)`
+          }}
+          draggable={false}
+        />
+        {/* Línea del slider */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: `calc(${sliderValue}% - 1px)`,
+            width: 2,
+            height: height,
+            background: '#ff0000',
+            zIndex: 3,
+            pointerEvents: 'none',
+            userSelect: 'none',
+          }}
+        />
+      </div>
+      {/* Slider de comparación */}
+      <input
+        type="range"
+        min={0}
+        max={100}
+        value={sliderValue}
+        onChange={e => setSliderValue(Number(e.target.value))}
+        className="w-full mt-2"
+        style={{ maxWidth: width }}
+      />
+    </div>
+  );
+}
+
+function Vectorizacion() {
+  const [pedidos, setPedidos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [dimensionesSVG, setDimensionesSVG] = useState({});
+  const [opcionesEscalado, setOpcionesEscalado] = useState({});
+  const [procesando, setProcesando] = useState({});
+  const [svgPreview, setSvgPreview] = useState(null);
+  const [svgPedido, setSvgPedido] = useState(null);
+  const [svgLoading, setSvgLoading] = useState(false);
+  const [verificadoExpandido, setVerificadoExpandido] = useState(null);
+  const [sliderValue, setSliderValue] = useState(50);
+
+  useEffect(() => {
+    async function fetchPedidos() {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("pedidos")
+        .select()
+        .not("estado_de_fabricacion", "eq", "Hecho");
+      if (!error) setPedidos(data || []);
+      setLoading(false);
+    }
+    fetchPedidos();
+  }, []);
+
+  // Medir SVGs y calcular opciones de escalado
+  useEffect(() => {
+    async function medirTodos() {
+      let nuevasDim = {};
+      let nuevasOpc = {};
+      for (const pedido of pedidos) {
+        if (pedido.archivo_vector && pedido.medida && pedido.medida.includes("x")) {
+          const url = publicUrl(pedido.archivo_vector);
+          const dimensiones = await medirSVG(url);
+          nuevasDim[pedido.id] = dimensiones;
+          const [medidaX, medidaY] = pedido.medida.split("x").map(parseFloat);
+          const svgRatio = dimensiones.width / dimensiones.height;
+          let opcion1X, opcion1Y, opcion2X, opcion2Y;
+          if (svgRatio > 1) {
+            opcion1X = medidaX;
+            opcion1Y = (medidaX / svgRatio).toFixed(1);
+            opcion2Y = medidaY;
+            opcion2X = (medidaY * svgRatio).toFixed(1);
+          } else {
+            opcion1X = medidaX;
+            opcion1Y = (medidaX / svgRatio).toFixed(1);
+            opcion2Y = medidaY;
+            opcion2X = (medidaY * svgRatio).toFixed(1);
+          }
+          nuevasOpc[pedido.id] = {
+            normal: `${opcion1X}x${opcion1Y}`,
+            invertido: `${opcion2X}x${opcion2Y}`,
+            original: `${dimensiones.width.toFixed(2)}x${dimensiones.height.toFixed(2)}`
+          };
+        }
+      }
+      setDimensionesSVG(nuevasDim);
+      setOpcionesEscalado(nuevasOpc);
+    }
+    if (pedidos.length > 0) medirTodos();
+  }, [pedidos]);
+
+  // Separar en grupos
+  const grupoVerificados = pedidos.filter(p => p.medida_real);
+  const grupoVector = pedidos.filter(p => p.archivo_vector && !p.medida_real);
+  const grupoBase = pedidos.filter(p => !p.archivo_vector && p.archivo_base && p.archivo_base.length > 0 && !p.medida_real);
+
+  // Acción de ajuste de medida
+  const handleAjustarMedida = async (pedido, orientacion) => {
+    setProcesando(prev => ({ ...prev, [pedido.id]: true }));
+    try {
+      const url = publicUrl(pedido.archivo_vector);
+      let medidaElegida = opcionesEscalado[pedido.id]?.[orientacion] || pedido.medida;
+      const nuevoSVG = await dimensionarSVG(url, medidaElegida);
+      if (!nuevoSVG) throw new Error("No se pudo dimensionar el SVG.");
+      const nombreArchivo = pedido.archivo_vector.split("/").pop();
+      const nuevoPath = await guardarSVGModificado(nuevoSVG, nombreArchivo);
+      if (!nuevoPath) throw new Error("No se pudo guardar el SVG dimensionado.");
+      // Calcular tipo de planchuela
+      const planchuelas = [12, 19, 25, 38];
+      const [mx, my] = medidaElegida.split("x").map(parseFloat);
+      // Convertir a milímetros
+      const minMedida = Math.min(mx, my) * 10;
+      // Calcular largo_planchuela (el mayor de los dos valores, en cm)
+      const largoPlanchuela = Math.max(mx, my);
+      // Buscar la planchuela más chica que sea mayor que la medida
+      let tipoPlanchuela = null;
+      for (let i = 0; i < planchuelas.length; i++) {
+        if (minMedida < planchuelas[i]) {
+          tipoPlanchuela = planchuelas[i];
+          break;
+        }
+      }
+      if (!tipoPlanchuela) tipoPlanchuela = null;
+      // Calcular tiempos CNC
+      const tiempos = await computeSealTimes(nuevoSVG, mx * 10, my * 10);
+      // Guardar en la base de datos
+      await supabase.from("pedidos").update({
+        archivo_vector: nuevoPath,
+        medida_real: medidaElegida,
+        tipo_planchuela: tipoPlanchuela,
+        tiempo_estimado: (tiempos.totalTime / 60).toFixed(1),
+        tiempo_estimado_ultrafino: ((tiempos.roughingTime + tiempos.fineProfilingTime) / 60).toFixed(1),
+        largo_planchuela: largoPlanchuela
+      }).eq("id", pedido.id);
+      // Refrescar pedidos
+      const { data } = await supabase.from("pedidos").select().not("estado_de_fabricacion", "eq", "Hecho");
+      setPedidos(data || []);
+    } catch (e) {
+      alert("Error al ajustar medida: " + e.message);
+    }
+    setProcesando(prev => ({ ...prev, [pedido.id]: false }));
+  };
+
+  const handleSubirVector = async (pedido, file) => {
+    if (!file) return;
+    // Subir archivo vector
+    const fileName = `${Date.now()}-${file.name}`;
+    const { data, error } = await supabase.storage.from("archivos-ventas").upload(`vector/${fileName}`, file);
+    if (error) {
+      alert("Error al subir vector");
+      return;
+    }
+    await supabase.from("pedidos").update({ archivo_vector: data.path }).eq("id", pedido.id);
+    // Refrescar pedidos
+    const { data: nuevos } = await supabase.from("pedidos").select().not("estado_de_fabricacion", "eq", "Hecho");
+    setPedidos(nuevos || []);
+  };
+
+  // Descargar archivo
+  const handleDescargar = (url, nombre) => {
+    fetch(url)
+      .then(response => response.blob())
+      .then(blob => {
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = nombre;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      });
+  };
+
+  // Cambiar vector
+  const handleCambiarVector = async (pedido, file) => {
+    if (!file) return;
+    const fileName = `${Date.now()}-${file.name}`;
+    // Eliminar medida_real al cambiar vector
+    const { data, error } = await supabase.storage.from("archivos-ventas").upload(`vector/${fileName}`, file);
+    if (error) {
+      alert("Error al subir vector");
+      return;
+    }
+    await supabase.from("pedidos").update({ archivo_vector: data.path, medida_real: null }).eq("id", pedido.id);
+    const { data: nuevos } = await supabase.from("pedidos").select().not("estado_de_fabricacion", "eq", "Hecho");
+    setPedidos(nuevos || []);
+  };
+
+  // Función para vectorizar automáticamente
+  const handleVectorizacionAutomatica = async (pedido) => {
+    setSvgLoading(true);
+    setSvgPreview(null);
+    setSvgPedido(pedido);
+    try {
+      // Obtener la ruta del archivo base correctamente (puede ser array o string tipo array)
+      let archivoBase = pedido.archivo_base;
+      if (typeof archivoBase === "string" && archivoBase.startsWith("[")) {
+        try {
+          const arr = JSON.parse(archivoBase);
+          archivoBase = Array.isArray(arr) ? arr[0] : arr;
+        } catch {
+          // Si falla el parseo, lo dejamos como está
+        }
+      } else if (Array.isArray(archivoBase)) {
+        archivoBase = archivoBase[0];
+      }
+      if (!archivoBase) throw new Error('No hay archivo base disponible.');
+      // Descargar archivo base como binario
+      const baseUrl = publicUrl(archivoBase);
+      const response = await fetch(baseUrl);
+      const blob = await response.blob();
+      const arrayBuffer = await blob.arrayBuffer();
+      const fileExt = archivoBase.split('.').pop() || 'file';
+      // Armar FormData
+      const formData = new FormData();
+      formData.append('image', new Blob([arrayBuffer], { type: blob.type }), `base.${fileExt}`);
+      // Llamar al proxy backend local en vez de la API directa
+      const vectorizerResp = await fetch("http://localhost:3001/api/vectorize", {
+        method: "POST",
+        body: formData
+      });
+      if (vectorizerResp.status === 200) {
+        const svgContent = await vectorizerResp.text();
+        setSvgPreview(svgContent);
+      } else {
+        const errorText = await vectorizerResp.text();
+        alert("Error en Vectorizer.AI: " + errorText);
+      }
+    } catch (e) {
+      alert("Error al vectorizar automáticamente: " + e.message);
+    }
+    setSvgLoading(false);
+  };
+
+  // Guardar SVG generado en storage y en la tabla pedidos
+  const handleGuardarSVG = async () => {
+    if (!svgPreview || !svgPedido) return;
+    try {
+      const nombreArchivo = `vectorAI-${Date.now()}-${svgPedido.id}.svg`;
+      const blob = new Blob([svgPreview], { type: "image/svg+xml" });
+      const file = new File([blob], nombreArchivo, { type: "image/svg+xml" });
+      const { data, error } = await supabase.storage.from("archivos-ventas").upload(`vector/${nombreArchivo}`, file);
+      if (error) throw new Error("No se pudo guardar el SVG en storage");
+      await supabase.from("pedidos").update({ archivo_vector: data.path }).eq("id", svgPedido.id);
+      // Refrescar pedidos
+      const { data: nuevos } = await supabase.from("pedidos").select().not("estado_de_fabricacion", "eq", "Hecho");
+      setPedidos(nuevos || []);
+      setSvgPreview(null);
+      setSvgPedido(null);
+    } catch (e) {
+      alert("Error al guardar SVG: " + e.message);
+    }
+  };
+
+  // Descargar SVG generado
+  const handleDescargarSVG = () => {
+    if (!svgPreview) return;
+    const blob = new Blob([svgPreview], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `vectorAI-${svgPedido?.id || 'descarga'}.svg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Rechazar SVG generado
+  const handleRechazarSVG = () => {
+    setSvgPreview(null);
+    setSvgPedido(null);
+  };
+
+  const renderCard = (pedido, esVector, esBase) => {
+    // Obtención robusta de archivoBase
+    let archivoBase = pedido.archivo_base;
+    if (typeof archivoBase === "string" && archivoBase.startsWith("[")) {
+      try {
+        const arr = JSON.parse(archivoBase);
+        archivoBase = Array.isArray(arr) ? arr[0] : arr;
+      } catch {
+        // Si falla el parseo, lo dejamos como está
+      }
+    } else if (Array.isArray(archivoBase)) {
+      archivoBase = archivoBase[0];
+    }
+    const url = esVector ? publicUrl(pedido.archivo_vector) : publicUrl(archivoBase);
+    const vectorUrl = publicUrl(pedido.archivo_vector);
+    const baseUrl = publicUrl(archivoBase);
+    return (
+      <div key={pedido.id} className="bg-[#23232a]/80 border border-white/10 rounded-2xl shadow-lg p-6 w-[300px] flex flex-col items-center mb-4 transition-all hover:shadow-xl hover:border-primary/40">
+        {url ? (
+          <img src={url} alt="preview" className="w-32 h-32 object-contain border rounded mb-2" />
+        ) : (
+          <div className="w-32 h-32 flex items-center justify-center bg-gray-100 border rounded mb-2 text-gray-400">Sin archivo</div>
+        )}
+        <div className="font-bold text-lg mb-1">{pedido.diseno || "Sin nombre"}</div>
+        <div className="text-sm text-gray-600 mb-2">{pedido.medida || "Sin medida"}</div>
+        {/* Opciones de descarga/cambio para vector */}
+        {pedido.archivo_vector && (
+          <div className="flex gap-2 mb-2">
+            <button
+              className="text-blue-600 underline text-xs"
+              onClick={() => handleDescargar(vectorUrl, `vector-${pedido.id}.svg`)}
+            >
+              Descargar
+            </button>
+            <label className="text-blue-600 underline text-xs cursor-pointer">
+              Cambiar
+              <input type="file" accept=".svg" className="hidden" onChange={e => handleCambiarVector(pedido, e.target.files[0])} />
+            </label>
+          </div>
+        )}
+        {/* Descargar archivo base en A vectorizar */}
+        {esBase && baseUrl && (
+          <button
+            className="text-blue-600 underline text-xs mb-2"
+            onClick={() => handleDescargar(baseUrl, `base-${pedido.id}.eps`)}
+          >
+            Descargar Archivo Base
+          </button>
+        )}
+        {/* Subir vector si es base */}
+        {esBase && !pedido.archivo_vector && (
+          <label className="text-blue-600 underline text-xs cursor-pointer mb-2">
+            Subir vector
+            <input type="file" accept=".svg" className="hidden" onChange={e => handleSubirVector(pedido, e.target.files[0])} />
+          </label>
+        )}
+        {/* Botones de ajuste si ya tiene vector */}
+        {(esVector || (esBase && pedido.archivo_vector)) && opcionesEscalado[pedido.id] && (
+          <div className="flex flex-col gap-2 w-full">
+            <div className="flex gap-2 justify-center">
+              <button
+                className="px-2 py-1 text-xs bg-blue-500 text-white rounded disabled:opacity-50"
+                onClick={() => handleAjustarMedida(pedido, "normal")}
+                disabled={procesando[pedido.id]}
+              >
+                Usar X: {opcionesEscalado[pedido.id].normal}
+              </button>
+              <button
+                className="px-2 py-1 text-xs bg-green-500 text-white rounded disabled:opacity-50"
+                onClick={() => handleAjustarMedida(pedido, "invertido")}
+                disabled={procesando[pedido.id]}
+              >
+                Usar Y: {opcionesEscalado[pedido.id].invertido}
+              </button>
+            </div>
+            <div className="text-xs text-gray-500 text-center">Medida real SVG: {opcionesEscalado[pedido.id].original} mm</div>
+          </div>
+        )}
+        {/* Botón de Vectorización Automática solo en grupoBase */}
+        {esBase && !pedido.archivo_vector && (
+          <button
+            className="text-purple-600 underline text-xs mb-2"
+            onClick={() => handleVectorizacionAutomatica(pedido)}
+            disabled={svgLoading}
+          >
+            {svgLoading && svgPedido?.id === pedido.id ? 'Vectorizando...' : 'Vectorización Automática'}
+          </button>
+        )}
+        {pedido.medida_real && (
+          <>
+            <div className="mt-2 text-xs text-green-700 font-bold">Verificado: {pedido.medida_real}</div>
+            {(pedido.tiempo_estimado || pedido.tiempo_estimado_ultrafino) && (
+              <div className="mt-1 text-xs text-blue-700">
+                ⏱ Tiempo estimado CNC: {pedido.tiempo_estimado} min<br />
+                🔬 Tiempo ultra fino: {pedido.tiempo_estimado_ultrafino} min
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    );
+  };
+
+  // Renderizar previsualización SVG grande si existe
+  const renderSVGPreview = () => {
+    if (!svgPreview) return null;
+    // Obtener la URL pública del archivo base del svgPedido
+    let archivoBase = svgPedido?.archivo_base;
+    if (typeof archivoBase === "string" && archivoBase.startsWith("[")) {
+      try {
+        const arr = JSON.parse(archivoBase);
+        archivoBase = Array.isArray(arr) ? arr[0] : arr;
+      } catch {
+        // Si falla el parseo, lo dejamos como está
+      }
+    } else if (Array.isArray(archivoBase)) {
+      archivoBase = archivoBase[0];
+    }
+    const baseUrl = publicUrl(archivoBase);
+    // Ancho del contenedor de preview
+    const previewWidth = 400;
+    const previewHeight = 400;
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg shadow-lg p-8 flex flex-col items-center max-w-2xl w-full relative">
+          <div className="mb-4 text-lg font-bold">Previsualización SVG</div>
+          <div className="w-full flex flex-col items-center mb-4 overflow-auto max-h-[60vh]">
+            {/* Comparador tipo slider */}
+            <ComparadorSlider baseUrl={baseUrl} svgString={svgPreview} width={previewWidth} height={previewHeight} />
+          </div>
+          <div className="flex gap-4 mt-2">
+            <button className="bg-green-600 text-white px-4 py-2 rounded" onClick={handleGuardarSVG}>Esta OK</button>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={handleDescargarSVG}>Descargar</button>
+            <button className="bg-red-600 text-white px-4 py-2 rounded" onClick={handleRechazarSVG}>Rechazar</button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Mini tarjeta para verificados
+  const renderMiniVerificado = (pedido) => {
+    const url = publicUrl(pedido.archivo_vector);
+    return (
+      <div
+        key={pedido.id}
+        className="bg-[#23232a]/80 border border-white/10 rounded-xl shadow p-2 w-28 flex flex-col items-center mb-2 cursor-pointer hover:shadow-lg hover:border-primary/40 transition-all"
+        onClick={() => setVerificadoExpandido(pedido)}
+      >
+        {url ? (
+          <img src={url} alt="preview" className="w-16 h-16 object-contain border rounded mb-1" />
+        ) : (
+          <div className="w-16 h-16 flex items-center justify-center bg-gray-100 border rounded mb-1 text-gray-400">Sin archivo</div>
+        )}
+        <div className="font-semibold text-xs text-center truncate w-full">{pedido.diseno || "Sin nombre"}</div>
+      </div>
+    );
+  };
+
+  // Tarjeta expandida para verificado
+  const renderVerificadoExpandido = (pedido) => {
+    // Reutiliza renderCard pero agrega botón de cerrar
+    return (
+      <div className="col-span-full flex justify-center items-start relative z-10">
+        <div className="relative">
+          <button
+            className="absolute -top-3 -right-3 bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center shadow-lg z-20"
+            onClick={() => setVerificadoExpandido(null)}
+            title="Cerrar"
+          >
+            ×
+          </button>
+          {renderCard(pedido, true, false)}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="p-8">
+      {renderSVGPreview()}
+      <h1 className="text-3xl font-bold mb-6">Vectorización</h1>
+      {loading ? (
+        <div>Cargando pedidos...</div>
+      ) : (
+        <div className="flex flex-col gap-8">
+          {/* Grilla superior: dos columnas */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Verificar Medidas</h2>
+              {grupoVector.length === 0 && <div className="text-gray-500">No hay pedidos para verificar.</div>}
+              {grupoVector.map(p => renderCard(p, true, false))}
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold mb-4">A vectorizar</h2>
+              {grupoBase.length === 0 && <div className="text-gray-500">No hay pedidos para vectorizar.</div>}
+              {grupoBase.map(p => renderCard(p, false, true))}
+            </div>
+          </div>
+          {/* Grilla inferior: verificados */}
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Verificados</h2>
+            {grupoVerificados.length === 0 && <div className="text-gray-500">No hay pedidos verificados.</div>}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 relative">
+              {/* Si hay expandido, mostrarlo ocupando toda la fila */}
+              {verificadoExpandido
+                ? renderVerificadoExpandido(verificadoExpandido)
+                : grupoVerificados.map(p => renderMiniVerificado(p))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default Vectorizacion; 
