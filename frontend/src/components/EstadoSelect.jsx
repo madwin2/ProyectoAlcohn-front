@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown } from 'lucide-react';
 
 const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [dropdownDirection, setDropdownDirection] = useState('down');
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  const buttonRef = useRef(null);
 
   // Mapeo de colores según el tipo y valor
   const getColorClass = (estado, tipo) => {
@@ -79,6 +83,25 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
     if (isDisabled) return;
     e.preventDefault();
     e.stopPropagation();
+    
+    if (!isOpen) {
+      // Calcular posición del botón
+      const buttonRect = e.currentTarget.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const spaceBelow = viewportHeight - buttonRect.bottom;
+      const spaceAbove = buttonRect.top;
+      
+      // Determinar dirección
+      const shouldOpenUp = spaceBelow < 200 && spaceAbove > spaceBelow;
+      setDropdownDirection(shouldOpenUp ? 'up' : 'down');
+      
+      // Calcular posición para el portal
+      setDropdownPosition({
+        top: shouldOpenUp ? buttonRect.top - 208 : buttonRect.bottom + 4,
+        left: buttonRect.left
+      });
+    }
+    
     setIsOpen(!isOpen);
   };
 
@@ -97,9 +120,124 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
   const colorClass = getColorClass(value, type);
   const displayLabel = getLabelShort(value, type);
 
+  // Renderizar el dropdown como portal
+  const renderDropdown = () => {
+    if (!isOpen) return null;
+    
+    return createPortal(
+      <>
+        {/* Overlay para cerrar el dropdown */}
+        <div
+          onClick={handleOverlayClick}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9998
+          }}
+        />
+
+        {/* Dropdown menu */}
+        <div
+          style={{
+            position: 'fixed',
+            top: dropdownPosition.top,
+            left: dropdownPosition.left,
+            background: 'rgba(9, 9, 11, 0.98)',
+            backdropFilter: 'blur(16px)',
+            border: '1px solid rgba(39, 39, 42, 0.8)',
+            borderRadius: '8px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
+            zIndex: 9999,
+            padding: '4px 0',
+            minWidth: '140px',
+            maxHeight: '200px',
+            overflowY: 'auto'
+          }}
+        >
+          {options.map((option) => {
+            const optionColorClass = getColorClass(option, type);
+            const optionLabel = getLabelShort(option, type);
+
+            return (
+              <button
+                key={option}
+                type="button"
+                onClick={(e) => handleOptionClick(e, option)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  textAlign: 'left',
+                  fontSize: '12px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'white',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'background 0.2s ease',
+                  outline: 'none'
+                }}
+                onMouseEnter={(e) => e.target.style.background = 'rgba(39, 39, 42, 0.6)'}
+                onMouseLeave={(e) => e.target.style.background = 'transparent'}
+              >
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '3px 6px',
+                  borderRadius: '9999px',
+                  fontSize: '10px',
+                  fontWeight: '500',
+                  whiteSpace: 'nowrap',
+                  background: optionColorClass.includes('bg-slate') ? 'rgba(100, 116, 139, 0.15)' :
+                    optionColorClass.includes('bg-cyan') ? 'rgba(6, 182, 212, 0.15)' :
+                      optionColorClass.includes('bg-emerald') ? 'rgba(16, 185, 129, 0.15)' :
+                        optionColorClass.includes('bg-red') ? 'rgba(239, 68, 68, 0.15)' :
+                          optionColorClass.includes('bg-amber') ? 'rgba(245, 158, 11, 0.15)' :
+                            optionColorClass.includes('bg-purple') ? 'rgba(168, 85, 247, 0.15)' :
+                              optionColorClass.includes('bg-teal') ? 'rgba(20, 184, 166, 0.15)' :
+                                optionColorClass.includes('bg-blue') ? 'rgba(59, 130, 246, 0.15)' :
+                                  optionColorClass.includes('bg-green') ? 'rgba(34, 197, 94, 0.15)' :
+                                    optionColorClass.includes('bg-orange') ? 'rgba(249, 115, 22, 0.15)' :
+                                      optionColorClass.includes('bg-violet') ? 'rgba(139, 92, 246, 0.15)' : 'rgba(100, 116, 139, 0.15)',
+                  color: optionColorClass.includes('text-slate') ? '#a8a29e' :
+                    optionColorClass.includes('text-cyan') ? '#67e8f9' :
+                      optionColorClass.includes('text-emerald') ? '#6ee7b7' :
+                        optionColorClass.includes('text-red') ? '#f87171' :
+                          optionColorClass.includes('text-amber') ? '#fbbf24' :
+                            optionColorClass.includes('text-purple') ? '#c4b5fd' :
+                              optionColorClass.includes('text-teal') ? '#5eead4' :
+                                optionColorClass.includes('text-blue') ? '#93c5fd' :
+                                  optionColorClass.includes('text-green') ? '#86efac' :
+                                    optionColorClass.includes('text-orange') ? '#fb923c' :
+                                      optionColorClass.includes('text-violet') ? '#c4b5fd' : '#a8a29e',
+                  border: `1px solid ${optionColorClass.includes('border-slate') ? 'rgba(100, 116, 139, 0.3)' :
+                    optionColorClass.includes('border-cyan') ? 'rgba(6, 182, 212, 0.3)' :
+                      optionColorClass.includes('border-emerald') ? 'rgba(16, 185, 129, 0.3)' :
+                        optionColorClass.includes('border-red') ? 'rgba(239, 68, 68, 0.3)' :
+                          optionColorClass.includes('border-amber') ? 'rgba(245, 158, 11, 0.3)' :
+                            optionColorClass.includes('border-purple') ? 'rgba(168, 85, 247, 0.3)' :
+                              optionColorClass.includes('border-teal') ? 'rgba(20, 184, 166, 0.3)' :
+                                optionColorClass.includes('border-blue') ? 'rgba(59, 130, 246, 0.3)' :
+                                  optionColorClass.includes('border-green') ? 'rgba(34, 197, 94, 0.3)' :
+                                    optionColorClass.includes('border-orange') ? 'rgba(249, 115, 22, 0.3)' :
+                                      optionColorClass.includes('border-violet') ? 'rgba(139, 92, 246, 0.3)' : 'rgba(100, 116, 139, 0.3)'}`
+                }}>
+                  {optionLabel}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </>,
+      document.body
+    );
+  };
+
   return (
     <div style={{ position: 'relative', width: '100%' }}>
       <button
+        ref={buttonRef}
         type="button"
         onClick={handleButtonClick}
         className={`estado-button${type === 'venta' ? ' venta' : ''}`}
@@ -169,119 +307,14 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
           width: '12px',
           height: '12px',
           marginLeft: '4px',
-          transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+          transform: isOpen ? 
+            (dropdownDirection === 'up' ? 'rotate(0deg)' : 'rotate(180deg)') : 
+            'rotate(0deg)',
           transition: 'transform 0.3s ease'
         }} />
       </button>
 
-      {isOpen && (
-        <>
-          {/* Overlay para cerrar el dropdown */}
-          <div
-            onClick={handleOverlayClick}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              zIndex: 9998
-            }}
-          />
-
-          {/* Dropdown menu */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '100%',
-              left: 0,
-              marginTop: '4px',
-              background: 'rgba(9, 9, 11, 0.98)',
-              backdropFilter: 'blur(16px)',
-              border: '1px solid rgba(39, 39, 42, 0.8)',
-              borderRadius: '8px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
-              zIndex: 9999,
-              padding: '4px 0',
-              minWidth: '140px',
-              maxHeight: '200px',
-              overflowY: 'auto'
-            }}
-          >
-            {options.map((option) => {
-              const optionColorClass = getColorClass(option, type);
-              const optionLabel = getLabelShort(option, type);
-
-              return (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={(e) => handleOptionClick(e, option)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    textAlign: 'left',
-                    fontSize: '12px',
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'white',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    transition: 'background 0.2s ease',
-                    outline: 'none'
-                  }}
-                  onMouseEnter={(e) => e.target.style.background = 'rgba(39, 39, 42, 0.6)'}
-                  onMouseLeave={(e) => e.target.style.background = 'transparent'}
-                >
-                  <span style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    padding: '3px 6px',
-                    borderRadius: '9999px',
-                    fontSize: '10px',
-                    fontWeight: '500',
-                    whiteSpace: 'nowrap',
-                    background: optionColorClass.includes('bg-slate') ? 'rgba(100, 116, 139, 0.15)' :
-                      optionColorClass.includes('bg-cyan') ? 'rgba(6, 182, 212, 0.15)' :
-                        optionColorClass.includes('bg-emerald') ? 'rgba(16, 185, 129, 0.15)' :
-                          optionColorClass.includes('bg-red') ? 'rgba(239, 68, 68, 0.15)' :
-                            optionColorClass.includes('bg-amber') ? 'rgba(245, 158, 11, 0.15)' :
-                              optionColorClass.includes('bg-purple') ? 'rgba(168, 85, 247, 0.15)' :
-                                optionColorClass.includes('bg-teal') ? 'rgba(20, 184, 166, 0.15)' :
-                                  optionColorClass.includes('bg-blue') ? 'rgba(59, 130, 246, 0.15)' :
-                                    optionColorClass.includes('bg-green') ? 'rgba(34, 197, 94, 0.15)' :
-                                      optionColorClass.includes('bg-orange') ? 'rgba(249, 115, 22, 0.15)' :
-                                        optionColorClass.includes('bg-violet') ? 'rgba(139, 92, 246, 0.15)' : 'rgba(100, 116, 139, 0.15)',
-                    color: optionColorClass.includes('text-slate') ? '#a8a29e' :
-                      optionColorClass.includes('text-cyan') ? '#67e8f9' :
-                        optionColorClass.includes('text-emerald') ? '#6ee7b7' :
-                          optionColorClass.includes('text-red') ? '#f87171' :
-                            optionColorClass.includes('text-amber') ? '#fbbf24' :
-                              optionColorClass.includes('text-purple') ? '#c4b5fd' :
-                                optionColorClass.includes('text-teal') ? '#5eead4' :
-                                  optionColorClass.includes('text-blue') ? '#93c5fd' :
-                                    optionColorClass.includes('text-green') ? '#86efac' :
-                                      optionColorClass.includes('text-orange') ? '#fb923c' :
-                                        optionColorClass.includes('text-violet') ? '#c4b5fd' : '#a8a29e',
-                    border: `1px solid ${optionColorClass.includes('border-slate') ? 'rgba(100, 116, 139, 0.3)' :
-                      optionColorClass.includes('border-cyan') ? 'rgba(6, 182, 212, 0.3)' :
-                        optionColorClass.includes('border-emerald') ? 'rgba(16, 185, 129, 0.3)' :
-                          optionColorClass.includes('border-red') ? 'rgba(239, 68, 68, 0.3)' :
-                            optionColorClass.includes('border-amber') ? 'rgba(245, 158, 11, 0.3)' :
-                              optionColorClass.includes('border-purple') ? 'rgba(168, 85, 247, 0.3)' :
-                                optionColorClass.includes('border-teal') ? 'rgba(20, 184, 166, 0.3)' :
-                                  optionColorClass.includes('border-blue') ? 'rgba(59, 130, 246, 0.3)' :
-                                    optionColorClass.includes('border-green') ? 'rgba(34, 197, 94, 0.3)' :
-                                      optionColorClass.includes('border-orange') ? 'rgba(249, 115, 22, 0.3)' :
-                                        optionColorClass.includes('border-violet') ? 'rgba(139, 92, 246, 0.3)' : 'rgba(100, 116, 139, 0.3)'}`
-                  }}>
-                    {optionLabel}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </>
-      )}
+      {renderDropdown()}
     </div>
   );
 };

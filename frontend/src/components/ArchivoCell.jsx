@@ -1,24 +1,6 @@
 import React from 'react';
 import { Upload } from 'lucide-react';
-import { supabase } from '../supabaseClient';
-
-const getSignedUrl = async (filePath) => {
-  if (!filePath) return null;
-  if (filePath.startsWith('http')) {
-    const idx = filePath.indexOf('/archivos-ventas/');
-    if (idx !== -1) {
-      filePath = filePath.substring(idx + '/archivos-ventas/'.length);
-    }
-  }
-  const { data, error } = await supabase.storage
-    .from('archivos-ventas')
-    .createSignedUrl(filePath, 60);
-  if (error) {
-    alert('No se pudo generar el enlace de acceso al archivo');
-    return null;
-  }
-  return data.signedUrl;
-};
+import { simpleFileUploadService } from '../services/simpleFileUpload';
 
 function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, _editing }) {
   const [signedUrl, setSignedUrl] = React.useState(null);
@@ -28,33 +10,37 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, _e
   React.useEffect(() => {
     if (!filePath) return;
     let mounted = true;
-    getSignedUrl(filePath).then(url => { if (mounted) setSignedUrl(url); });
+    simpleFileUploadService.getSignedUrl(filePath).then(url => { 
+      if (mounted) setSignedUrl(url); 
+    }).catch(error => {
+      console.error('Error obteniendo URL firmada:', error);
+      if (mounted) setSignedUrl(null);
+    });
     return () => { mounted = false; };
   }, [filePath]);
 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
+    
     setIsUploading(true);
     try {
-      const timestamp = Date.now();
-      const fileExtension = file.name.split('.').pop();
-      const fileName = `${field}_${pedidoId}_${timestamp}.${fileExtension}`;
-      const { error } = await supabase.storage
-        .from('archivos-ventas')
-        .upload(fileName, file);
-      if (error) throw error;
-      const { data: publicData } = supabase.storage
-        .from('archivos-ventas')
-        .getPublicUrl(fileName);
-      const updateData = {};
-      updateData[`p_${field}`] = publicData.publicUrl;
-      await supabase.rpc('editar_pedido', {
-        p_id: pedidoId,
-        ...updateData
-      });
+      // Subir archivo usando el servicio simplificado
+      const uploadResult = await simpleFileUploadService.uploadFile(file, field, pedidoId);
+      
+      // Actualizar el pedido con la nueva URL del archivo
+      await simpleFileUploadService.updatePedidoWithFile(pedidoId, field, uploadResult.publicUrl);
+      
+      // Notificar que se completó la subida
       if (onUpload) onUpload();
+      
+      // No mostrar mensaje de éxito para archivos con previsualización
+      if (field !== 'archivo_vector' && field !== 'foto_sello') {
+        alert('Archivo subido exitosamente');
+      }
+      
     } catch (err) {
+      console.error('Error al subir archivo:', err);
       alert('Error al subir el archivo: ' + err.message);
     } finally {
       setIsUploading(false);
@@ -79,9 +65,23 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, _e
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (window.confirm(`¿Estás seguro de que deseas eliminar ${nombre}?`)) {
-      onDelete && onDelete(signedUrl || filePath, field, pedidoId);
+      try {
+        // Eliminar archivo del storage
+        await simpleFileUploadService.deleteFile(filePath);
+        
+        // Actualizar el pedido para remover la referencia al archivo
+        await simpleFileUploadService.updatePedidoWithFile(pedidoId, field, null);
+        
+        // Notificar que se completó la eliminación
+        if (onDelete) onDelete(signedUrl || filePath, field, pedidoId);
+        
+        alert('Archivo eliminado exitosamente');
+      } catch (err) {
+        console.error('Error al eliminar archivo:', err);
+        alert('Error al eliminar el archivo: ' + err.message);
+      }
     }
   };
 
@@ -113,13 +113,13 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, _e
           }}
         >
           <Upload style={{ width: '12px', height: '12px' }} />
-          {field === 'foto_sello' ? 'Foto' : 'Subir'}
+          {isUploading ? 'Subiendo...' : field === 'foto_sello' ? 'Foto' : 'Subir'}
           <input
             type="file"
             onChange={handleFileUpload}
             style={{ display: 'none' }}
             disabled={isUploading}
-            accept="image/*,.pdf,.doc,.docx,.txt"
+            accept={field === 'foto_sello' ? 'image/*' : field === 'archivo_vector' ? '.svg,.ai,.eps,.pdf,.dxf' : 'image/*,.pdf,.doc,.docx,.txt'}
           />
         </label>
       </div>
@@ -131,6 +131,9 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, _e
   const isImage = filePath.match(/\.(jpg|jpeg|png|gif|svg)$/i);
 
   if (isImage) {
+    // Para SVG y vectores, usar object-fit: contain para mostrar completo
+    const objectFit = field === 'archivo_vector' ? 'contain' : 'cover';
+    
     return (
       <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: '48px', width: '48px' }}>
         <div
@@ -152,7 +155,7 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, _e
               style={{
                 width: '48px',
                 height: '48px',
-                objectFit: 'cover',
+                objectFit: objectFit,
                 borderRadius: '6px',
                 border: '1px solid rgba(63, 63, 70, 0.5)',
                 transition: 'border-color 0.3s ease'
