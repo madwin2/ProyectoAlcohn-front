@@ -67,7 +67,7 @@ export const useVectorizacion = () => {
     setOpcionesEscalado(nuevasOpc);
   };
 
-  // Vectorizar con IA (simulado)
+  // Vectorizar con IA real usando vectorizer.ai
   const handleVectorizar = async (pedido) => {
     if (!pedido.archivo_base || procesando[pedido.id_pedido]) return;
     
@@ -80,38 +80,32 @@ export const useVectorizacion = () => {
     setSvgLoading(true);
     
     try {
-      // Simular proceso de vectorización
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Descargar la imagen base
+      const imageResponse = await fetch(baseUrl);
+      const imageBlob = await imageResponse.blob();
       
-      // Generar SVG simulado basado en el pedido
-      const svgSimulado = `
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
-          <defs>
-            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
-              <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
-            </linearGradient>
-          </defs>
-          <rect width="400" height="300" fill="url(#grad1)" rx="20"/>
-          <text x="200" y="120" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="24" font-weight="bold">
-            ${pedido.disenio || 'Diseño Vectorizado'}
-          </text>
-          <text x="200" y="160" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16">
-            ID: ${pedido.id_pedido}
-          </text>
-          <text x="200" y="200" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14">
-            Vectorizado con IA
-          </text>
-          <circle cx="200" cy="240" r="20" fill="white" opacity="0.8"/>
-          <path d="M190 240 L200 250 L210 230" stroke="#2563eb" stroke-width="3" fill="none"/>
-        </svg>
-      `;
+      // Preparar FormData para el proxy local
+      const formData = new FormData();
+      formData.append('image', imageBlob, 'image.jpg');
       
-      setSvgPreview(svgSimulado);
+      // Llamar al proxy local
+      const response = await fetch('http://localhost:3001/api/vectorize', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
+        throw new Error(errorData.error || `Error del servidor: ${response.status}`);
+      }
+      
+      const svgContent = await response.text();
+      
+      setSvgPreview(svgContent);
       setSvgPedido(pedido);
     } catch (error) {
       console.error('Error vectorizando:', error);
-      alert('Error al vectorizar la imagen');
+      alert(`Error al vectorizar la imagen: ${error.message}`);
     } finally {
       setProcesando(prev => ({ ...prev, [pedido.id_pedido]: false }));
       setSvgLoading(false);
@@ -138,6 +132,14 @@ export const useVectorizacion = () => {
   const handleDimensionar = async (pedido, medidaReal) => {
     if (!pedido.archivo_vector || procesando[pedido.id_pedido]) return;
     
+    // Debug logging
+    console.log('handleDimensionar called with:', {
+      pedido_id: pedido.id_pedido,
+      medida_real: medidaReal,
+      typeof_id: typeof pedido.id_pedido,
+      typeof_medida: typeof medidaReal
+    });
+    
     setProcesando(prev => ({ ...prev, [pedido.id_pedido]: true }));
     
     try {
@@ -153,19 +155,23 @@ export const useVectorizacion = () => {
         const tipoPlanchuela = calcularTipoPlanchuela(medidaReal);
         const largoPlanchuela = calcularLargoPlanchuela(medidaReal);
         
+        // Debug before Supabase call
+        console.log('About to update Supabase with id_pedido:', pedido.id_pedido);
+        
         const { error } = await supabase
           .from('pedidos')
           .update({
             medida_real: medidaReal,
             tiempo_estimado: Math.round(tiempos.totalTime),
-            tiempo_estimado_desbaste: Math.round(tiempos.roughingTime),
-            tiempo_estimado_ultrafino: Math.round(tiempos.fineProfilingTime),
             tipo_planchuela: tipoPlanchuela,
             largo_planchuela: largoPlanchuela
           })
           .eq('id_pedido', pedido.id_pedido);
         
-        if (!error) {
+        if (error) {
+          console.error('Supabase error:', error);
+          alert(`Error actualizando pedido: ${error.message}`);
+        } else {
           await fetchPedidos();
         }
       }

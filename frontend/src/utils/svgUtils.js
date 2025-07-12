@@ -185,34 +185,208 @@ export const calcularLargoPlanchuela = (medidaReal) => {
 };
 
 /**
- * Función de placeholder para cálculos CNC
- * En el futuro se puede integrar con bronzeSealUtils
+ * Configuración de herramientas y parámetros de mecanizado
+ */
+const HERRAMIENTAS = {
+  fresa6mm: {
+    nombre: "Fresa 6mm",
+    velocidadAvance: 800, // mm/min
+    profundidadPasada: 0.2, // mm
+    recuperacion: 0.8, // 80% - herramienta recta
+    diametro: 6
+  },
+  fresa1mm: {
+    nombre: "Fresa 1mm",
+    velocidadAvance: 1000, // mm/min
+    profundidadPasada: 0.1, // mm
+    recuperacion: 0.3, // 30% - cónica 15° lateral
+    diametro: 1
+  },
+  fresa05mm: {
+    nombre: "Fresa 0.5mm",
+    velocidadAvance: 800, // mm/min
+    profundidadPasada: 0.1, // mm  
+    recuperacion: 0.3, // 30% - cónica 15° lateral
+    diametro: 0.5
+  }
+};
+
+/**
+ * Configuración de operaciones de mecanizado
+ */
+const OPERACIONES = {
+  planeado: {
+    herramienta: HERRAMIENTAS.fresa6mm,
+    profundidadTotal: 0.5, // mm - profundidad típica de planeado
+    factor: 1.0 // Factor de cobertura del área
+  },
+  cajeado6mm: {
+    herramienta: HERRAMIENTAS.fresa6mm,
+    profundidadTotal: 2.0, // mm - profundidad típica de desbaste
+    factor: 0.7 // 70% del área total (zonas a desbastar)
+  },
+  cajeado1mm: {
+    herramienta: HERRAMIENTAS.fresa1mm,
+    profundidadTotal: 0.5, // mm - acabado intermedio
+    factor: 0.4 // 40% del área (zonas más complejas)
+  },
+  perfilado05mm: {
+    herramienta: HERRAMIENTAS.fresa05mm,
+    profundidadTotal: 0.3, // mm - acabado final
+    factor: 0.2 // 20% del área (solo contornos y detalles finos)
+  }
+};
+
+/**
+ * Calcula el tiempo de una operación específica
+ */
+const calcularTiempoOperacion = (area, perimetro, operacion) => {
+  const { herramienta, profundidadTotal, factor } = operacion;
+
+  // Calcular número de pasadas necesarias
+  const numPasadas = Math.ceil(profundidadTotal / herramienta.profundidadPasada);
+
+  // Estimar longitud de trayectoria basada en área y perímetro
+  let longitudTrayectoria;
+
+  if (operacion === OPERACIONES.planeado) {
+    // Planeado: trayectoria en zigzag sobre toda el área
+    const espaciado = herramienta.diametro * 0.8; // 80% solapamiento
+    longitudTrayectoria = (area / espaciado) * factor;
+  } else if (operacion === OPERACIONES.perfilado05mm) {
+    // Perfilado: principalmente perímetro y contornos
+    longitudTrayectoria = perimetro * factor * 2; // Múltiples pasadas de contorno
+  } else {
+    // Cajeados: combinación de área y perímetro
+    const espaciado = herramienta.diametro * 0.6; // 60% solapamiento para cajeado
+    const trayectoriaArea = (area * factor) / espaciado;
+    const trayectoriaContorno = perimetro * factor;
+    longitudTrayectoria = trayectoriaArea + trayectoriaContorno;
+  }
+
+  // Tiempo de mecanizado productivo
+  const tiempoProductivo = (longitudTrayectoria * numPasadas) / herramienta.velocidadAvance;
+
+  // Tiempo de movimientos no productivos (recuperación)
+  const tiempoRecuperacion = tiempoProductivo * (1 - herramienta.recuperacion);
+
+  // Tiempo total de la operación
+  const tiempoTotal = tiempoProductivo + tiempoRecuperacion;
+
+  return {
+    operacion: herramienta.nombre,
+    numPasadas,
+    longitudTrayectoria: longitudTrayectoria.toFixed(1),
+    tiempoProductivo: tiempoProductivo.toFixed(1),
+    tiempoRecuperacion: tiempoRecuperacion.toFixed(1),
+    tiempoTotal: tiempoTotal.toFixed(1)
+  };
+};
+
+/**
+ * Estima el perímetro basado en la complejidad del SVG
+ */
+const estimarPerimetro = (svgString, area) => {
+  // Contar elementos de path y formas que indican complejidad
+  const pathCount = (svgString.match(/<path/g) || []).length;
+  const circleCount = (svgString.match(/<circle/g) || []).length;
+  const rectCount = (svgString.match(/<rect/g) || []).length;
+  const lineCount = (svgString.match(/<line/g) || []).length;
+
+  // Factor de complejidad basado en elementos
+  const complejidad = pathCount * 2 + circleCount + rectCount + lineCount;
+
+  // Estimar perímetro basado en área y complejidad
+  // Para un círculo: perímetro = 2 * π * √(área/π)
+  const perimetroBase = 2 * Math.sqrt(Math.PI * area);
+
+  // Ajustar por complejidad (más elementos = más perímetro)
+  const factorComplejidad = 1 + (complejidad * 0.1);
+
+  return perimetroBase * factorComplejidad;
+};
+
+/**
+ * Función principal de cálculo de tiempos CNC mejorada
  */
 export const calcularTiemposCNC = async (svgString, widthMm, heightMm) => {
-  // Placeholder - en el futuro integrar con bronzeSealUtils
   try {
-    // Estimación básica basada en área y complejidad
-    const area = (widthMm * heightMm) / 100; // cm²
-    const complejidad = svgString.length / 1000; // Factor de complejidad básico
-    
-    const baseTime = area * 2; // 2 segundos por cm²
-    const complexityTime = complejidad * 10; // 10 segundos por unidad de complejidad
-    
-    const totalTime = baseTime + complexityTime;
-    const roughingTime = totalTime * 0.3;
-    const fineProfilingTime = totalTime * 0.7;
-    
+    // Calcular área en mm²
+    const area = widthMm * heightMm;
+
+    // Estimar perímetro basado en complejidad del SVG
+    const perimetro = estimarPerimetro(svgString, area);
+
+    // Calcular tiempo para cada operación
+    const tiempoPlaneado = calcularTiempoOperacion(area, perimetro, OPERACIONES.planeado);
+    const tiempoCajeado6 = calcularTiempoOperacion(area, perimetro, OPERACIONES.cajeado6mm);
+    const tiempoCajeado1 = calcularTiempoOperacion(area, perimetro, OPERACIONES.cajeado1mm);
+    const tiempoPerfilado = calcularTiempoOperacion(area, perimetro, OPERACIONES.perfilado05mm);
+
+    // Tiempo total (convertir de minutos a segundos)
+    const tiempoTotalMinutos = parseFloat(tiempoPlaneado.tiempoTotal) +
+      parseFloat(tiempoCajeado6.tiempoTotal) +
+      parseFloat(tiempoCajeado1.tiempoTotal) +
+      parseFloat(tiempoPerfilado.tiempoTotal);
+
+    const tiempoTotalSegundos = tiempoTotalMinutos * 60;
+
+    // Distribución por tipo de operación (en segundos)
+    const roughingTime = (parseFloat(tiempoPlaneado.tiempoTotal) + parseFloat(tiempoCajeado6.tiempoTotal)) * 60;
+    const fineProfilingTime = (parseFloat(tiempoCajeado1.tiempoTotal) + parseFloat(tiempoPerfilado.tiempoTotal)) * 60;
+
+    // Resultado detallado
     return {
-      totalTime: Math.max(totalTime, 30), // Mínimo 30 segundos
-      roughingTime: Math.max(roughingTime, 10),
-      fineProfilingTime: Math.max(fineProfilingTime, 20)
+      totalTime: Math.max(Math.round(tiempoTotalSegundos), 30), // Mínimo 30 segundos
+      roughingTime: Math.max(Math.round(roughingTime), 10),
+      fineProfilingTime: Math.max(Math.round(fineProfilingTime), 20),
+
+      // Información detallada para debugging
+      detalles: {
+        area: `${area.toFixed(0)} mm²`,
+        perimetro: `${perimetro.toFixed(1)} mm`,
+        tiempoTotalMinutos: `${tiempoTotalMinutos.toFixed(1)} min`,
+        operaciones: {
+          planeado: tiempoPlaneado,
+          cajeado6mm: tiempoCajeado6,
+          cajeado1mm: tiempoCajeado1,
+          perfilado05mm: tiempoPerfilado
+        }
+      }
     };
+
   } catch (error) {
     console.error('Error calculando tiempos CNC:', error);
+
+    // Valores por defecto en caso de error
     return {
-      totalTime: 60,
-      roughingTime: 20,
-      fineProfilingTime: 40
+      totalTime: 300, // 5 minutos por defecto
+      roughingTime: 180, // 3 minutos desbaste
+      fineProfilingTime: 120, // 2 minutos acabado
+      detalles: {
+        error: error.message
+      }
     };
+  }
+};
+
+/**
+ * Función auxiliar para mostrar el desglose detallado
+ */
+export const mostrarDesgloseTiempos = (resultados) => {
+  if (resultados.detalles) {
+    console.log('=== DESGLOSE DE TIEMPOS CNC ===');
+    console.log(`Área: ${resultados.detalles.area}`);
+    console.log(`Perímetro estimado: ${resultados.detalles.perimetro}`);
+    console.log(`Tiempo total: ${resultados.detalles.tiempoTotalMinutos}`);
+    console.log('\n--- Operaciones ---');
+
+    Object.entries(resultados.detalles.operaciones).forEach(([nombre, datos]) => {
+      console.log(`${nombre}:`);
+      console.log(`  - Herramienta: ${datos.operacion}`);
+      console.log(`  - Pasadas: ${datos.numPasadas}`);
+      console.log(`  - Trayectoria: ${datos.longitudTrayectoria} mm`);
+      console.log(`  - Tiempo: ${datos.tiempoTotal} min`);
+    });
   }
 };
