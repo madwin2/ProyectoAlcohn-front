@@ -66,6 +66,8 @@ const PedidoRow = ({
     }
   };
 
+  console.log('Estados en PedidoRow:', ESTADOS_FABRICACION);
+
   return (
     <TableRow
       editing={editing}

@@ -128,7 +128,7 @@ function ProduccionPage() {
         // Usar RPC optimizada para búsqueda de pedidos con ordenamiento múltiple
         const { data, error: fetchError } = await supabase.rpc('buscar_pedidos_ordenado_multiple', {
           termino_busqueda: debouncedSearchTerm || '',
-          filtro_estado_fabricacion: debouncedFilters.estado_fabricacion.length > 0 ? debouncedFilters.estado_fabricacion[0] : '',
+          filtro_estado_fabricacion: debouncedFilters.estado_fabricacion.length === 1 ? debouncedFilters.estado_fabricacion[0] : '',
           filtro_estado_venta: '',
           filtro_estado_envio: '',
           filtro_fecha_desde: debouncedFilters.fecha_compra_gte || null,
@@ -152,6 +152,22 @@ function ProduccionPage() {
           );
         }
 
+        // Ordenar por estado de fabricación personalizado si corresponde
+        const criterioEstado = multiSort.sortCriteria.find(c => c.field === 'estado_fabricacion');
+        if (criterioEstado) {
+          const asc = criterioEstado.order === 'asc';
+          pedidosOrdenados.sort((a, b) => {
+            const idxA = ordenEstadosFabricacion.indexOf(a.estado_fabricacion);
+            const idxB = ordenEstadosFabricacion.indexOf(b.estado_fabricacion);
+            if (idxA !== idxB) {
+              return asc
+                ? (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB)
+                : (idxB === -1 ? 999 : idxB) - (idxA === -1 ? 999 : idxA);
+            }
+            return 0;
+          });
+        }
+
         setPedidos(pedidosOrdenados);
       } catch (err) {
         setError(err.message);
@@ -160,7 +176,7 @@ function ProduccionPage() {
       }
     };
     getPedidos();
-  }, [sortOrder, debouncedSearchTerm, debouncedFilters, multiSort.sortCriteria]);
+  }, [sortOrder, debouncedSearchTerm, debouncedFilters, multiSort.sortCriteria, ordenEstadosFabricacion]);
 
   const handlePedidoAdded = () => {
     setIsModalOpen(false);
@@ -232,7 +248,7 @@ function ProduccionPage() {
     setLoading(true);
     supabase.rpc('buscar_pedidos_ordenado_multiple', {
       termino_busqueda: debouncedSearchTerm || '',
-      filtro_estado_fabricacion: debouncedFilters.estado_fabricacion.length > 0 ? debouncedFilters.estado_fabricacion[0] : '',
+      filtro_estado_fabricacion: debouncedFilters.estado_fabricacion.length === 1 ? debouncedFilters.estado_fabricacion[0] : '',
       filtro_estado_venta: '',
       filtro_estado_envio: '',
       filtro_fecha_desde: debouncedFilters.fecha_compra_gte || null,
@@ -243,7 +259,29 @@ function ProduccionPage() {
       if (error) {
         setError(error.message);
       } else {
-        setPedidos(data || []);
+        let pedidosOrdenados = data || [];
+        // Aplicar filtros múltiples que la RPC no soporta directamente
+        if (debouncedFilters.estado_fabricacion.length > 1) {
+          pedidosOrdenados = pedidosOrdenados.filter(p => 
+            debouncedFilters.estado_fabricacion.includes(p.estado_fabricacion)
+          );
+        }
+        // Ordenar por estado de fabricación personalizado si corresponde
+        const criterioEstado = multiSort.sortCriteria.find(c => c.field === 'estado_fabricacion');
+        if (criterioEstado) {
+          const asc = criterioEstado.order === 'asc';
+          pedidosOrdenados.sort((a, b) => {
+            const idxA = ordenEstadosFabricacion.indexOf(a.estado_fabricacion);
+            const idxB = ordenEstadosFabricacion.indexOf(b.estado_fabricacion);
+            if (idxA !== idxB) {
+              return asc
+                ? (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB)
+                : (idxB === -1 ? 999 : idxB) - (idxA === -1 ? 999 : idxA);
+            }
+            return 0;
+          });
+        }
+        setPedidos(pedidosOrdenados);
       }
       setLoading(false);
     });

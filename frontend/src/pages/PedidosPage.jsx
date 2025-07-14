@@ -17,13 +17,19 @@ import SortModal from '../components/ui/SortModal';
 import { ArrowUpDown } from 'lucide-react';
 import { useGuardarVistaUsuario, cargarVistaUsuario, guardarVistaUsuario } from '../hooks/useGuardarVistaUsuario';
 import { useAuth } from '../hooks/useAuth';
+import SortPopover from '../components/ui/SortPopover';
 console.log('*** PedidosPage importó useGuardarVistaUsuario ***', useGuardarVistaUsuario);
+
+const ESTADOS_FABRICACION_DEFAULT = [
+  'Sin Hacer', 'Haciendo', 'Rehacer', 'Retocar', 'Prioridad', 'Verificar', 'Hecho'
+];
 
 function PedidosPage() {
   const [verificarMedidaModal, setVerificarMedidaModal] = useState({ isOpen: false, pedido: null });
   const [sortModalOpen, setSortModalOpen] = useState(false);
   const [configCargada, setConfigCargada] = useState(false);
   const [sortAplicado, setSortAplicado] = useState(false);
+  const [ordenEstadosFabricacion, setOrdenEstadosFabricacion] = useState(ESTADOS_FABRICACION_DEFAULT);
   const verificacionMedidas = useVerificacionMedidas();
   const multiSort = useMultiSort([]);
   const state = usePedidosState();
@@ -42,6 +48,8 @@ function PedidosPage() {
   });
 
   const { user, loading: authLoading } = useAuth();
+  const [showSortPopover, setShowSortPopover] = useState(false);
+  const sortButtonRef = useRef();
 
   // Effects
   useEffect(() => {
@@ -161,6 +169,9 @@ function PedidosPage() {
         if (config.orden && Array.isArray(config.orden) && multiSort && multiSort.setSortCriteria) {
           multiSort.setSortCriteria(config.orden);
         }
+        if (config.ordenEstadosFabricacion && Array.isArray(config.ordenEstadosFabricacion)) {
+          setOrdenEstadosFabricacion(config.ordenEstadosFabricacion);
+        }
       }
       setConfigCargada(true);
     }
@@ -173,23 +184,53 @@ function PedidosPage() {
     if (configCargada && user) {
       guardarVistaUsuario(user, 'pedidos', {
         filtros: debouncedFilters,
-        orden: multiSort.sortCriteria
+        orden: multiSort.sortCriteria,
+        ordenEstadosFabricacion
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedFilters]);
+  }, [debouncedFilters, ordenEstadosFabricacion]);
 
   // Guardar la vista solo cuando se aplica el sort
   useEffect(() => {
     if (sortAplicado && configCargada && user) {
       guardarVistaUsuario(user, 'pedidos', {
         filtros: filters,
-        orden: multiSort.sortCriteria
+        orden: multiSort.sortCriteria,
+        ordenEstadosFabricacion
       });
       setSortAplicado(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortAplicado]);
+  }, [sortAplicado, ordenEstadosFabricacion]);
+
+  // Ordenar los pedidos según los criterios seleccionados
+  const pedidosOrdenados = [...pedidos].sort((a, b) => {
+    // Buscar si hay criterio de estado de fabricación
+    const criterioEstado = multiSort.sortCriteria.find(c => c.field === 'estado_fabricacion');
+    if (criterioEstado) {
+      const idxA = ordenEstadosFabricacion.indexOf(a.estado_fabricacion);
+      const idxB = ordenEstadosFabricacion.indexOf(b.estado_fabricacion);
+      const asc = criterioEstado.order === 'asc';
+      if (idxA !== idxB) {
+        return asc
+          ? (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB)
+          : (idxB === -1 ? 999 : idxB) - (idxA === -1 ? 999 : idxA);
+      }
+    }
+    // Si hay otros criterios, aplicarlos (ejemplo: fecha)
+    for (const criterio of multiSort.sortCriteria) {
+      if (criterio.field === 'fecha_compra') {
+        const dateA = new Date(a.fecha_compra);
+        const dateB = new Date(b.fecha_compra);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return criterio.order === 'asc' ? dateA - dateB : dateB - dateA;
+        }
+      }
+      // Agregar más criterios si es necesario
+    }
+    return 0;
+  });
 
   return (
     <div style={{
@@ -199,68 +240,30 @@ function PedidosPage() {
       <PageHeader
         pedidos={pedidos} searchTerm={searchTerm} setSearchTerm={setSearchTerm}
         showFilterPanel={showFilterPanel} setShowFilterPanel={setShowFilterPanel}
-        filters={filters} setFilters={setFilters} filterOptions={filterOptions}
+        filters={filters} setFilters={setFilters} filterOptions={{ ...filterOptions, estado_fabricacion: ordenEstadosFabricacion }}
         onClearFilters={onClearFilters} setIsModalOpen={setIsModalOpen}
+        showSortPopover={showSortPopover}
+        setShowSortPopover={setShowSortPopover}
+        sortCriteria={multiSort.sortCriteria}
+        ordenPopover={showSortPopover && (
+          <SortPopover
+            anchorRef={sortButtonRef}
+            onClose={() => setShowSortPopover(false)}
+            fields={sortFields}
+            sortCriteria={multiSort.sortCriteria}
+            addSortCriterion={multiSort.addSortCriterion}
+            removeSortCriterion={multiSort.removeSortCriterion}
+            updateSortCriterionField={multiSort.updateSortCriterionField}
+            updateSortCriterionOrder={multiSort.updateSortCriterionOrder}
+            moveCriterionUp={multiSort.moveCriterionUp}
+            moveCriterionDown={multiSort.moveCriterionDown}
+            clearSortCriteria={multiSort.clearSortCriteria}
+            onApply={() => { handleApplySort(); setShowSortPopover(false); }}
+            ordenEstadosFabricacion={ordenEstadosFabricacion}
+            setOrdenEstadosFabricacion={setOrdenEstadosFabricacion}
+          />
+        )}
       />
-
-      {/* Botón de ordenamiento en la cabecera */}
-      <div style={{ 
-        position: 'sticky', 
-        top: 0, 
-        zIndex: 10, 
-        background: 'rgba(9, 9, 11, 0.8)', 
-        borderBottom: '1px solid rgba(39, 39, 42, 0.5)', 
-        padding: '16px 32px',
-        display: 'flex',
-        justifyContent: 'flex-end'
-      }}>
-        <button
-          onClick={() => setSortModalOpen(true)}
-          style={{
-            background: multiSort.sortCriteria.length > 0 ? 'rgba(59, 130, 246, 0.2)' : 'rgba(39, 39, 42, 0.5)',
-            border: multiSort.sortCriteria.length > 0 ? '1px solid rgba(59, 130, 246, 0.5)' : '1px solid rgba(63, 63, 70, 0.5)',
-            color: multiSort.sortCriteria.length > 0 ? '#60a5fa' : '#a1a1aa',
-            borderRadius: '8px',
-            padding: '8px 16px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontSize: '14px',
-            fontWeight: '500',
-            transition: 'all 0.3s ease'
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.background = 'rgba(59, 130, 246, 0.3)';
-            e.target.style.borderColor = 'rgba(59, 130, 246, 0.7)';
-            e.target.style.color = '#93c5fd';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.background = multiSort.sortCriteria.length > 0 ? 'rgba(59, 130, 246, 0.2)' : 'rgba(39, 39, 42, 0.5)';
-            e.target.style.borderColor = multiSort.sortCriteria.length > 0 ? 'rgba(59, 130, 246, 0.5)' : 'rgba(63, 63, 70, 0.5)';
-            e.target.style.color = multiSort.sortCriteria.length > 0 ? '#60a5fa' : '#a1a1aa';
-          }}
-        >
-          <ArrowUpDown style={{ width: '16px', height: '16px' }} />
-          Ordenar
-          {multiSort.sortCriteria.length > 0 && (
-            <span style={{
-              background: '#3b82f6',
-              color: 'white',
-              borderRadius: '50%',
-              width: '18px',
-              height: '18px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '10px',
-              fontWeight: '600'
-            }}>
-              {multiSort.sortCriteria.length}
-            </span>
-          )}
-        </button>
-      </div>
 
       <AddPedidoModal
         isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}
@@ -294,21 +297,6 @@ function PedidosPage() {
         editingId={editingId} setEditContextMenu={setEditContextMenu}
       />
 
-      <SortModal
-        isOpen={sortModalOpen}
-        onClose={() => setSortModalOpen(false)}
-        fields={sortFields}
-        sortCriteria={multiSort.sortCriteria}
-        addSortCriterion={multiSort.addSortCriterion}
-        removeSortCriterion={multiSort.removeSortCriterion}
-        updateSortCriterionField={multiSort.updateSortCriterionField}
-        updateSortCriterionOrder={multiSort.updateSortCriterionOrder}
-        moveCriterionUp={multiSort.moveCriterionUp}
-        moveCriterionDown={multiSort.moveCriterionDown}
-        clearSortCriteria={multiSort.clearSortCriteria}
-        onApply={handleApplySort}
-      />
-
       <div style={{ maxWidth: '100%', margin: '0 auto', padding: '32px' }}>
         <Table>
           <TableHeader>
@@ -331,15 +319,15 @@ function PedidosPage() {
               <tr><td colSpan="11" className="table-loading">Cargando...</td></tr>
             ) : error ? (
               <tr><td colSpan="11" className="table-error">Error: {error}</td></tr>
-            ) : pedidos.length > 0 ? (
-              pedidos.map((pedido) => (
+            ) : pedidosOrdenados.length > 0 ? (
+              pedidosOrdenados.map((pedido) => (
                 <PedidoRow
                   key={pedido.id_pedido} pedido={pedido} editing={editingId === pedido.id_pedido}
                   editForm={editForm} handleEditFormChange={api.handleEditFormChange}
                   handleEditRowRightClick={handleEditRowRightClick} handleRowRightClick={handleRowRightClick}
                   startEdit={api.startEdit} getEstadoStyle={getEstadoStyle} handlePedidoAdded={handlePedidoAdded}
                   handleEliminarArchivo={api.handleEliminarArchivo} supabase={supabase} getPedidos={api.getPedidos}
-                  ESTADOS_FABRICACION={ESTADOS_FABRICACION} ESTADOS_VENTA={ESTADOS_VENTA}
+                  ESTADOS_FABRICACION={ordenEstadosFabricacion} ESTADOS_VENTA={ESTADOS_VENTA}
                   ESTADOS_ENVIO={ESTADOS_ENVIO} setEditForm={state.setEditForm} editingId={editingId}
                 />
               ))

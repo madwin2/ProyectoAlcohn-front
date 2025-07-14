@@ -1,6 +1,6 @@
 import React from 'react';
 import FilterPanel from './FilterPanel';
-import { Search, Plus, Filter, X, Package } from 'lucide-react';
+import { Search, Plus, Filter, X, Package, ArrowUpDown } from 'lucide-react';
 import { hayFiltrosActivos } from '../utils/pedidosUtils';
 
 const PageHeader = ({
@@ -13,7 +13,12 @@ const PageHeader = ({
   setFilters,
   filterOptions,
   onClearFilters,
-  setIsModalOpen
+  setIsModalOpen,
+  showSortPopover, // NUEVO: estado para mostrar el popover de ordenar
+  setShowSortPopover, // NUEVO: setter para el popover
+  sortCriteria = [], // NUEVO: criterios de orden actuales
+  ordenPopover, // NUEVO: componente popover de ordenar
+  ordenEstadosFabricacion // <-- Agregado aquí
 }) => {
   const hayFiltros = hayFiltrosActivos(filters);
 
@@ -96,8 +101,54 @@ const PageHeader = ({
             />
           </div>
 
-          {/* Filtros */}
-          <div style={{ position: 'relative' }}>
+          {/* Botón de ordenar y filtro juntos */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' }}>
+            {/* Botón ORDENAR */}
+            <button
+              onClick={() => setShowSortPopover(!showSortPopover)}
+              style={{
+                color: sortCriteria.length > 0 ? 'white' : '#a1a1aa',
+                background: sortCriteria.length > 0 ? 'rgba(39, 39, 42, 0.5)' : 'transparent',
+                border: 'none',
+                padding: '8px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontWeight: 500
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.color = 'white';
+                e.target.style.background = 'rgba(39, 39, 42, 0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.color = sortCriteria.length > 0 ? 'white' : '#a1a1aa';
+                e.target.style.background = sortCriteria.length > 0 ? 'rgba(39, 39, 42, 0.5)' : 'transparent';
+              }}
+            >
+              <ArrowUpDown style={{ width: '16px', height: '16px' }} />
+              Ordenar
+              {sortCriteria.length > 0 && (
+                <span style={{
+                  background: '#3b82f6',
+                  color: 'white',
+                  borderRadius: '50%',
+                  width: '18px',
+                  height: '18px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '10px',
+                  fontWeight: '600'
+                }}>
+                  {sortCriteria.length}
+                </span>
+              )}
+            </button>
+            {ordenPopover}
+            {/* Botón FILTRO */}
             <button
               onClick={() => setShowFilterPanel(!showFilterPanel)}
               style={{
@@ -107,7 +158,11 @@ const PageHeader = ({
                 padding: '8px',
                 borderRadius: '8px',
                 cursor: 'pointer',
-                transition: 'all 0.3s ease'
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontWeight: 500
               }}
               onMouseEnter={(e) => {
                 e.target.style.color = 'white';
@@ -119,8 +174,9 @@ const PageHeader = ({
               }}
             >
               <Filter style={{ width: '16px', height: '16px' }} />
+              Filtros
             </button>
-
+            {/* Popover de filtros */}
             {showFilterPanel && (
               <div style={{
                 position: 'absolute',
@@ -177,7 +233,7 @@ const PageHeader = ({
                 </div>
 
                 <FilterPanel
-                  filterOptions={filterOptions}
+                  filterOptions={{ ...filterOptions, estado_fabricacion: ordenEstadosFabricacion }}
                   filters={filters}
                   setFilters={setFilters}
                   onClear={onClearFilters}

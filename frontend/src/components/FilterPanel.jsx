@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import './FilterPanel.css';
 
-function FilterPanel({ _filterOptions, filters, setFilters, onClear, isExpanded, onToggle, showHeader = true, visibleFilters }) {
+function FilterPanel({ filterOptions, filters, setFilters, onClear, isExpanded, onToggle, showHeader = true, visibleFilters }) {
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
   const [activeFiltersChips, setActiveFiltersChips] = useState([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
+
+  console.log('Estados en filtro:', filterOptions?.estado_fabricacion);
 
   // Opciones de fecha predefinidas tipo Notion
   const datePresets = useMemo(() => [
@@ -317,7 +319,7 @@ function FilterPanel({ _filterOptions, filters, setFilters, onClear, isExpanded,
                 <h4>🔨 Estado de Fabricación</h4>
                 <NotionDropdownFilter
                   label="Estado de Fabricación"
-                  options={ESTADOS_FABRICACION}
+                  options={filterOptions?.estado_fabricacion || ESTADOS_FABRICACION}
                   selected={filters.estado_fabricacion}
                   onChange={(option, checked) => {
                     setFilters(prev => {

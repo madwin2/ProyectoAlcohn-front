@@ -47,9 +47,9 @@ export const usePedidosApi = ({
       // Usar RPC optimizada para búsqueda de pedidos con ordenamiento múltiple
       const { data, error: fetchError } = await supabase.rpc('buscar_pedidos_ordenado_multiple', {
         termino_busqueda: debouncedSearchTerm || '',
-        filtro_estado_fabricacion: debouncedFilters.estado_fabricacion.length > 0 ? debouncedFilters.estado_fabricacion[0] : '',
-        filtro_estado_venta: debouncedFilters.estado_venta.length > 0 ? debouncedFilters.estado_venta[0] : '',
-        filtro_estado_envio: debouncedFilters.estado_envio.length > 0 ? debouncedFilters.estado_envio[0] : '',
+        filtro_estado_fabricacion: debouncedFilters.estado_fabricacion.length === 1 ? debouncedFilters.estado_fabricacion[0] : '',
+        filtro_estado_venta: debouncedFilters.estado_venta.length === 1 ? debouncedFilters.estado_venta[0] : '',
+        filtro_estado_envio: debouncedFilters.estado_envio.length === 1 ? debouncedFilters.estado_envio[0] : '',
         filtro_fecha_desde: debouncedFilters.fecha_compra_gte || null,
         filtro_fecha_hasta: debouncedFilters.fecha_compra_lte || null,
         limite_resultados: 500,
