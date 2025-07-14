@@ -58,7 +58,7 @@ function VectorizacionPage() {
       />
 
       {/* Content */}
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px' }}>
+      <div style={{ maxWidth: '100%', margin: '0 auto', padding: '32px' }}>
         {/* Tabs */}
         <VectorizacionTabs 
           activeTab={activeTab}

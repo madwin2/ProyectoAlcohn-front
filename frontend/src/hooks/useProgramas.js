@@ -1,0 +1,248 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
+
+export const useProgramas = () => {
+  const [programas, setProgramas] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Función para obtener URL pública
+  const publicUrl = (path) => {
+    if (!path) return null;
+    if (Array.isArray(path)) path = path[0];
+    if (!path) return null;
+    return supabase.storage.from('archivos-ventas').getPublicUrl(path).data.publicUrl;
+  };
+
+  // Fetch programas usando RPC optimizado
+  const fetchProgramas = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase.rpc('get_programas_activos');
+      
+      if (error) {
+        throw error;
+      }
+      
+      setProgramas(data || []);
+    } catch (err) {
+      console.error('Error fetching programas:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Crear programa
+  const crearPrograma = async (programaData) => {
+    try {
+      const { data, error } = await supabase
+        .from('programas')
+        .insert([programaData])
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    } catch (err) {
+      console.error('Error creando programa:', err);
+      throw err;
+    }
+  };
+
+  // Actualizar programa
+  const actualizarPrograma = async (id, updateData) => {
+    try {
+      const { data, error } = await supabase
+        .from('programas')
+        .update(updateData)
+        .eq('id_programa', id)
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      // Actualizar estado local
+      setProgramas(prev => 
+        prev.map(p => p.id_programa === id ? { ...p, ...updateData } : p)
+      );
+
+      return data;
+    } catch (err) {
+      console.error('Error actualizando programa:', err);
+      throw err;
+    }
+  };
+
+  // Eliminar programa
+  const eliminarPrograma = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('programas')
+        .delete()
+        .eq('id_programa', id);
+
+      if (error) {
+        throw error;
+      }
+
+      // Actualizar estado local
+      setProgramas(prev => prev.filter(p => p.id_programa !== id));
+    } catch (err) {
+      console.error('Error eliminando programa:', err);
+      throw err;
+    }
+  };
+
+  // Obtener pedidos disponibles para agregar a programa según tipo de máquina
+  const obtenerPedidosDisponibles = async (tipoMaquina) => {
+    try {
+      let functionName;
+      
+      switch (tipoMaquina) {
+        case 'C':
+          functionName = 'get_pedidos_maquina_c';
+          break;
+        case 'G':
+          functionName = 'get_pedidos_maquina_g';
+          break;
+        case 'XL':
+          functionName = 'get_pedidos_maquina_xl';
+          break;
+        default:
+          throw new Error(`Tipo de máquina no válido: ${tipoMaquina}`);
+      }
+
+      const { data, error } = await supabase.rpc(functionName);
+
+      if (error) {
+        throw error;
+      }
+
+      return data || [];
+    } catch (err) {
+      console.error('Error obteniendo pedidos disponibles:', err);
+      throw err;
+    }
+  };
+
+  // Obtener pedidos de un programa específico
+  const obtenerPedidosPrograma = async (programaId) => {
+    try {
+      const { data, error } = await supabase.rpc('get_pedidos_programa', {
+        programa_id: programaId
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // Transformar datos para mantener compatibilidad con estructura anterior
+      const pedidosTransformados = (data || []).map(pedido => ({
+        ...pedido,
+        clientes: {
+          nombre_cliente: pedido.nombre_cliente,
+          apellido_cliente: pedido.apellido_cliente,
+          telefono_cliente: pedido.telefono_cliente
+        }
+      }));
+
+      return pedidosTransformados;
+    } catch (err) {
+      console.error('Error obteniendo pedidos del programa:', err);
+      throw err;
+    }
+  };
+
+  // Agregar pedido a programa usando RPC optimizado
+  const agregarPedidoAPrograma = async (pedidoId, programaId) => {
+    try {
+      const { data, error } = await supabase.rpc('asignar_pedido_programa', {
+        pedido_id: pedidoId,
+        programa_id: programaId
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // Verificar que la operación fue exitosa
+      const result = data?.[0];
+      if (!result?.success) {
+        throw new Error(result?.message || 'Error asignando pedido al programa');
+      }
+
+      return result;
+    } catch (err) {
+      console.error('Error agregando pedido al programa:', err);
+      throw err;
+    }
+  };
+
+  // Remover pedido de programa usando RPC optimizado
+  const removerPedidoDePrograma = async (pedidoId) => {
+    try {
+      const { data, error } = await supabase.rpc('remover_pedido_programa', {
+        pedido_id: pedidoId
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // Verificar que la operación fue exitosa
+      const result = data?.[0];
+      if (!result?.success) {
+        throw new Error(result?.message || 'Error removiendo pedido del programa');
+      }
+
+      return result;
+    } catch (err) {
+      console.error('Error removiendo pedido del programa:', err);
+      throw err;
+    }
+  };
+
+  // Obtener estadísticas de programas
+  const obtenerEstadisticas = () => {
+    const stats = {
+      total: programas.length,
+      sinHacer: programas.filter(p => p.estado_programa === 'Sin Hacer').length,
+      haciendo: programas.filter(p => p.estado_programa === 'Haciendo').length,
+      verificar: programas.filter(p => p.estado_programa === 'Verificar').length,
+      rehacer: programas.filter(p => p.estado_programa === 'Rehacer').length,
+      hecho: programas.filter(p => p.estado_programa === 'Hecho').length,
+      verificado: programas.filter(p => p.verificado).length,
+      bloqueado: programas.filter(p => p.programa_bloqueado).length
+    };
+
+    return stats;
+  };
+
+  return {
+    // Estado
+    programas,
+    loading,
+    error,
+    
+    // Acciones
+    fetchProgramas,
+    crearPrograma,
+    actualizarPrograma,
+    eliminarPrograma,
+    obtenerPedidosDisponibles,
+    obtenerPedidosPrograma,
+    agregarPedidoAPrograma,
+    removerPedidoDePrograma,
+    obtenerEstadisticas,
+    
+    // Utils
+    publicUrl
+  };
+};

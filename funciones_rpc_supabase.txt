@@ -1,0 +1,507 @@
+-- ================================================
+-- FUNCIONES RPC PARA SUPABASE - PROYECTO ALCOHN
+-- ================================================
+
+-- 2. FUNCIÓN PARA OBTENER PEDIDOS DE UN PROGRAMA
+-- ================================================
+
+CREATE OR REPLACE FUNCTION get_pedidos_programa(programa_id text)
+RETURNS TABLE (
+  id_pedido integer,
+  id_cliente integer,
+  disenio text,
+  medida_pedida text,
+  medida_real text,
+  archivo_vector text,
+  tiempo_estimado numeric,
+  fecha_compra date,
+  valor_sello numeric,
+  estado_fabricacion text,
+  tipo_planchuela integer,
+  largo_planchuela double precision,
+  nombre_cliente text,
+  apellido_cliente text,
+  telefono_cliente text
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    p.id_pedido,
+    p.id_cliente,
+    p.disenio,
+    p.medida_pedida,
+    p.medida_real,
+    p.archivo_vector,
+    p.tiempo_estimado,
+    p.fecha_compra,
+    p.valor_sello,
+    p.estado_fabricacion,
+    p.tipo_planchuela,
+    p.largo_planchuela,
+    c.nombre_cliente,
+    c.apellido_cliente,
+    c.telefono_cliente
+  FROM pedidos p
+  INNER JOIN clientes c ON p.id_cliente = c.id_cliente
+  WHERE p.id_programa = programa_id
+  ORDER BY p.fecha_compra DESC, p.id_pedido ASC;
+END;
+$$;
+
+-- 3. FUNCIÓN PARA OBTENER PROGRAMAS ACTIVOS
+-- ==========================================
+
+CREATE OR REPLACE FUNCTION get_programas_activos()
+RETURNS TABLE (
+  id_programa text,
+  fecha_programa date,
+  maquina text,
+  programa_bloqueado boolean,
+  nombre_archivo text,
+  cantidad_sellos numeric,
+  limite_tiempo integer,
+  estado_programa character varying,
+  verificado boolean,
+  tiempo_usado integer,
+  updated_at timestamp with time zone,
+  cantidad_pedidos bigint,
+  tiempo_total_pedidos numeric
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    pr.id_programa,
+    pr.fecha_programa,
+    pr.maquina,
+    pr.programa_bloqueado,
+    pr.nombre_archivo,
+    pr.cantidad_sellos,
+    pr.limite_tiempo,
+    pr.estado_programa,
+    pr.verificado,
+    pr.tiempo_usado,
+    pr.updated_at,
+    COALESCE(COUNT(p.id_pedido), 0) AS cantidad_pedidos,
+    COALESCE(SUM(p.tiempo_estimado), 0) AS tiempo_total_pedidos
+  FROM programas pr
+  LEFT JOIN pedidos p ON pr.id_programa = p.id_programa
+  WHERE pr.estado_programa != 'Hecho'
+  GROUP BY 
+    pr.id_programa,
+    pr.fecha_programa,
+    pr.maquina,
+    pr.programa_bloqueado,
+    pr.nombre_archivo,
+    pr.cantidad_sellos,
+    pr.limite_tiempo,
+    pr.estado_programa,
+    pr.verificado,
+    pr.tiempo_usado,
+    pr.updated_at
+  ORDER BY pr.fecha_programa DESC, pr.id_programa DESC;
+END;
+$$;
+
+-- 4. FUNCIÓN PARA ACTUALIZAR PEDIDO CON MEDIDA
+-- =============================================
+
+CREATE OR REPLACE FUNCTION actualizar_pedido_con_medida(
+  pedido_id integer,
+  archivo_vector_path text,
+  medida_real_value text,
+  tiempo_estimado_value integer,
+  tipo_planchuela_value integer,
+  largo_planchuela_value double precision
+)
+RETURNS TABLE (
+  id_pedido integer,
+  archivo_vector text,
+  medida_real text,
+  tiempo_estimado numeric,
+  tipo_planchuela integer,
+  largo_planchuela double precision,
+  updated_at timestamp with time zone
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  -- Actualizar el pedido con todos los valores calculados
+  UPDATE pedidos 
+  SET 
+    archivo_vector = archivo_vector_path,
+    medida_real = medida_real_value,
+    tiempo_estimado = tiempo_estimado_value,
+    tipo_planchuela = tipo_planchuela_value,
+    largo_planchuela = largo_planchuela_value,
+    updated_at = NOW()
+  WHERE pedidos.id_pedido = pedido_id;
+
+  -- Retornar el pedido actualizado
+  RETURN QUERY
+  SELECT 
+    p.id_pedido,
+    p.archivo_vector,
+    p.medida_real,
+    p.tiempo_estimado,
+    p.tipo_planchuela,
+    p.largo_planchuela,
+    p.updated_at
+  FROM pedidos p
+  WHERE p.id_pedido = pedido_id;
+END;
+$$;
+
+-- 5. FUNCIÓN PARA BUSCAR PEDIDOS CON FILTROS
+-- ===========================================
+
+CREATE OR REPLACE FUNCTION buscar_pedidos(
+  termino_busqueda text DEFAULT '',
+  filtro_estado_fabricacion text DEFAULT '',
+  filtro_estado_venta text DEFAULT '',
+  filtro_estado_envio text DEFAULT '',
+  filtro_fecha_desde date DEFAULT NULL,
+  filtro_fecha_hasta date DEFAULT NULL,
+  limite_resultados integer DEFAULT 100
+)
+RETURNS TABLE (
+  id_pedido integer,
+  id_cliente integer,
+  disenio text,
+  medida_pedida text,
+  medida_real text,
+  archivo_vector text,
+  archivo_base text,
+  tiempo_estimado numeric,
+  fecha_compra date,
+  valor_sello numeric,
+  valor_envio numeric,
+  valor_senia numeric,
+  estado_fabricacion text,
+  estado_venta text,
+  estado_envio text,
+  numero_seguimiento text,
+  nombre_cliente text,
+  apellido_cliente text,
+  telefono_cliente text,
+  restante_pagar numeric
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    p.id_pedido,
+    p.id_cliente,
+    p.disenio,
+    p.medida_pedida,
+    p.medida_real,
+    p.archivo_vector,
+    p.archivo_base,
+    p.tiempo_estimado,
+    p.fecha_compra,
+    p.valor_sello,
+    p.valor_envio,
+    p.valor_senia,
+    p.estado_fabricacion,
+    p.estado_venta,
+    p.estado_envio,
+    p.numero_seguimiento,
+    c.nombre_cliente,
+    c.apellido_cliente,
+    c.telefono_cliente,
+    p.restante_pagar
+  FROM pedidos p
+  INNER JOIN clientes c ON p.id_cliente = c.id_cliente
+  WHERE (
+    termino_busqueda = '' OR
+    p.disenio ILIKE '%' || termino_busqueda || '%' OR
+    c.nombre_cliente ILIKE '%' || termino_busqueda || '%' OR
+    c.apellido_cliente ILIKE '%' || termino_busqueda || '%' OR
+    c.telefono_cliente ILIKE '%' || termino_busqueda || '%' OR
+    p.numero_seguimiento ILIKE '%' || termino_busqueda || '%' OR
+    p.id_pedido::text ILIKE '%' || termino_busqueda || '%'
+  )
+  AND (filtro_estado_fabricacion = '' OR p.estado_fabricacion = filtro_estado_fabricacion)
+  AND (filtro_estado_venta = '' OR p.estado_venta = filtro_estado_venta)
+  AND (filtro_estado_envio = '' OR p.estado_envio = filtro_estado_envio)
+  AND (filtro_fecha_desde IS NULL OR p.fecha_compra >= filtro_fecha_desde)
+  AND (filtro_fecha_hasta IS NULL OR p.fecha_compra <= filtro_fecha_hasta)
+  ORDER BY p.fecha_compra DESC, p.id_pedido DESC
+  LIMIT limite_resultados;
+END;
+$$;
+
+-- 6. FUNCIÓN PARA ASIGNAR PEDIDO A PROGRAMA
+-- =========================================
+
+CREATE OR REPLACE FUNCTION asignar_pedido_programa(
+  pedido_id integer,
+  programa_id text
+)
+RETURNS TABLE (
+  id_pedido integer,
+  id_programa text,
+  updated_at timestamp with time zone,
+  success boolean,
+  message text
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  pedido_existe boolean;
+  programa_existe boolean;
+BEGIN
+  -- Verificar que el pedido existe y no está asignado
+  SELECT EXISTS(
+    SELECT 1 FROM pedidos 
+    WHERE pedidos.id_pedido = asignar_pedido_programa.pedido_id 
+    AND pedidos.id_programa IS NULL
+  ) INTO pedido_existe;
+
+  -- Verificar que el programa existe
+  SELECT EXISTS(
+    SELECT 1 FROM programas 
+    WHERE programas.id_programa = asignar_pedido_programa.programa_id
+  ) INTO programa_existe;
+
+  -- Validaciones
+  IF NOT pedido_existe THEN
+    RETURN QUERY SELECT 
+      asignar_pedido_programa.pedido_id,
+      asignar_pedido_programa.programa_id,
+      NOW()::timestamp with time zone,
+      false,
+      'El pedido no existe o ya está asignado a otro programa'::text;
+    RETURN;
+  END IF;
+
+  IF NOT programa_existe THEN
+    RETURN QUERY SELECT 
+      asignar_pedido_programa.pedido_id,
+      asignar_pedido_programa.programa_id,
+      NOW()::timestamp with time zone,
+      false,
+      'El programa no existe'::text;
+    RETURN;
+  END IF;
+
+  -- Asignar pedido al programa
+  UPDATE pedidos 
+  SET 
+    id_programa = asignar_pedido_programa.programa_id,
+    updated_at = NOW()
+  WHERE pedidos.id_pedido = asignar_pedido_programa.pedido_id;
+
+  -- Retornar resultado exitoso
+  RETURN QUERY
+  SELECT 
+    p.id_pedido,
+    p.id_programa,
+    p.updated_at,
+    true,
+    'Pedido asignado exitosamente'::text
+  FROM pedidos p
+  WHERE p.id_pedido = asignar_pedido_programa.pedido_id;
+END;
+$$;
+
+-- 7. FUNCIÓN PARA REMOVER PEDIDO DE PROGRAMA
+-- ===========================================
+
+CREATE OR REPLACE FUNCTION remover_pedido_programa(pedido_id integer)
+RETURNS TABLE (
+  id_pedido integer,
+  id_programa text,
+  updated_at timestamp with time zone,
+  success boolean,
+  message text
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  -- Remover asignación del pedido
+  UPDATE pedidos 
+  SET 
+    id_programa = NULL,
+    updated_at = NOW()
+  WHERE pedidos.id_pedido = remover_pedido_programa.pedido_id;
+
+  -- Verificar que se actualizó al menos un registro
+  IF FOUND THEN
+    RETURN QUERY
+    SELECT 
+      p.id_pedido,
+      p.id_programa,
+      p.updated_at,
+      true,
+      'Pedido removido del programa exitosamente'::text
+    FROM pedidos p
+    WHERE p.id_pedido = remover_pedido_programa.pedido_id;
+  ELSE
+    RETURN QUERY SELECT 
+      remover_pedido_programa.pedido_id,
+      NULL::text,
+      NOW()::timestamp with time zone,
+      false,
+      'Pedido no encontrado'::text;
+  END IF;
+END;
+$$;
+
+-- Función RPC para búsqueda de pedidos con ordenamiento múltiple
+-- Permite ordenar por: fecha_compra, estado_fabricacion, estado_venta, estado_envio, vectorizacion, id_programa
+create or replace function buscar_pedidos_ordenado_multiple(
+  termino_busqueda text default '',
+  filtro_estado_fabricacion text default '',
+  filtro_estado_venta text default '',
+  filtro_estado_envio text default '',
+  filtro_fecha_desde date default null,
+  filtro_fecha_hasta date default null,
+  limite_resultados integer default 500,
+  criterios_orden jsonb default '[]'
+)
+returns setof pedidos as $$
+declare
+  query text;
+  order_clause text := '';
+  criterio record;
+  where_conditions text := '';
+begin
+  -- Construir condiciones WHERE con parámetros interpolados
+  where_conditions := '1=1'; -- Siempre verdadero como base
+  
+  if termino_busqueda != '' then
+    where_conditions := where_conditions || ' and (disenio ilike ''%' || termino_busqueda || '%'' or cliente ilike ''%' || termino_busqueda || '%'')';
+  end if;
+  
+  if filtro_estado_fabricacion != '' then
+    where_conditions := where_conditions || ' and estado_fabricacion = ''' || filtro_estado_fabricacion || '''';
+  end if;
+  
+  if filtro_estado_venta != '' then
+    where_conditions := where_conditions || ' and estado_venta = ''' || filtro_estado_venta || '''';
+  end if;
+  
+  if filtro_estado_envio != '' then
+    where_conditions := where_conditions || ' and estado_envio = ''' || filtro_estado_envio || '''';
+  end if;
+  
+  if filtro_fecha_desde is not null then
+    where_conditions := where_conditions || ' and fecha_compra >= ''' || filtro_fecha_desde || '''';
+  end if;
+  
+  if filtro_fecha_hasta is not null then
+    where_conditions := where_conditions || ' and fecha_compra <= ''' || filtro_fecha_hasta || '''';
+  end if;
+
+  -- Construir la cláusula ORDER BY dinámicamente
+  if criterios_orden is not null and jsonb_array_length(criterios_orden) > 0 then
+    for criterio in select * from jsonb_array_elements(criterios_orden) with ordinality as t(criterio, idx)
+    loop
+      if order_clause != '' then
+        order_clause := order_clause || ', ';
+      end if;
+      
+      -- Validar que el campo sea uno de los permitidos
+      case criterio->>'field'
+        when 'fecha_compra' then
+          order_clause := order_clause || 'fecha_compra ' || (criterio->>'order');
+        when 'estado_fabricacion' then
+          order_clause := order_clause || 'estado_fabricacion ' || (criterio->>'order');
+        when 'estado_venta' then
+          order_clause := order_clause || 'estado_venta ' || (criterio->>'order');
+        when 'estado_envio' then
+          order_clause := order_clause || 'estado_envio ' || (criterio->>'order');
+        when 'vectorizacion' then
+          order_clause := order_clause || 'vectorizacion ' || (criterio->>'order');
+        when 'id_programa' then
+          order_clause := order_clause || 'id_programa ' || (criterio->>'order');
+        else
+          -- Campo no válido, ignorar
+          continue;
+      end case;
+    end loop;
+  end if;
+  
+  -- Si no hay criterios de ordenamiento, usar ordenamiento por defecto
+  if order_clause = '' then
+    order_clause := 'fecha_compra desc';
+  end if;
+
+  -- Construir la consulta final con los parámetros interpolados
+  query := 'select * from pedidos where ' || where_conditions || ' order by ' || order_clause || ' limit ' || limite_resultados;
+  
+  -- Retornar los resultados directamente
+  return query execute (query);
+end;
+$$ language plpgsql;
+
+-- Función auxiliar para validar criterios de ordenamiento
+create or replace function validar_criterio_ordenamiento(
+  campo text,
+  orden text
+)
+returns boolean as $$
+begin
+  -- Validar campo
+  if campo not in ('fecha_compra', 'estado_fabricacion', 'estado_venta', 'estado_envio', 'vectorizacion', 'id_programa') then
+    return false;
+  end if;
+  
+  -- Validar orden
+  if orden not in ('asc', 'desc') then
+    return false;
+  end if;
+  
+  return true;
+end;
+$$ language plpgsql;
+
+-- ================================================
+-- INSTRUCCIONES DE USO
+-- ================================================
+
+/*
+Para usar estas funciones desde tu aplicación React:
+
+1. get_pedidos_maquina_c() / get_pedidos_maquina_g() / get_pedidos_maquina_xl()
+   const { data } = await supabase.rpc('get_pedidos_maquina_c');
+
+2. get_pedidos_programa(programa_id)
+   const { data } = await supabase.rpc('get_pedidos_programa', { programa_id: 'PROG123' });
+
+3. get_programas_activos()
+   const { data } = await supabase.rpc('get_programas_activos');
+
+4. actualizar_pedido_con_medida(pedido_id, datos...)
+   const { data } = await supabase.rpc('actualizar_pedido_con_medida', {
+     pedido_id: 123,
+     archivo_vector_path: 'vector/archivo.svg',
+     medida_real_value: '5x3',
+     tiempo_estimado_value: 300,
+     tipo_planchuela_value: 25,
+     largo_planchuela_value: 5.0
+   });
+
+5. buscar_pedidos(filtros...)
+   const { data } = await supabase.rpc('buscar_pedidos', {
+     termino_busqueda: 'texto',
+     filtro_estado_fabricacion: 'Sin Hacer',
+     limite_resultados: 50
+   });
+
+6. asignar_pedido_programa(pedido_id, programa_id)
+   const { data } = await supabase.rpc('asignar_pedido_programa', {
+     pedido_id: 123,
+     programa_id: 'PROG123'
+   });
+
+7. remover_pedido_programa(pedido_id)
+   const { data } = await supabase.rpc('remover_pedido_programa', {
+     pedido_id: 123
+   });
+*/

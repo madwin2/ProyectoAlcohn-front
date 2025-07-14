@@ -14,7 +14,7 @@ const VectorizacionHeader = ({
       background: 'rgba(9, 9, 11, 0.8)', 
       backdropFilter: 'blur(24px)' 
     }}>
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 32px' }}>
+      <div style={{ padding: '24px 32px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

@@ -14,7 +14,8 @@ export const usePedidosApi = ({
   setFilterOptions,
   setEditingId,
   setEditForm,
-  setContextMenu
+  setContextMenu,
+  sortCriteria
 }) => {
   
   // Obtener opciones de filtros
@@ -43,46 +44,65 @@ export const usePedidosApi = ({
       setLoading(true);
       setError(null);
 
-      let query = supabase.from('pedidos').select('*, clientes (*)');
-
-      if (debouncedSearchTerm) {
-        const { data: idObjects, error: rpcError } = await supabase.rpc('get_pedido_ids_by_client_search', { search_term: debouncedSearchTerm });
-        if (rpcError) throw rpcError;
-        const ids = idObjects.map(o => o.id_pedido);
-        query = query.in('id_pedido', ids.length > 0 ? ids : [-1]);
-      }
-
-      // Aplicar filtros
-      if (debouncedFilters.fecha_compra_gte) {
-        query = query.gte('fecha_compra', debouncedFilters.fecha_compra_gte);
-      }
-      if (debouncedFilters.fecha_compra_lte) {
-        const isoEndOfDay = getInclusiveEndDateISOString(debouncedFilters.fecha_compra_lte);
-        query = query.lte('fecha_compra', isoEndOfDay);
-      }
-      if (debouncedFilters.estado_fabricacion.length > 0) {
-        query = query.in('estado_fabricacion', debouncedFilters.estado_fabricacion);
-      }
-      if (debouncedFilters.estado_venta.length > 0) {
-        query = query.in('estado_venta', debouncedFilters.estado_venta);
-      }
-      if (debouncedFilters.estado_envio.length > 0) {
-        query = query.in('estado_envio', debouncedFilters.estado_envio);
-      }
-
-      query = query.order('fecha_compra', { ascending: sortOrder === 'asc' });
-
-      const { data, error: fetchError } = await query;
+      // Usar RPC optimizada para búsqueda de pedidos con ordenamiento múltiple
+      const { data, error: fetchError } = await supabase.rpc('buscar_pedidos_ordenado_multiple', {
+        termino_busqueda: debouncedSearchTerm || '',
+        filtro_estado_fabricacion: debouncedFilters.estado_fabricacion.length > 0 ? debouncedFilters.estado_fabricacion[0] : '',
+        filtro_estado_venta: debouncedFilters.estado_venta.length > 0 ? debouncedFilters.estado_venta[0] : '',
+        filtro_estado_envio: debouncedFilters.estado_envio.length > 0 ? debouncedFilters.estado_envio[0] : '',
+        filtro_fecha_desde: debouncedFilters.fecha_compra_gte || null,
+        filtro_fecha_hasta: debouncedFilters.fecha_compra_lte || null,
+        limite_resultados: 500,
+        criterios_orden: sortCriteria || []
+      });
 
       if (fetchError) throw fetchError;
-      setPedidos(data || []);
+
+      // Transformar los datos para mantener compatibilidad con la estructura anterior
+      const pedidosTransformados = (data || []).map(pedido => ({
+        ...pedido,
+        clientes: {
+          nombre_cliente: pedido.nombre_cliente,
+          apellido_cliente: pedido.apellido_cliente,
+          telefono_cliente: pedido.telefono_cliente,
+          medio_contacto: pedido.medio_contacto
+        }
+      }));
+
+      // Aplicar ordenamiento en el frontend (la RPC ordena por fecha desc por defecto)
+      if (sortOrder === 'asc') {
+        pedidosTransformados.sort((a, b) => new Date(a.fecha_compra) - new Date(b.fecha_compra));
+      }
+
+      // Aplicar filtros múltiples que la RPC no soporta directamente
+      let pedidosFiltrados = pedidosTransformados;
+      
+      if (debouncedFilters.estado_fabricacion.length > 1) {
+        pedidosFiltrados = pedidosFiltrados.filter(p => 
+          debouncedFilters.estado_fabricacion.includes(p.estado_fabricacion)
+        );
+      }
+      
+      if (debouncedFilters.estado_venta.length > 1) {
+        pedidosFiltrados = pedidosFiltrados.filter(p => 
+          debouncedFilters.estado_venta.includes(p.estado_venta)
+        );
+      }
+      
+      if (debouncedFilters.estado_envio.length > 1) {
+        pedidosFiltrados = pedidosFiltrados.filter(p => 
+          debouncedFilters.estado_envio.includes(p.estado_envio)
+        );
+      }
+
+      setPedidos(pedidosFiltrados);
     } catch (err) {
       console.error("Error al obtener pedidos:", err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [sortOrder, debouncedSearchTerm, debouncedFilters, setPedidos, setLoading, setError]);
+  }, [sortOrder, debouncedSearchTerm, debouncedFilters, setPedidos, setLoading, setError, sortCriteria]);
 
   const handlePedidoAdded = () => {
     getPedidos();

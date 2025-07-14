@@ -88,3 +88,4 @@ Estas son las piezas de "magia" que hacen que la base de datos trabaje por sí s
 
 - **Row Level Security (RLS)**: Todas las tablas (`clientes`, `programas`, `pedidos`) tienen RLS activado.
 - **Políticas de Acceso**: Actualmente, se ha configurado una política básica que permite a cualquier **usuario autenticado** realizar todas las operaciones (leer, crear, modificar, borrar) en todas las tablas. Esto es ideal para el desarrollo y se puede ajustar en el futuro para dar permisos más específicos. 
+

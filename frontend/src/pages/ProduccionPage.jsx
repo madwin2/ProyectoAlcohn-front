@@ -1,16 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import AddPedidoModal from '../components/Pedidos/AddPedidoModal';
 import EstadoSelect from '../components/EstadoSelect';
 import FilterPanel from '../components/FilterPanel';
+import { useMultiSort } from '../hooks/useMultiSort';
+import SortModal from '../components/ui/SortModal';
 import {
   Plus,
   Filter,
   Search,
   X,
   Package,
-  Upload
+  Upload,
+  ArrowUpDown
 } from 'lucide-react';
+import { useGuardarVistaUsuario, cargarVistaUsuario, guardarVistaUsuario } from '../hooks/useGuardarVistaUsuario';
+import { useAuth } from '../hooks/useAuth';
+console.log('*** ProduccionPage importó useGuardarVistaUsuario ***', useGuardarVistaUsuario);
 
 const ESTADOS_FABRICACION = [
   'Sin Hacer', 'Haciendo', 'Rehacer', 'Retocar', 'Prioridad', 'Verificar', 'Hecho'
@@ -20,6 +26,10 @@ const ESTADOS_VENTA = [
 ];
 const ESTADOS_ENVIO = [
   'Sin enviar', 'Hacer Etiqueta', 'Etiqueta Lista', 'Despachado', 'Seguimiento Enviado'
+];
+
+const ESTADOS_FABRICACION_DEFAULT = [
+  'Sin Hacer', 'Haciendo', 'Rehacer', 'Retocar', 'Prioridad', 'Verificar', 'Hecho'
 ];
 
 const initialFiltersState = {
@@ -65,6 +75,7 @@ function ProduccionPage() {
   const [error, setError] = useState(null);
   const [sortOrder] = useState('desc');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [sortModalOpen, setSortModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
@@ -73,9 +84,14 @@ function ProduccionPage() {
   });
   const [filters, setFilters] = useState(initialFiltersState);
   const [debouncedFilters, setDebouncedFilters] = useState(initialFiltersState);
+  const multiSort = useMultiSort([]);
   // Estado local para el valor mockeado de programado
-  const [programadoValues, setProgramadoValues] = useState({});
-  const opcionesProgramado = ['No Programado', 'Programado', 'En Proceso'];
+  // const [programadoValues, setProgramadoValues] = useState({});
+  // const opcionesProgramado = ['No Programado', 'Programado', 'En Proceso'];
+  const { user, loading: authLoading } = useAuth();
+  const [configCargada, setConfigCargada] = useState(false);
+  const [ordenEstadosFabricacion, setOrdenEstadosFabricacion] = useState(ESTADOS_FABRICACION_DEFAULT);
+  const [sortAplicado, setSortAplicado] = useState(false);
 
   useEffect(() => {
     const fetchFilterOptions = async () => {
@@ -108,25 +124,35 @@ function ProduccionPage() {
       try {
         setLoading(true);
         setError(null);
-        let query = supabase.from('pedidos').select('*');
-        // Filtros de búsqueda
-        if (debouncedSearchTerm) {
-          query = query.ilike('disenio', `%${debouncedSearchTerm}%`);
-        }
-        if (debouncedFilters.fecha_compra_gte) {
-          query = query.gte('fecha_compra', debouncedFilters.fecha_compra_gte);
-        }
-        if (debouncedFilters.fecha_compra_lte) {
-          const isoEndOfDay = getInclusiveEndDateISOString(debouncedFilters.fecha_compra_lte);
-          query = query.lte('fecha_compra', isoEndOfDay);
-        }
-        if (debouncedFilters.estado_fabricacion.length > 0) {
-          query = query.in('estado_fabricacion', debouncedFilters.estado_fabricacion);
-        }
-        query = query.order('fecha_compra', { ascending: sortOrder === 'asc' });
-        const { data, error: fetchError } = await query;
+        
+        // Usar RPC optimizada para búsqueda de pedidos con ordenamiento múltiple
+        const { data, error: fetchError } = await supabase.rpc('buscar_pedidos_ordenado_multiple', {
+          termino_busqueda: debouncedSearchTerm || '',
+          filtro_estado_fabricacion: debouncedFilters.estado_fabricacion.length > 0 ? debouncedFilters.estado_fabricacion[0] : '',
+          filtro_estado_venta: '',
+          filtro_estado_envio: '',
+          filtro_fecha_desde: debouncedFilters.fecha_compra_gte || null,
+          filtro_fecha_hasta: debouncedFilters.fecha_compra_lte || null,
+          limite_resultados: 500,
+          criterios_orden: multiSort.sortCriteria
+        });
+
         if (fetchError) throw fetchError;
-        setPedidos(data || []);
+
+        // Aplicar ordenamiento (la RPC ordena por fecha desc por defecto)
+        let pedidosOrdenados = data || [];
+        if (sortOrder === 'asc') {
+          pedidosOrdenados.sort((a, b) => new Date(a.fecha_compra) - new Date(b.fecha_compra));
+        }
+
+        // Aplicar filtros múltiples que la RPC no soporta directamente
+        if (debouncedFilters.estado_fabricacion.length > 1) {
+          pedidosOrdenados = pedidosOrdenados.filter(p => 
+            debouncedFilters.estado_fabricacion.includes(p.estado_fabricacion)
+          );
+        }
+
+        setPedidos(pedidosOrdenados);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -134,7 +160,7 @@ function ProduccionPage() {
       }
     };
     getPedidos();
-  }, [sortOrder, debouncedSearchTerm, debouncedFilters]);
+  }, [sortOrder, debouncedSearchTerm, debouncedFilters, multiSort.sortCriteria]);
 
   const handlePedidoAdded = () => {
     setIsModalOpen(false);
@@ -193,6 +219,93 @@ function ProduccionPage() {
 
   const hayFiltrosActivos = Object.values(filters).some((filtro) => filtro !== "" && filtro !== null && (!Array.isArray(filtro) || filtro.length > 0));
 
+  // Campos disponibles para ordenamiento en producción
+  const sortFields = [
+    { value: 'fecha_compra', label: 'Fecha de compra' },
+    { value: 'estado_fabricacion', label: 'Estado de fabricación' },
+    { value: 'vectorizacion', label: 'Vectorización' },
+    { value: 'id_programa', label: 'Programado' }
+  ];
+
+  const handleApplySort = () => {
+    // Refrescar pedidos con el nuevo ordenamiento
+    setLoading(true);
+    supabase.rpc('buscar_pedidos_ordenado_multiple', {
+      termino_busqueda: debouncedSearchTerm || '',
+      filtro_estado_fabricacion: debouncedFilters.estado_fabricacion.length > 0 ? debouncedFilters.estado_fabricacion[0] : '',
+      filtro_estado_venta: '',
+      filtro_estado_envio: '',
+      filtro_fecha_desde: debouncedFilters.fecha_compra_gte || null,
+      filtro_fecha_hasta: debouncedFilters.fecha_compra_lte || null,
+      limite_resultados: 500,
+      criterios_orden: multiSort.sortCriteria
+    }).then(({ data, error }) => {
+      if (error) {
+        setError(error.message);
+      } else {
+        setPedidos(data || []);
+      }
+      setLoading(false);
+    });
+    setSortAplicado(true);
+  };
+
+  // Cargar configuración de vista al montar
+  useEffect(() => {
+    if (!user || authLoading) return;
+    async function fetchVista() {
+      const config = await cargarVistaUsuario('produccion', user);
+      if (config) {
+        setFilters(config.filtros || {});
+        if (config.orden && Array.isArray(config.orden) && multiSort && multiSort.setSortCriteria) {
+          multiSort.setSortCriteria(config.orden);
+        }
+        if (config.ordenEstadosFabricacion && Array.isArray(config.ordenEstadosFabricacion)) {
+          setOrdenEstadosFabricacion(config.ordenEstadosFabricacion);
+        }
+      }
+      setConfigCargada(true);
+    }
+    fetchVista();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authLoading]);
+
+  // Guardar la vista solo cuando se aplica el sort
+  useEffect(() => {
+    if (sortAplicado && configCargada && user) {
+      guardarVistaUsuario(user, 'produccion', {
+        filtros: filters,
+        orden: multiSort.sortCriteria,
+        ordenEstadosFabricacion
+      });
+      setSortAplicado(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortAplicado]);
+
+  // Guardar la vista solo cuando se aplican los filtros (debouncedFilters cambia, pero no en cada input)
+  useEffect(() => {
+    if (configCargada && user) {
+      guardarVistaUsuario(user, 'produccion', {
+        filtros: debouncedFilters,
+        orden: multiSort.sortCriteria,
+        ordenEstadosFabricacion
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedFilters]);
+
+  // Función para mover un estado hacia arriba o abajo
+  const moverEstado = (index, direccion) => {
+    setOrdenEstadosFabricacion(prev => {
+      const nuevoOrden = [...prev];
+      const newIndex = index + direccion;
+      if (newIndex < 0 || newIndex >= nuevoOrden.length) return nuevoOrden;
+      [nuevoOrden[index], nuevoOrden[newIndex]] = [nuevoOrden[newIndex], nuevoOrden[index]];
+      return nuevoOrden;
+    });
+  };
+
   return (
     <div style={{ background: '#000', minHeight: '100vh', color: 'white' }}>
       <div style={{ borderBottom: '1px solid rgba(39, 39, 42, 0.5)', background: 'rgba(9, 9, 11, 0.8)', position: 'sticky', top: 0, zIndex: 10, padding: '24px 32px' }}>
@@ -212,37 +325,83 @@ function ProduccionPage() {
               </div>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ position: 'relative' }}>
-              <Search style={{
-                position: 'absolute',
-                left: '16px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: '16px',
-                height: '16px',
-                color: '#71717a'
-              }} />
-              <input
-                placeholder="Buscar..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{ position: 'relative' }}>
+                <Search style={{
+                  position: 'absolute',
+                  left: '16px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: '16px',
+                  height: '16px',
+                  color: '#71717a'
+                }} />
+                <input
+                  placeholder="Buscar..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{
+                    width: '320px',
+                    background: 'rgba(39, 39, 42, 0.5)',
+                    border: '1px solid rgba(63, 63, 70, 0.5)',
+                    color: 'white',
+                    borderRadius: '8px',
+                    padding: '8px 16px 8px 44px',
+                    outline: 'none',
+                    fontSize: '14px',
+                    transition: 'border-color 0.3s ease'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = 'rgba(96, 165, 250, 0.5)'}
+                  onBlur={(e) => e.target.style.borderColor = 'rgba(63, 63, 70, 0.5)'}
+                />
+              </div>
+              <button
+                onClick={() => setSortModalOpen(true)}
                 style={{
-                  width: '320px',
-                  background: 'rgba(39, 39, 42, 0.5)',
-                  border: '1px solid rgba(63, 63, 70, 0.5)',
-                  color: 'white',
+                  background: multiSort.sortCriteria.length > 0 ? 'rgba(59, 130, 246, 0.2)' : 'rgba(39, 39, 42, 0.5)',
+                  border: multiSort.sortCriteria.length > 0 ? '1px solid rgba(59, 130, 246, 0.5)' : '1px solid rgba(63, 63, 70, 0.5)',
+                  color: multiSort.sortCriteria.length > 0 ? '#60a5fa' : '#a1a1aa',
                   borderRadius: '8px',
-                  padding: '8px 16px 8px 44px',
-                  outline: 'none',
+                  padding: '8px 16px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
                   fontSize: '14px',
-                  transition: 'border-color 0.3s ease'
+                  fontWeight: '500',
+                  transition: 'all 0.3s ease'
                 }}
-                onFocus={(e) => e.target.style.borderColor = 'rgba(96, 165, 250, 0.5)'}
-                onBlur={(e) => e.target.style.borderColor = 'rgba(63, 63, 70, 0.5)'}
-              />
-            </div>
-            <div style={{ position: 'relative' }}>
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'rgba(59, 130, 246, 0.3)';
+                  e.target.style.borderColor = 'rgba(59, 130, 246, 0.7)';
+                  e.target.style.color = '#93c5fd';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = multiSort.sortCriteria.length > 0 ? 'rgba(59, 130, 246, 0.2)' : 'rgba(39, 39, 42, 0.5)';
+                  e.target.style.borderColor = multiSort.sortCriteria.length > 0 ? 'rgba(59, 130, 246, 0.5)' : 'rgba(63, 63, 70, 0.5)';
+                  e.target.style.color = multiSort.sortCriteria.length > 0 ? '#60a5fa' : '#a1a1aa';
+                }}
+              >
+                <ArrowUpDown style={{ width: '16px', height: '16px' }} />
+                Ordenar
+                {multiSort.sortCriteria.length > 0 && (
+                  <span style={{
+                    background: '#3b82f6',
+                    color: 'white',
+                    borderRadius: '50%',
+                    width: '18px',
+                    height: '18px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '10px',
+                    fontWeight: '600'
+                  }}>
+                    {multiSort.sortCriteria.length}
+                  </span>
+                )}
+              </button>
+              <div style={{ position: 'relative' }}>
               <button
                 onClick={() => setShowFilterPanel(!showFilterPanel)}
                 style={{
@@ -320,7 +479,7 @@ function ProduccionPage() {
                     )}
                   </div>
                   <FilterPanel
-                    filterOptions={filterOptions}
+                    filterOptions={{ ...filterOptions, estado_fabricacion: ordenEstadosFabricacion }}
                     filters={filters}
                     setFilters={setFilters}
                     onClear={onClearFilters}
@@ -336,6 +495,24 @@ function ProduccionPage() {
         </div>
       </div>
       <AddPedidoModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onPedidoAdded={handlePedidoAdded} />
+      
+      <SortModal
+        isOpen={sortModalOpen}
+        onClose={() => setSortModalOpen(false)}
+        fields={sortFields}
+        sortCriteria={multiSort.sortCriteria}
+        addSortCriterion={multiSort.addSortCriterion}
+        removeSortCriterion={multiSort.removeSortCriterion}
+        updateSortCriterionField={multiSort.updateSortCriterionField}
+        updateSortCriterionOrder={multiSort.updateSortCriterionOrder}
+        moveCriterionUp={multiSort.moveCriterionUp}
+        moveCriterionDown={multiSort.moveCriterionDown}
+        clearSortCriteria={multiSort.clearSortCriteria}
+        onApply={handleApplySort}
+        ordenEstadosFabricacion={ordenEstadosFabricacion}
+        setOrdenEstadosFabricacion={setOrdenEstadosFabricacion}
+      />
+      
       <div style={{ maxWidth: '100%', margin: '0 auto', padding: '32px' }}>
         <div className="table-container" style={{ background: 'rgba(9, 9, 11, 0.5)', border: '1px solid rgba(39, 39, 42, 0.5)', borderRadius: '8px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', overflow: 'hidden' }}>
           <div style={{ overflowX: 'auto' }}>
@@ -389,7 +566,7 @@ function ProduccionPage() {
                           <EstadoSelect
                             value={pedido.estado_fabricacion}
                             onChange={val => handleEstadoChange(pedido, 'estado_fabricacion', val)}
-                            options={ESTADOS_FABRICACION}
+                            options={ordenEstadosFabricacion}
                             type="fabricacion"
                             isDisabled={false}
                             size="small"
@@ -409,15 +586,9 @@ function ProduccionPage() {
                         />
                       </td>
                       <td style={{ padding: '16px 12px', textAlign: 'left', verticalAlign: 'middle' }}>
-                        <EstadoSelect
-                          value={programadoValues[pedido.id_pedido] || 'No Programado'}
-                          onChange={val => setProgramadoValues(prev => ({ ...prev, [pedido.id_pedido]: val }))}
-                          options={opcionesProgramado}
-                          type="programado"
-                          isDisabled={false}
-                          size="small"
-                          style={{ width: '60%' }}
-                        />
+                        <span style={{ color: 'white', fontWeight: 500, fontSize: '15px' }}>
+                          {pedido.id_programa ?? 'Sin programa'}
+                        </span>
                       </td>
                       <td style={{ padding: '16px 12px', textAlign: 'center', verticalAlign: 'middle' }}>
                         <ArchivoCell

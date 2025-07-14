@@ -1,0 +1,357 @@
+-- ================================================
+-- FUNCIONES RPC PARA USUARIOS - PROYECTO ALCOHN
+-- ================================================
+
+-- 1. FUNCIÓN PARA OBTENER PERFIL DE USUARIO
+-- ==========================================
+
+CREATE OR REPLACE FUNCTION get_user_profile(user_id uuid)
+RETURNS TABLE (
+  id uuid,
+  nombre text,
+  creado_en timestamp with time zone,
+  total_vistas bigint
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    u.id,
+    u.nombre,
+    u.creado_en,
+    COALESCE(COUNT(v.id), 0) AS total_vistas
+  FROM usuarios u
+  LEFT JOIN vistas_usuario v ON u.id = v.usuario_id
+  WHERE u.id = user_id
+  GROUP BY u.id, u.nombre, u.creado_en;
+END;
+$$;
+
+-- 2. FUNCIÓN PARA ACTUALIZAR PERFIL DE USUARIO
+-- =============================================
+
+CREATE OR REPLACE FUNCTION update_user_profile(
+  user_id uuid,
+  new_nombre text
+)
+RETURNS TABLE (
+  id uuid,
+  nombre text,
+  creado_en timestamp with time zone,
+  success boolean,
+  message text
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  -- Verificar que el usuario existe
+  IF NOT EXISTS (SELECT 1 FROM usuarios WHERE usuarios.id = user_id) THEN
+    RETURN QUERY SELECT 
+      user_id,
+      NULL::text,
+      NULL::timestamp with time zone,
+      false,
+      'Usuario no encontrado'::text;
+    RETURN;
+  END IF;
+
+  -- Actualizar el perfil
+  UPDATE usuarios 
+  SET nombre = new_nombre
+  WHERE usuarios.id = user_id;
+
+  -- Retornar el perfil actualizado
+  RETURN QUERY
+  SELECT 
+    u.id,
+    u.nombre,
+    u.creado_en,
+    true,
+    'Perfil actualizado correctamente'::text
+  FROM usuarios u
+  WHERE u.id = user_id;
+END;
+$$;
+
+-- 3. FUNCIÓN PARA GUARDAR VISTA DE USUARIO
+-- =========================================
+
+CREATE OR REPLACE FUNCTION save_user_view(
+  user_id uuid,
+  page_name text,
+  view_name text,
+  view_config jsonb
+)
+RETURNS TABLE (
+  id integer,
+  usuario_id uuid,
+  pagina text,
+  nombre_vista text,
+  configuracion jsonb,
+  actualizado_en timestamp with time zone,
+  success boolean,
+  message text
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  -- Verificar que el usuario existe
+  IF NOT EXISTS (SELECT 1 FROM usuarios WHERE usuarios.id = user_id) THEN
+    RETURN QUERY SELECT 
+      NULL::integer,
+      user_id,
+      page_name,
+      view_name,
+      view_config,
+      NOW(),
+      false,
+      'Usuario no encontrado'::text;
+    RETURN;
+  END IF;
+
+  -- Insertar o actualizar la vista
+  INSERT INTO vistas_usuario (usuario_id, pagina, nombre_vista, configuracion, actualizado_en)
+  VALUES (user_id, page_name, view_name, view_config, NOW())
+  ON CONFLICT (usuario_id, pagina, nombre_vista)
+  DO UPDATE SET 
+    configuracion = EXCLUDED.configuracion,
+    actualizado_en = NOW();
+
+  -- Retornar la vista guardada
+  RETURN QUERY
+  SELECT 
+    v.id,
+    v.usuario_id,
+    v.pagina,
+    v.nombre_vista,
+    v.configuracion,
+    v.actualizado_en,
+    true,
+    'Vista guardada correctamente'::text
+  FROM vistas_usuario v
+  WHERE v.usuario_id = user_id 
+    AND v.pagina = page_name 
+    AND v.nombre_vista = view_name;
+END;
+$$;
+
+-- 4. FUNCIÓN PARA OBTENER VISTA DE USUARIO
+-- =========================================
+
+CREATE OR REPLACE FUNCTION get_user_view(
+  user_id uuid,
+  page_name text,
+  view_name text DEFAULT 'default'
+)
+RETURNS TABLE (
+  id integer,
+  configuracion jsonb,
+  actualizado_en timestamp with time zone,
+  found boolean
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    v.id,
+    v.configuracion,
+    v.actualizado_en,
+    true AS found
+  FROM vistas_usuario v
+  WHERE v.usuario_id = user_id 
+    AND v.pagina = page_name 
+    AND v.nombre_vista = view_name;
+
+  -- Si no se encontró nada, retornar resultado vacío pero indicando que no se encontró
+  IF NOT FOUND THEN
+    RETURN QUERY SELECT 
+      NULL::integer,
+      NULL::jsonb,
+      NULL::timestamp with time zone,
+      false AS found;
+  END IF;
+END;
+$$;
+
+-- 5. FUNCIÓN PARA OBTENER TODAS LAS VISTAS DE UN USUARIO
+-- =======================================================
+
+CREATE OR REPLACE FUNCTION get_user_views(user_id uuid)
+RETURNS TABLE (
+  id integer,
+  pagina text,
+  nombre_vista text,
+  configuracion jsonb,
+  creado_en timestamp with time zone,
+  actualizado_en timestamp with time zone
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    v.id,
+    v.pagina,
+    v.nombre_vista,
+    v.configuracion,
+    v.creado_en,
+    v.actualizado_en
+  FROM vistas_usuario v
+  WHERE v.usuario_id = user_id
+  ORDER BY v.actualizado_en DESC;
+END;
+$$;
+
+-- 6. FUNCIÓN PARA ELIMINAR VISTA DE USUARIO
+-- ==========================================
+
+CREATE OR REPLACE FUNCTION delete_user_view(
+  user_id uuid,
+  page_name text,
+  view_name text
+)
+RETURNS TABLE (
+  success boolean,
+  message text
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  -- Eliminar la vista
+  DELETE FROM vistas_usuario 
+  WHERE usuario_id = user_id 
+    AND pagina = page_name 
+    AND nombre_vista = view_name;
+
+  -- Verificar si se eliminó
+  IF FOUND THEN
+    RETURN QUERY SELECT 
+      true,
+      'Vista eliminada correctamente'::text;
+  ELSE
+    RETURN QUERY SELECT 
+      false,
+      'Vista no encontrada'::text;
+  END IF;
+END;
+$$;
+
+-- 7. FUNCIÓN PARA CREAR USUARIO (COMPLEMENTARIA)
+-- ===============================================
+
+CREATE OR REPLACE FUNCTION create_user_profile(
+  user_id uuid,
+  user_nombre text DEFAULT NULL,
+  user_email text DEFAULT NULL
+)
+RETURNS TABLE (
+  id uuid,
+  nombre text,
+  creado_en timestamp with time zone,
+  success boolean,
+  message text
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  -- Verificar si el usuario ya existe
+  IF EXISTS (SELECT 1 FROM usuarios WHERE usuarios.id = user_id) THEN
+    RETURN QUERY SELECT 
+      user_id,
+      NULL::text,
+      NULL::timestamp with time zone,
+      false,
+      'El usuario ya existe'::text;
+    RETURN;
+  END IF;
+
+  -- Crear el perfil de usuario
+  INSERT INTO usuarios (id, nombre, creado_en)
+  VALUES (
+    user_id, 
+    COALESCE(user_nombre, split_part(user_email, '@', 1), 'Usuario'),
+    NOW()
+  );
+
+  -- Retornar el usuario creado
+  RETURN QUERY
+  SELECT 
+    u.id,
+    u.nombre,
+    u.creado_en,
+    true,
+    'Usuario creado correctamente'::text
+  FROM usuarios u
+  WHERE u.id = user_id;
+END;
+$$;
+
+-- ================================================
+-- POLÍTICAS DE SEGURIDAD RLS (Row Level Security)
+-- ================================================
+
+-- Habilitar RLS en las tablas
+ALTER TABLE usuarios ENABLE ROW LEVEL SECURITY;
+ALTER TABLE vistas_usuario ENABLE ROW LEVEL SECURITY;
+
+-- Política para usuarios: solo pueden ver y modificar su propio perfil
+CREATE POLICY usuarios_own_profile ON usuarios
+  FOR ALL USING (auth.uid() = id);
+
+-- Política para vistas: solo pueden ver y modificar sus propias vistas
+CREATE POLICY vistas_own_views ON vistas_usuario
+  FOR ALL USING (auth.uid() = usuario_id);
+
+-- ================================================
+-- INSTRUCCIONES DE USO
+-- ================================================
+
+/*
+Para usar estas funciones desde tu aplicación React:
+
+1. get_user_profile(user_id)
+   const { data } = await supabase.rpc('get_user_profile', { user_id: user.id });
+
+2. update_user_profile(user_id, new_nombre)
+   const { data } = await supabase.rpc('update_user_profile', {
+     user_id: user.id,
+     new_nombre: 'Nuevo Nombre'
+   });
+
+3. save_user_view(user_id, page_name, view_name, view_config)
+   const { data } = await supabase.rpc('save_user_view', {
+     user_id: user.id,
+     page_name: 'pedidos',
+     view_name: 'mi_vista_personalizada',
+     view_config: { filtros: { estado: 'activo' }, orden: 'fecha_desc' }
+   });
+
+4. get_user_view(user_id, page_name, view_name)
+   const { data } = await supabase.rpc('get_user_view', {
+     user_id: user.id,
+     page_name: 'pedidos',
+     view_name: 'default'
+   });
+
+5. get_user_views(user_id)
+   const { data } = await supabase.rpc('get_user_views', { user_id: user.id });
+
+6. delete_user_view(user_id, page_name, view_name)
+   const { data } = await supabase.rpc('delete_user_view', {
+     user_id: user.id,
+     page_name: 'pedidos',
+     view_name: 'vista_temporal'
+   });
+
+7. create_user_profile(user_id, user_nombre, user_email)
+   const { data } = await supabase.rpc('create_user_profile', {
+     user_id: newUser.id,
+     user_nombre: 'Juan Pérez',
+     user_email: 'juan@email.com'
+   });
+
+NOTA: Todas las funciones incluyen validaciones y manejo de errores.
+Las políticas RLS aseguran que cada usuario solo pueda acceder a sus propios datos.
+*/

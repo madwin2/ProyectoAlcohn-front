@@ -132,7 +132,6 @@ export const useVectorizacion = () => {
   const handleDimensionar = async (pedido, medidaReal) => {
     if (!pedido.archivo_vector || procesando[pedido.id_pedido]) return;
     
-    // Debug logging
     console.log('handleDimensionar called with:', {
       pedido_id: pedido.id_pedido,
       medida_real: medidaReal,
@@ -147,6 +146,24 @@ export const useVectorizacion = () => {
       const svgDimensionado = await dimensionarSVG(url, medidaReal);
       
       if (svgDimensionado) {
+        // 1. Subir el SVG redimensionado a Supabase Storage
+        const fileName = `vector/archivo_vector_${pedido.id_pedido}_${Date.now()}.svg`;
+        const svgBlob = new Blob([svgDimensionado], { type: 'image/svg+xml' });
+        
+        console.log('Subiendo SVG redimensionado:', fileName);
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('archivos-ventas')
+          .upload(fileName, svgBlob);
+
+        if (uploadError) {
+          console.error('Error de upload:', uploadError);
+          throw uploadError;
+        }
+
+        // 2. Usar el path relativo en lugar de la URL completa
+        console.log('Nuevo path del vector:', fileName);
+
+        // 3. Calcular tiempos CNC y otros valores
         const [cmW, cmH] = medidaReal.split("x").map(parseFloat);
         const widthMm = cmW * 10;
         const heightMm = cmH * 10;
@@ -155,12 +172,12 @@ export const useVectorizacion = () => {
         const tipoPlanchuela = calcularTipoPlanchuela(medidaReal);
         const largoPlanchuela = calcularLargoPlanchuela(medidaReal);
         
-        // Debug before Supabase call
-        console.log('About to update Supabase with id_pedido:', pedido.id_pedido);
-        
+        // 4. Actualizar el pedido con el nuevo archivo vector y todos los datos
+        console.log('Actualizando pedido con nuevo path y medidas');
         const { error } = await supabase
           .from('pedidos')
           .update({
+            archivo_vector: fileName, // ¡IMPORTANTE! Guardar path relativo
             medida_real: medidaReal,
             tiempo_estimado: Math.round(tiempos.totalTime),
             tipo_planchuela: tipoPlanchuela,
@@ -172,6 +189,7 @@ export const useVectorizacion = () => {
           console.error('Supabase error:', error);
           alert(`Error actualizando pedido: ${error.message}`);
         } else {
+          console.log('Pedido actualizado exitosamente con SVG redimensionado');
           await fetchPedidos();
         }
       }

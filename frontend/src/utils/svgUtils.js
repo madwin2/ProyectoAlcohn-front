@@ -52,9 +52,11 @@ export const medirSVG = async (url) => {
  */
 export const dimensionarSVG = async (url, medidaDeseada) => {
   try {
+    console.log('Dimensionando SVG:', url, 'a medida:', medidaDeseada);
     const [cmW, cmH] = medidaDeseada.split("x").map(parseFloat);
     const targetW = cmW * 10; // Convertir cm a mm
     const targetH = cmH * 10;
+    console.log('Medidas objetivo en mm:', targetW, 'x', targetH);
     
     const response = await fetch(url);
     const svgText = await response.text();
@@ -91,12 +93,20 @@ export const dimensionarSVG = async (url, medidaDeseada) => {
       g.appendChild(el);
     });
     
-    // Calcular escala y posición
-    const scale = Math.min(targetW / bbox.width, targetH / bbox.height);
-    const canvasWidth = targetW + 20;
-    const canvasHeight = targetH + 20;
-    const tx = (canvasWidth - bbox.width * scale) / 2 - bbox.x * scale;
-    const ty = (canvasHeight - bbox.height * scale) / 2 - bbox.y * scale;
+    // Calcular escala para que el contenido tenga exactamente las medidas pedidas
+    const scaleX = targetW / bbox.width;
+    const scaleY = targetH / bbox.height;
+    
+    // Usar la escala uniforme más pequeña para mantener proporciones
+    const scale = Math.min(scaleX, scaleY);
+    
+    // Calcular dimensiones reales del contenido escalado
+    const contentWidth = bbox.width * scale;
+    const contentHeight = bbox.height * scale;
+    
+    // Usar las dimensiones del contenido como dimensiones del SVG
+    const tx = -bbox.x * scale;
+    const ty = -bbox.y * scale;
     
     // Aplicar transformación
     g.setAttribute("transform", `translate(${tx}, ${ty}) scale(${scale})`);
@@ -105,13 +115,19 @@ export const dimensionarSVG = async (url, medidaDeseada) => {
     while (svg.firstChild) svg.removeChild(svg.firstChild);
     svg.appendChild(g);
     
-    // Establecer dimensiones del SVG
-    svg.setAttribute("width", `${canvasWidth}mm`);
-    svg.setAttribute("height", `${canvasHeight}mm`);
-    svg.setAttribute("viewBox", `0 0 ${canvasWidth} ${canvasHeight}`);
+    // Establecer dimensiones exactas del SVG
+    svg.setAttribute("width", `${contentWidth}mm`);
+    svg.setAttribute("height", `${contentHeight}mm`);
+    svg.setAttribute("viewBox", `0 0 ${contentWidth} ${contentHeight}`);
     svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
     
-    return new XMLSerializer().serializeToString(doc);
+    console.log('SVG redimensionado a:', contentWidth, 'x', contentHeight, 'mm');
+    console.log('Equivale a:', (contentWidth/10), 'x', (contentHeight/10), 'cm');
+    
+    const result = new XMLSerializer().serializeToString(doc);
+    console.log('SVG generado (primeros 300 chars):', result.substring(0, 300));
+    
+    return result;
   } catch (error) {
     console.error('Error dimensionando SVG:', error);
     return null;
@@ -126,29 +142,26 @@ export const calcularOpcionesEscalado = (dimensionesSVG, medidaPedida) => {
     return null;
   }
   
+  // Convertir dimensiones SVG de mm a cm para las comparaciones
+  const svgWidthCm = dimensionesSVG.width / 10;
+  const svgHeightCm = dimensionesSVG.height / 10;
   const [medidaX, medidaY] = medidaPedida.split("x").map(parseFloat);
-  const svgRatio = dimensionesSVG.width / dimensionesSVG.height;
+  const svgRatio = svgWidthCm / svgHeightCm;
   
   let opcion1X, opcion1Y, opcion2X, opcion2Y;
   
-  if (svgRatio > 1) {
-    // SVG es más ancho que alto
-    opcion1X = medidaX;
-    opcion1Y = (medidaX / svgRatio).toFixed(1);
-    opcion2Y = medidaY;
-    opcion2X = (medidaY * svgRatio).toFixed(1);
-  } else {
-    // SVG es más alto que ancho
-    opcion1X = medidaX;
-    opcion1Y = (medidaX / svgRatio).toFixed(1);
-    opcion2Y = medidaY;
-    opcion2X = (medidaY * svgRatio).toFixed(1);
-  }
+  // Opción 1: Escalar manteniendo el ancho pedido (3) y ajustar alto según proporción del SVG
+  opcion1X = medidaX;
+  opcion1Y = parseFloat((medidaX / svgRatio).toFixed(1));
+  
+  // Opción 2: Escalar manteniendo el alto pedido (2) y ajustar ancho según proporción del SVG  
+  opcion2Y = medidaY;
+  opcion2X = parseFloat((medidaY * svgRatio).toFixed(1));
   
   return {
     normal: `${opcion1X}x${opcion1Y}`,
     invertido: `${opcion2X}x${opcion2Y}`,
-    original: `${dimensionesSVG.width.toFixed(2)}x${dimensionesSVG.height.toFixed(2)}`
+    original: `${svgWidthCm.toFixed(2)}x${svgHeightCm.toFixed(2)}`
   };
 };
 

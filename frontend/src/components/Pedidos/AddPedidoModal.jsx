@@ -8,8 +8,9 @@ const initialFormState = {
   apellido_cliente: '',
   telefono_cliente: '',
   medio_contacto: '',
+  fecha_compra: new Date().toISOString().split('T')[0],
   valor_sello: '',
-  valor_envio: '',
+  valor_envio: '4000',
   valor_senia: '',
   estado_fabricacion: 'Sin Hacer',
   notas: '',
@@ -90,6 +91,7 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded }) {
       // Paso 2: Crear pedido con referencia al cliente
       const pedidoData = {
         id_cliente: clienteId,
+        fecha_compra: formData.fecha_compra,
         valor_sello: formData.valor_sello ? parseFloat(formData.valor_sello) : null,
         valor_envio: formData.valor_envio ? parseFloat(formData.valor_envio) : null,
         valor_senia: formData.valor_senia ? parseFloat(formData.valor_senia) : null,
@@ -153,9 +155,24 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded }) {
         }
       }
 
-      // Llamar callback de éxito
+      // Obtener el pedido completo creado para pasarlo al callback
+      const { data: pedidoCompleto, error: fetchError } = await supabase
+        .from('pedidos')
+        .select(`
+          *,
+          clientes (
+            nombre_cliente,
+            apellido_cliente,
+            telefono_cliente,
+            medio_contacto
+          )
+        `)
+        .eq('id_pedido', pedidoId)
+        .single();
+
+      // Llamar callback de éxito con el pedido completo
       if (onPedidoAdded) {
-        onPedidoAdded();
+        onPedidoAdded(pedidoCompleto);
       }
       
       onClose();
@@ -345,6 +362,26 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded }) {
                         onBlur={(e) => e.target.style.borderColor = 'rgba(63, 63, 70, 0.5)'}
                       />
                     </div>
+                    <input
+                      type="date"
+                      name="fecha_compra"
+                      value={formData.fecha_compra}
+                      onChange={handleChange}
+                      required
+                      style={{
+                        width: '100%',
+                        background: 'rgba(24, 24, 27, 0.5)',
+                        border: '1px solid rgba(63, 63, 70, 0.5)',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        color: 'white',
+                        fontSize: '14px',
+                        outline: 'none',
+                        transition: 'border-color 0.3s ease'
+                      }}
+                      onFocus={(e) => e.target.style.borderColor = 'rgba(96, 165, 250, 0.5)'}
+                      onBlur={(e) => e.target.style.borderColor = 'rgba(63, 63, 70, 0.5)'}
+                    />
                     <div style={{ display: 'flex', gap: '12px' }}>
                       <input
                         type="tel"
@@ -543,10 +580,8 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded }) {
                         onBlur={(e) => e.target.style.borderColor = 'rgba(63, 63, 70, 0.5)'}
                       />
                     </div>
-                    <input
-                      type="number"
+                    <select
                       name="valor_envio"
-                      placeholder="Valor envío"
                       value={formData.valor_envio}
                       onChange={handleChange}
                       style={{
@@ -562,7 +597,11 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded }) {
                       }}
                       onFocus={(e) => e.target.style.borderColor = 'rgba(96, 165, 250, 0.5)'}
                       onBlur={(e) => e.target.style.borderColor = 'rgba(63, 63, 70, 0.5)'}
-                    />
+                    >
+                      <option value=""></option>
+                      <option value="4000">$4000</option>
+                      <option value="7000">$7000</option>
+                    </select>
                   </div>
                 </div>
 
@@ -603,11 +642,10 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded }) {
                     onBlur={(e) => e.target.style.borderColor = 'rgba(63, 63, 70, 0.5)'}
                   >
                     <option value="Sin Hacer">Sin Hacer</option>
-                    <option value="Haciendo">Haciendo</option>
+                    <option value="Prioridad">Prioridad</option>
                     <option value="Hecho">Hecho</option>
                   </select>
                 </div>
-
                 {/* Archivos */}
                 <div>
                   <div style={{ 

@@ -28,8 +28,6 @@ const PageHeader = ({
       padding: '24px 32px'
     }}>
       <div style={{
-        maxWidth: '1280px',
-        margin: '0 auto',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between'

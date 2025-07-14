@@ -20,7 +20,7 @@ const PedidoRow = ({
   ESTADOS_VENTA, 
   ESTADOS_ENVIO, 
   setEditForm, 
-  editingId: _editingId 
+  editingId: _editingId
 }) => {
   // Estilo invisible para inputs
   const invisibleInput = {

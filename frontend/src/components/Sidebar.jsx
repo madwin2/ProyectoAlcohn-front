@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FiChevronRight, FiHome, FiBox } from "react-icons/fi";
-import { Shapes } from "lucide-react";
+import { Shapes, Computer } from "lucide-react";
+import UserMenu from './UserMenu';
 import './Sidebar.css';
 
 export default function Sidebar() {
@@ -15,7 +16,8 @@ export default function Sidebar() {
     { to: "/", label: "Inicio", icon: <FiHome /> },
     { to: "/pedidos", label: "Pedidos", icon: <FiBox /> },
     { to: "/vectorizacion", label: "Vectorización", icon: <Shapes /> },
-    { to: "/produccion", label: "Producción", icon: <FiBox /> }
+    { to: "/produccion", label: "Producción", icon: <FiBox /> },
+    { to: "/programas", label: "Programas", icon: <Computer /> }
   ];
 
   return (
@@ -55,6 +57,15 @@ export default function Sidebar() {
             </Link>
           ))}
         </nav>
+        
+        {/* User Menu */}
+        <div className="sidebar-user" style={{
+          marginTop: 'auto',
+          padding: isExpanded ? '16px' : '8px',
+          borderTop: '1px solid rgba(39, 39, 42, 0.5)'
+        }}>
+          <UserMenu />
+        </div>
       </div>
     </aside>
   );
