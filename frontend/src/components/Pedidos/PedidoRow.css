@@ -264,6 +264,45 @@
   .pedido-row:not(.editing):hover {
     background-color: #262626 !important;
   }
-  
-  
-  
+
+  /* Botón para agregar tarea */
+  .add-tarea-btn {
+    background: #3b82f6;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    opacity: 0;
+  }
+
+  .pedido-row:hover .add-tarea-btn {
+    opacity: 1;
+  }
+
+  .add-tarea-btn:hover {
+    background: #2563eb;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  }
+
+  /* Contenedor de tareas */
+  .tareas-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  .tareas-container .tarea-pendiente {
+    pointer-events: auto;
+  }

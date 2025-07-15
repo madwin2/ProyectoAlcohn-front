@@ -18,6 +18,7 @@ import { ArrowUpDown } from 'lucide-react';
 import { useGuardarVistaUsuario, cargarVistaUsuario, guardarVistaUsuario } from '../hooks/useGuardarVistaUsuario';
 import { useAuth } from '../hooks/useAuth';
 import SortPopover from '../components/ui/SortPopover';
+import { useTareasPendientes } from '../hooks/useTareasPendientes';
 console.log('*** PedidosPage importó useGuardarVistaUsuario ***', useGuardarVistaUsuario);
 
 const ESTADOS_FABRICACION_DEFAULT = [
@@ -50,6 +51,9 @@ function PedidosPage() {
   const { user, loading: authLoading } = useAuth();
   const [showSortPopover, setShowSortPopover] = useState(false);
   const sortButtonRef = useRef();
+  
+  // Hook para tareas pendientes
+  const tareasPendientes = useTareasPendientes();
 
   // Effects
   useEffect(() => {
@@ -320,17 +324,29 @@ function PedidosPage() {
             ) : error ? (
               <tr><td colSpan="11" className="table-error">Error: {error}</td></tr>
             ) : pedidosOrdenados.length > 0 ? (
-              pedidosOrdenados.map((pedido) => (
-                <PedidoRow
-                  key={pedido.id_pedido} pedido={pedido} editing={editingId === pedido.id_pedido}
-                  editForm={editForm} handleEditFormChange={api.handleEditFormChange}
-                  handleEditRowRightClick={handleEditRowRightClick} handleRowRightClick={handleRowRightClick}
-                  startEdit={api.startEdit} getEstadoStyle={getEstadoStyle} handlePedidoAdded={handlePedidoAdded}
-                  handleEliminarArchivo={api.handleEliminarArchivo} supabase={supabase} getPedidos={api.getPedidos}
-                  ESTADOS_FABRICACION={ordenEstadosFabricacion} ESTADOS_VENTA={ESTADOS_VENTA}
-                  ESTADOS_ENVIO={ESTADOS_ENVIO} setEditForm={state.setEditForm} editingId={editingId}
-                />
-              ))
+              pedidosOrdenados.map((pedido) => {
+                // Crear una ref para el modal de agregar tarea
+                if (!pedido.addTareaModalRef) {
+                  pedido.addTareaModalRef = React.createRef();
+                }
+                return (
+                  <PedidoRow
+                    key={pedido.id_pedido} pedido={pedido} editing={editingId === pedido.id_pedido}
+                    editForm={editForm} handleEditFormChange={api.handleEditFormChange}
+                    handleEditRowRightClick={handleEditRowRightClick} handleRowRightClick={handleRowRightClick}
+                    startEdit={api.startEdit} getEstadoStyle={getEstadoStyle} handlePedidoAdded={handlePedidoAdded}
+                    handleEliminarArchivo={api.handleEliminarArchivo} supabase={supabase} getPedidos={api.getPedidos}
+                    ESTADOS_FABRICACION={ordenEstadosFabricacion} ESTADOS_VENTA={ESTADOS_VENTA}
+                    ESTADOS_ENVIO={ESTADOS_ENVIO} setEditForm={state.setEditForm} editingId={editingId}
+                    tareasPendientes={tareasPendientes.tareas}
+                    onCreateTarea={tareasPendientes.crearTarea}
+                    onUpdateTareaPosition={tareasPendientes.actualizarPosicionTarea}
+                    onCompleteTarea={tareasPendientes.completarTarea}
+                    onDeleteTarea={tareasPendientes.eliminarTarea}
+                    addTareaModalRef={pedido.addTareaModalRef}
+                  />
+                );
+              })
             ) : (
               <tr><td colSpan="11" className="table-empty">No se encontraron pedidos.</td></tr>
             )}

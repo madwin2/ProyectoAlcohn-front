@@ -1,0 +1,400 @@
+-- ================================================
+-- TABLA Y FUNCIONES PARA TAREAS PENDIENTES
+-- ================================================
+
+-- Tabla para tareas pendientes
+CREATE TABLE public.tareas_pendientes (
+  id_tarea integer NOT NULL DEFAULT nextval('tareas_pendientes_id_tarea_seq'::regclass),
+  id_pedido integer NOT NULL,
+  id_usuario uuid NOT NULL,
+  descripcion text NOT NULL,
+  posicion_x numeric DEFAULT 0,
+  posicion_y numeric DEFAULT 0,
+  completada boolean DEFAULT false,
+  creado_en timestamp with time zone DEFAULT now(),
+  actualizado_en timestamp with time zone DEFAULT now(),
+  CONSTRAINT tareas_pendientes_pkey PRIMARY KEY (id_tarea),
+  CONSTRAINT tareas_pendientes_id_pedido_fkey FOREIGN KEY (id_pedido) REFERENCES public.pedidos(id_pedido) ON DELETE CASCADE,
+  CONSTRAINT tareas_pendientes_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES auth.users(id) ON DELETE CASCADE
+);
+
+-- Secuencia para el ID de tareas
+CREATE SEQUENCE IF NOT EXISTS tareas_pendientes_id_tarea_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+-- Asignar la secuencia a la columna id_tarea
+ALTER TABLE public.tareas_pendientes ALTER COLUMN id_tarea SET DEFAULT nextval('tareas_pendientes_id_tarea_seq'::regclass);
+
+-- Trigger para actualizar updated_at
+CREATE OR REPLACE FUNCTION update_tareas_pendientes_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.actualizado_en = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_update_tareas_pendientes_updated_at
+  BEFORE UPDATE ON tareas_pendientes
+  FOR EACH ROW
+  EXECUTE FUNCTION update_tareas_pendientes_updated_at();
+
+-- ================================================
+-- FUNCIONES RPC PARA TAREAS PENDIENTES
+-- ================================================
+
+-- 1. FUNCIÓN PARA CREAR TAREA PENDIENTE
+CREATE OR REPLACE FUNCTION crear_tarea_pendiente(
+  p_id_pedido integer,
+  p_id_usuario uuid,
+  p_descripcion text,
+  p_posicion_x numeric DEFAULT 0,
+  p_posicion_y numeric DEFAULT 0
+)
+RETURNS TABLE (
+  id_tarea integer,
+  id_pedido integer,
+  id_usuario uuid,
+  descripcion text,
+  posicion_x numeric,
+  posicion_y numeric,
+  completada boolean,
+  creado_en timestamp with time zone,
+  success boolean,
+  message text
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  -- Verificar que el pedido existe
+  IF NOT EXISTS (SELECT 1 FROM pedidos WHERE id_pedido = p_id_pedido) THEN
+    RETURN QUERY SELECT 
+      NULL::integer,
+      p_id_pedido,
+      p_id_usuario,
+      p_descripcion,
+      p_posicion_x,
+      p_posicion_y,
+      false,
+      NOW(),
+      false,
+      'El pedido especificado no existe'::text;
+    RETURN;
+  END IF;
+
+  -- Verificar que el usuario existe
+  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE id = p_id_usuario) THEN
+    RETURN QUERY SELECT 
+      NULL::integer,
+      p_id_pedido,
+      p_id_usuario,
+      p_descripcion,
+      p_posicion_x,
+      p_posicion_y,
+      false,
+      NOW(),
+      false,
+      'El usuario especificado no existe'::text;
+    RETURN;
+  END IF;
+
+  -- Crear la tarea
+  INSERT INTO tareas_pendientes (id_pedido, id_usuario, descripcion, posicion_x, posicion_y)
+  VALUES (p_id_pedido, p_id_usuario, p_descripcion, p_posicion_x, p_posicion_y);
+
+  -- Retornar la tarea creada
+  RETURN QUERY
+  SELECT 
+    t.id_tarea,
+    t.id_pedido,
+    t.id_usuario,
+    t.descripcion,
+    t.posicion_x,
+    t.posicion_y,
+    t.completada,
+    t.creado_en,
+    true,
+    'Tarea creada correctamente'::text
+  FROM tareas_pendientes t
+  WHERE t.id_tarea = currval('tareas_pendientes_id_tarea_seq');
+END;
+$$;
+
+-- 2. FUNCIÓN PARA OBTENER TAREAS PENDIENTES DE UN PEDIDO
+CREATE OR REPLACE FUNCTION obtener_tareas_pedido(
+  p_id_pedido integer
+)
+RETURNS TABLE (
+  id_tarea integer,
+  id_pedido integer,
+  id_usuario uuid,
+  descripcion text,
+  posicion_x numeric,
+  posicion_y numeric,
+  completada boolean,
+  creado_en timestamp with time zone,
+  nombre_usuario text
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    t.id_tarea,
+    t.id_pedido,
+    t.id_usuario,
+    t.descripcion,
+    t.posicion_x,
+    t.posicion_y,
+    t.completada,
+    t.creado_en,
+    COALESCE(u.nombre, 'Usuario')::text AS nombre_usuario
+  FROM tareas_pendientes t
+  LEFT JOIN usuarios u ON t.id_usuario = u.id
+  WHERE t.id_pedido = p_id_pedido
+  ORDER BY t.creado_en DESC;
+END;
+$$;
+
+-- 3. FUNCIÓN PARA OBTENER TAREAS PENDIENTES DE UN USUARIO
+CREATE OR REPLACE FUNCTION obtener_tareas_usuario(
+  p_id_usuario uuid
+)
+RETURNS TABLE (
+  id_tarea integer,
+  id_pedido integer,
+  descripcion text,
+  posicion_x numeric,
+  posicion_y numeric,
+  completada boolean,
+  creado_en timestamp with time zone,
+  disenio text,
+  nombre_cliente text,
+  apellido_cliente text
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    t.id_tarea,
+    t.id_pedido,
+    t.descripcion,
+    t.posicion_x,
+    t.posicion_y,
+    t.completada,
+    t.creado_en,
+    p.disenio,
+    c.nombre_cliente,
+    c.apellido_cliente
+  FROM tareas_pendientes t
+  INNER JOIN pedidos p ON t.id_pedido = p.id_pedido
+  INNER JOIN clientes c ON p.id_cliente = c.id_cliente
+  WHERE t.id_usuario = p_id_usuario AND t.completada = false
+  ORDER BY t.creado_en DESC;
+END;
+$$;
+
+-- 4. FUNCIÓN PARA ACTUALIZAR POSICIÓN DE TAREA
+CREATE OR REPLACE FUNCTION actualizar_posicion_tarea(
+  p_id_tarea integer,
+  p_posicion_x numeric,
+  p_posicion_y numeric
+)
+RETURNS TABLE (
+  id_tarea integer,
+  posicion_x numeric,
+  posicion_y numeric,
+  success boolean,
+  message text
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  -- Verificar que la tarea existe
+  IF NOT EXISTS (SELECT 1 FROM tareas_pendientes WHERE id_tarea = p_id_tarea) THEN
+    RETURN QUERY SELECT 
+      p_id_tarea,
+      p_posicion_x,
+      p_posicion_y,
+      false,
+      'La tarea especificada no existe'::text;
+    RETURN;
+  END IF;
+
+  -- Actualizar la posición
+  UPDATE tareas_pendientes 
+  SET 
+    posicion_x = p_posicion_x,
+    posicion_y = p_posicion_y,
+    actualizado_en = NOW()
+  WHERE id_tarea = p_id_tarea;
+
+  -- Retornar la tarea actualizada
+  RETURN QUERY
+  SELECT 
+    t.id_tarea,
+    t.posicion_x,
+    t.posicion_y,
+    true,
+    'Posición actualizada correctamente'::text
+  FROM tareas_pendientes t
+  WHERE t.id_tarea = p_id_tarea;
+END;
+$$;
+
+-- 5. FUNCIÓN PARA COMPLETAR TAREA
+CREATE OR REPLACE FUNCTION completar_tarea(
+  p_id_tarea integer
+)
+RETURNS TABLE (
+  id_tarea integer,
+  completada boolean,
+  success boolean,
+  message text
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  -- Verificar que la tarea existe
+  IF NOT EXISTS (SELECT 1 FROM tareas_pendientes WHERE id_tarea = p_id_tarea) THEN
+    RETURN QUERY SELECT 
+      p_id_tarea,
+      false,
+      false,
+      'La tarea especificada no existe'::text;
+    RETURN;
+  END IF;
+
+  -- Completar la tarea
+  UPDATE tareas_pendientes 
+  SET 
+    completada = true,
+    actualizado_en = NOW()
+  WHERE id_tarea = p_id_tarea;
+
+  -- Retornar la tarea actualizada
+  RETURN QUERY
+  SELECT 
+    t.id_tarea,
+    t.completada,
+    true,
+    'Tarea completada correctamente'::text
+  FROM tareas_pendientes t
+  WHERE t.id_tarea = p_id_tarea;
+END;
+$$;
+
+-- 6. FUNCIÓN PARA ELIMINAR TAREA
+CREATE OR REPLACE FUNCTION eliminar_tarea(
+  p_id_tarea integer
+)
+RETURNS TABLE (
+  id_tarea integer,
+  success boolean,
+  message text
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  -- Verificar que la tarea existe
+  IF NOT EXISTS (SELECT 1 FROM tareas_pendientes WHERE id_tarea = p_id_tarea) THEN
+    RETURN QUERY SELECT 
+      p_id_tarea,
+      false,
+      'La tarea especificada no existe'::text;
+    RETURN;
+  END IF;
+
+  -- Eliminar la tarea
+  DELETE FROM tareas_pendientes WHERE id_tarea = p_id_tarea;
+
+  -- Retornar resultado
+  RETURN QUERY SELECT 
+    p_id_tarea,
+    true,
+    'Tarea eliminada correctamente'::text;
+END;
+$$;
+
+-- 7. FUNCIÓN PARA CONTAR TAREAS PENDIENTES DE UN USUARIO
+CREATE OR REPLACE FUNCTION contar_tareas_pendientes_usuario(
+  p_id_usuario uuid
+)
+RETURNS TABLE (
+  total_tareas bigint
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT COUNT(*)::bigint
+  FROM tareas_pendientes
+  WHERE id_usuario = p_id_usuario AND completada = false;
+END;
+$$;
+
+-- ================================================
+-- POLÍTICAS DE SEGURIDAD RLS
+-- ================================================
+
+-- Habilitar RLS en la tabla tareas_pendientes
+ALTER TABLE tareas_pendientes ENABLE ROW LEVEL SECURITY;
+
+-- Política para que los usuarios solo puedan ver sus propias tareas
+CREATE POLICY tareas_own_tasks ON tareas_pendientes
+  FOR ALL USING (auth.uid() = id_usuario);
+
+-- ================================================
+-- INSTRUCCIONES DE USO
+-- ================================================
+
+/*
+Para usar estas funciones desde tu aplicación React:
+
+1. crear_tarea_pendiente(p_id_pedido, p_id_usuario, p_descripcion, p_posicion_x, p_posicion_y)
+   const { data } = await supabase.rpc('crear_tarea_pendiente', {
+     p_id_pedido: 123,
+     p_id_usuario: user.id,
+     p_descripcion: 'Subir vector',
+     p_posicion_x: 50,
+     p_posicion_y: 25
+   });
+
+2. obtener_tareas_pedido(p_id_pedido)
+   const { data } = await supabase.rpc('obtener_tareas_pedido', {
+     p_id_pedido: 123
+   });
+
+3. obtener_tareas_usuario(p_id_usuario)
+   const { data } = await supabase.rpc('obtener_tareas_usuario', {
+     p_id_usuario: user.id
+   });
+
+4. actualizar_posicion_tarea(p_id_tarea, p_posicion_x, p_posicion_y)
+   const { data } = await supabase.rpc('actualizar_posicion_tarea', {
+     p_id_tarea: 1,
+     p_posicion_x: 75,
+     p_posicion_y: 30
+   });
+
+5. completar_tarea(p_id_tarea)
+   const { data } = await supabase.rpc('completar_tarea', {
+     p_id_tarea: 1
+   });
+
+6. eliminar_tarea(p_id_tarea)
+   const { data } = await supabase.rpc('eliminar_tarea', {
+     p_id_tarea: 1
+   });
+
+7. contar_tareas_pendientes_usuario(p_id_usuario)
+   const { data } = await supabase.rpc('contar_tareas_pendientes_usuario', {
+     p_id_usuario: user.id
+   });
+*/ 

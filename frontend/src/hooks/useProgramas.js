@@ -80,7 +80,64 @@ export const useProgramas = () => {
     }
   };
 
-  // Eliminar programa
+  // Actualizar estado de programa y sus pedidos usando RPC
+  const actualizarEstadoProgramaConPedidos = async (programaId, nuevoEstado) => {
+    try {
+      const { data, error } = await supabase.rpc('actualizar_estado_programa_con_pedidos', {
+        p_programa_id: programaId,
+        p_nuevo_estado: nuevoEstado
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // Verificar que la operación fue exitosa
+      const result = data?.[0];
+      if (!result?.success) {
+        throw new Error(result?.message || 'Error actualizando estado del programa y pedidos');
+      }
+
+      // Actualizar estado local
+      setProgramas(prev => 
+        prev.map(p => p.id_programa === programaId ? { ...p, estado_programa: nuevoEstado } : p)
+      );
+
+      return result;
+    } catch (err) {
+      console.error('Error actualizando estado del programa con pedidos:', err);
+      throw err;
+    }
+  };
+
+  // Eliminar programa usando RPC (desasocia pedidos automáticamente)
+  const eliminarProgramaConPedidos = async (programaId) => {
+    try {
+      const { data, error } = await supabase.rpc('eliminar_programa_y_desasociar_pedidos', {
+        p_programa_id: programaId
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // Verificar que la operación fue exitosa
+      const result = data?.[0];
+      if (!result?.success) {
+        throw new Error(result?.message || 'Error eliminando programa y desasociando pedidos');
+      }
+
+      // Actualizar estado local
+      setProgramas(prev => prev.filter(p => p.id_programa !== programaId));
+
+      return result;
+    } catch (err) {
+      console.error('Error eliminando programa con pedidos:', err);
+      throw err;
+    }
+  };
+
+  // Eliminar programa (función original - mantiene compatibilidad)
   const eliminarPrograma = async (id) => {
     try {
       const { error } = await supabase
@@ -235,7 +292,9 @@ export const useProgramas = () => {
     fetchProgramas,
     crearPrograma,
     actualizarPrograma,
+    actualizarEstadoProgramaConPedidos, // Nueva función RPC
     eliminarPrograma,
+    eliminarProgramaConPedidos, // Nueva función RPC
     obtenerPedidosDisponibles,
     obtenerPedidosPrograma,
     agregarPedidoAPrograma,

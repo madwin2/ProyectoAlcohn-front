@@ -18,12 +18,14 @@ import {
   Users
 } from 'lucide-react';
 import { useProgramas } from '../../hooks/useProgramas';
+import { useNotification } from '../../hooks/useNotification';
 import EditProgramaModal from './EditProgramaModal';
 import AddPedidosModal from './AddPedidosModal';
 import SVGPreview from '../ui/SVGPreview';
 
 const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
-  const { actualizarPrograma, eliminarPrograma, obtenerPedidosPrograma } = useProgramas();
+  const { actualizarPrograma, actualizarEstadoProgramaConPedidos, eliminarPrograma, eliminarProgramaConPedidos, obtenerPedidosPrograma } = useProgramas();
+  const { addNotification } = useNotification();
   const [loading, setLoading] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -75,13 +77,23 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
   const handleEstadoChange = async (nuevoEstado) => {
     setLoading(true);
     try {
-      await actualizarPrograma(programa.id_programa, { 
-        estado_programa: nuevoEstado 
-      });
+      // Usar la nueva función RPC que actualiza programa y pedidos
+      const result = await actualizarEstadoProgramaConPedidos(programa.id_programa, nuevoEstado);
+      
+      // Mostrar notificación de éxito con información sobre pedidos actualizados
+      if (result.pedidos_actualizados > 0) {
+        addNotification(
+          `Estado actualizado: ${result.pedidos_actualizados} pedidos también actualizados`,
+          'success'
+        );
+      } else {
+        addNotification('Estado del programa actualizado', 'success');
+      }
+      
       onProgramaUpdated();
     } catch (error) {
       console.error('Error actualizando estado:', error);
-      alert('Error al actualizar el estado del programa');
+      alert('Error al actualizar el estado del programa: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -118,14 +130,30 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
   };
 
   const handleEliminar = async () => {
-    if (window.confirm('¿Estás seguro de eliminar este programa?')) {
+    const mensaje = cantidadPedidos > 0 
+      ? `¿Estás seguro de eliminar este programa? Se desasociarán ${cantidadPedidos} pedidos.`
+      : '¿Estás seguro de eliminar este programa?';
+      
+    if (window.confirm(mensaje)) {
       setLoading(true);
       try {
-        await eliminarPrograma(programa.id_programa);
+        // Usar la nueva función RPC que desasocia pedidos automáticamente
+        const result = await eliminarProgramaConPedidos(programa.id_programa);
+        
+        // Mostrar notificación de éxito con información sobre pedidos desasociados
+        if (result.pedidos_desasociados > 0) {
+          addNotification(
+            `Programa eliminado: ${result.pedidos_desasociados} pedidos desasociados`,
+            'success'
+          );
+        } else {
+          addNotification('Programa eliminado exitosamente', 'success');
+        }
+        
         onProgramaUpdated();
       } catch (error) {
         console.error('Error eliminando programa:', error);
-        alert('Error al eliminar el programa');
+        alert('Error al eliminar el programa: ' + error.message);
       } finally {
         setLoading(false);
       }
@@ -201,7 +229,8 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
             </div>
             <div>
               <div style={{ fontSize: '18px', fontWeight: '600', color: 'white' }}>
-                #{programa.id_programa}
+                {/* Mostrar solo el nombre_archivo como título principal */}
+                {programa.nombre_archivo}
               </div>
               <div style={{ fontSize: '12px', color: '#a1a1aa' }}>
                 {formatearFecha(programa.fecha_programa)}
@@ -332,7 +361,7 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
       </div>
 
       {/* Información del archivo */}
-      {programa.nombre_archivo && (
+      {false && programa.nombre_archivo && (
         <div style={{
           background: 'rgba(39, 39, 42, 0.5)',
           borderRadius: '6px',
@@ -400,23 +429,7 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
             Bloqueado
           </div>
         )}
-
-        {cantidadPedidos > 0 && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            background: '#3b82f620',
-            color: '#3b82f6',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            fontSize: '11px',
-            fontWeight: '500'
-          }}>
-            <Users style={{ width: '12px', height: '12px' }} />
-            {cantidadPedidos} pedido{cantidadPedidos > 1 ? 's' : ''}
-          </div>
-        )}
+        {/* Eliminada la etiqueta azul de cantidad de pedidos aquí */}
       </div>
 
       {/* Preview de vectores */}
@@ -435,7 +448,7 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
           </div>
           <div style={{ 
             display: 'flex', 
-            gap: '6px', 
+            gap: '10px', // Aumenta el espacio entre previews
             overflowX: 'auto',
             paddingBottom: '4px'
           }}>
@@ -452,12 +465,12 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
               >
                 <SVGPreview
                   vectorUrl={pedido.archivo_vector ? publicUrl(pedido.archivo_vector) : null}
-                  size={32}
+                  size={56} // Aumentado el tamaño de 32 a 56
                   backgroundColor="rgba(24, 24, 27, 0.8)"
                   borderRadius="4px"
                 />
                 <span style={{ 
-                  fontSize: '9px', 
+                  fontSize: '10px', // Un poco más grande
                   color: '#a1a1aa',
                   whiteSpace: 'nowrap'
                 }}>
@@ -474,8 +487,8 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
                 justifyContent: 'center'
               }}>
                 <div style={{
-                  width: '32px',
-                  height: '32px',
+                  width: '56px', // Aumentado el tamaño
+                  height: '56px',
                   background: 'rgba(39, 39, 42, 0.5)',
                   border: '1px solid rgba(63, 63, 70, 0.5)',
                   borderRadius: '4px',
@@ -483,13 +496,13 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: '#a1a1aa',
-                  fontSize: '10px',
+                  fontSize: '14px',
                   fontWeight: '500'
                 }}>
                   +{cantidadPedidos - 3}
                 </div>
                 <span style={{ 
-                  fontSize: '9px', 
+                  fontSize: '10px', 
                   color: '#a1a1aa',
                   whiteSpace: 'nowrap'
                 }}>
@@ -603,7 +616,6 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
           <option value="Haciendo">Haciendo</option>
           <option value="Verificar">Verificar</option>
           <option value="Rehacer">Rehacer</option>
-          <option value="Hecho">Hecho</option>
         </select>
 
         {/* Gestionar pedidos */}

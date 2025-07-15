@@ -111,7 +111,7 @@ export const usePedidosApi = ({
   const startEdit = (pedido) => {
     setEditingId(pedido.id_pedido);
     setEditForm({
-      fecha_compra: pedido.fecha_compra ? pedido.fecha_compra.split('T')[0] : '',
+      fecha_compra: pedido.fecha_compra || '',
       nombre_cliente: pedido.clientes?.nombre_cliente || '',
       apellido_cliente: pedido.clientes?.apellido_cliente || '',
       telefono_cliente: pedido.clientes?.telefono_cliente || '',

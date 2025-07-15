@@ -1,14 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FiChevronRight, FiHome, FiBox } from "react-icons/fi";
-import { Shapes, Computer } from "lucide-react";
+import { Shapes, Computer, CheckCircle } from "lucide-react";
 import UserMenu from './UserMenu';
+import { useTareasPendientes } from '../hooks/useTareasPendientes';
 import './Sidebar.css';
 
 export default function Sidebar() {
   const location = useLocation();
   const [expanded, setExpanded] = useState(false);
   const [fixed, setFixed] = useState(false);
+  
+  // Hook para tareas pendientes
+  const { totalTareasPendientes } = useTareasPendientes();
 
   const isExpanded = expanded || fixed;
 
@@ -17,7 +21,8 @@ export default function Sidebar() {
     { to: "/pedidos", label: "Pedidos", icon: <FiBox /> },
     { to: "/vectorizacion", label: "Vectorización", icon: <Shapes /> },
     { to: "/produccion", label: "Producción", icon: <FiBox /> },
-    { to: "/programas", label: "Programas", icon: <Computer /> }
+    { to: "/programas", label: "Programas", icon: <Computer /> },
+    { to: "/verificacion", label: "Verificación", icon: <CheckCircle /> }
   ];
 
   return (
@@ -54,6 +59,12 @@ export default function Sidebar() {
             >
               <span className="nav-icon">{item.icon}</span>
               {isExpanded && <span className="nav-label">{item.label}</span>}
+              {/* Contador de tareas pendientes para la página de pedidos */}
+              {item.to === "/pedidos" && totalTareasPendientes > 0 && (
+                <span className="tareas-badge">
+                  {totalTareasPendientes}
+                </span>
+              )}
             </Link>
           ))}
         </nav>

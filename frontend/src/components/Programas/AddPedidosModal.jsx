@@ -123,6 +123,34 @@ const AddPedidosModal = ({ isOpen, onClose, programa, onPedidosUpdated, publicUr
 
   if (!isOpen || !programa) return null;
 
+  // Nuevo bloque reutilizable para datos del pedido, con mejor jerarquía visual
+  const DatosPedido = ({ pedido }) => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: 2 }}>
+      {pedido.tipo_planchuela && (
+        <div style={{ color: '#a1a1aa', fontSize: '14px', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Package style={{ width: 15, height: 15 }} />
+          <span><b>Tipo Planchuela:</b> {pedido.tipo_planchuela}</span>
+        </div>
+      )}
+      {pedido.medida_real && (
+        <div style={{ color: '#a1a1aa', fontSize: '14px', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Ruler style={{ width: 15, height: 15 }} />
+          <span><b>Medida Real:</b> {pedido.medida_real} cm</span>
+        </div>
+      )}
+      {pedido.largo_planchuela && (
+        <div style={{ color: '#a1a1aa', fontSize: '14px', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span><b>Largo Planchuela:</b> {pedido.largo_planchuela} cm</span>
+        </div>
+      )}
+      {pedido.estado_fabricacion && (
+        <div style={{ color: pedido.estado_fabricacion === 'prioridad' ? '#f59e0b' : pedido.estado_fabricacion === 'rehacer' ? '#ef4444' : '#a1a1aa', fontSize: '14px', display: 'flex', alignItems: 'center', gap: 6, fontWeight: pedido.estado_fabricacion === 'prioridad' ? 'bold' : 'normal', textTransform: 'capitalize' }}>
+          <span><b>Estado:</b> {pedido.estado_fabricacion === 'prioridad' ? '★ ' : pedido.estado_fabricacion === 'rehacer' ? '⟳ ' : pedido.estado_fabricacion === 'sin hacer' ? '● ' : ''}{pedido.estado_fabricacion}</span>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div style={{ 
       position: 'fixed', 
@@ -360,7 +388,7 @@ const AddPedidosModal = ({ isOpen, onClose, programa, onPedidosUpdated, publicUr
                         {/* Preview del vector */}
                         <SVGPreview
                           vectorUrl={pedido.archivo_vector ? publicUrl(pedido.archivo_vector) : null}
-                          size={50}
+                          size={90}
                           backgroundColor="rgba(24, 24, 27, 0.8)"
                         />
                         
@@ -413,38 +441,10 @@ const AddPedidosModal = ({ isOpen, onClose, programa, onPedidosUpdated, publicUr
                               textOverflow: 'ellipsis',
                               whiteSpace: 'nowrap'
                             }}>
-                              {pedido.disenio}
+                              <b>{pedido.disenio}</b>
                             </div>
-                            <div style={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: '4px', 
-                              color: '#a1a1aa', 
-                              fontSize: '11px' 
-                            }}>
-                              <User style={{ width: '9px', height: '9px' }} />
-                              <span style={{
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap'
-                              }}>
-                                {pedido.clientes?.nombre_cliente} {pedido.clientes?.apellido_cliente}
-                              </span>
-                            </div>
+                            <DatosPedido pedido={pedido} />
                           </div>
-
-                          {pedido.medida_real && (
-                            <div style={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: '4px', 
-                              color: '#a1a1aa', 
-                              fontSize: '10px' 
-                            }}>
-                              <Ruler style={{ width: '9px', height: '9px' }} />
-                              {pedido.medida_real} cm
-                            </div>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -547,7 +547,7 @@ const AddPedidosModal = ({ isOpen, onClose, programa, onPedidosUpdated, publicUr
                       {/* Preview del vector */}
                       <SVGPreview
                         vectorUrl={pedido.archivo_vector ? publicUrl(pedido.archivo_vector) : null}
-                        size={50}
+                        size={90}
                         backgroundColor="rgba(24, 24, 27, 0.8)"
                       />
                       
@@ -632,18 +632,8 @@ const AddPedidosModal = ({ isOpen, onClose, programa, onPedidosUpdated, publicUr
                           </div>
                         </div>
 
-                        {pedido.medida_real && (
-                          <div style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '4px', 
-                            color: '#a1a1aa', 
-                            fontSize: '10px' 
-                          }}>
-                            <Ruler style={{ width: '9px', height: '9px' }} />
-                            {pedido.medida_real} cm
-                          </div>
-                        )}
+                        {/* Reemplazar el bloque de datos en ambas tarjetas por <DatosPedido pedido={pedido} /> */}
+                        <DatosPedido pedido={pedido} />
                       </div>
                     </div>
                   </div>

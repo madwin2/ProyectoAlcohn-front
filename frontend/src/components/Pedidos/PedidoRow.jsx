@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { TableRow, TableCell } from '../ui/Table';
 import ArchivoCell from '../ArchivoCell';
 import EstadoSelect from '../EstadoSelect';
+import TareaPendiente from './TareaPendiente';
+import AddTareaModal from './AddTareaModal';
+import { Plus } from 'lucide-react';
 
 const PedidoRow = ({ 
   pedido, 
@@ -20,7 +23,12 @@ const PedidoRow = ({
   ESTADOS_VENTA, 
   ESTADOS_ENVIO, 
   setEditForm, 
-  editingId: _editingId
+  editingId: _editingId,
+  tareasPendientes = [],
+  onCreateTarea,
+  onUpdateTareaPosition,
+  onCompleteTarea,
+  onDeleteTarea
 }) => {
   // Estilo invisible para inputs
   const invisibleInput = {
@@ -44,20 +52,9 @@ const PedidoRow = ({
     try {
       const pedidoFields = {
         p_id: pedido.id_pedido,
-        p_fecha_compra: pedido.fecha_compra,
-        p_valor_sello: pedido.valor_sello,
-        p_valor_envio: pedido.valor_envio,
-        p_valor_senia: pedido.valor_senia,
         p_estado_fabricacion: campo === 'estado_fabricacion' ? valor : pedido.estado_fabricacion,
         p_estado_venta: campo === 'estado_venta' ? valor : pedido.estado_venta,
         p_estado_envio: campo === 'estado_envio' ? valor : pedido.estado_envio,
-        p_notas: pedido.notas,
-        p_disenio: pedido.disenio,
-        p_archivo_base: pedido.archivo_base,
-        p_archivo_vector: pedido.archivo_vector,
-        p_foto_sello: pedido.foto_sello,
-        p_medida_pedida: pedido.medida_pedida,
-        p_numero_seguimiento: pedido.numero_seguimiento,
       };
       await supabase.rpc('editar_pedido', pedidoFields);
       getPedidos();
@@ -68,8 +65,66 @@ const PedidoRow = ({
 
   console.log('Estados en PedidoRow:', ESTADOS_FABRICACION);
 
+  // Estado para el modal de agregar tarea
+  const [showAddTareaModal, setShowAddTareaModal] = useState(false);
+  const [tareasDelPedido, setTareasDelPedido] = useState([]);
+  const rowRef = useRef(null);
+  const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
+
+  // Permitir que el menú contextual pueda abrir el modal
+  React.useImperativeHandle(pedido.addTareaModalRef, () => ({
+    open: () => setShowAddTareaModal(true),
+    close: () => setShowAddTareaModal(false)
+  }), []);
+
+  // Filtrar tareas del pedido actual
+  useEffect(() => {
+    const tareasFiltradas = tareasPendientes.filter(tarea => tarea.id_pedido === pedido.id_pedido);
+    setTareasDelPedido(tareasFiltradas);
+  }, [tareasPendientes, pedido.id_pedido]);
+
+  // Obtener dimensiones del contenedor
+  useEffect(() => {
+    if (rowRef.current) {
+      const rect = rowRef.current.getBoundingClientRect();
+      setContainerDimensions({
+        width: rect.width,
+        height: rect.height
+      });
+    }
+  }, []);
+
+  // Manejar agregar tarea
+  const handleAddTarea = async (pedidoId, descripcion) => {
+    if (onCreateTarea) {
+      await onCreateTarea(pedidoId, descripcion);
+    }
+  };
+
+  // Manejar actualizar posición de tarea
+  const handleUpdateTareaPosition = async (tareaId, posX, posY) => {
+    if (onUpdateTareaPosition) {
+      await onUpdateTareaPosition(tareaId, posX, posY);
+    }
+  };
+
+  // Manejar completar tarea
+  const handleCompleteTarea = async (tareaId) => {
+    if (onCompleteTarea) {
+      await onCompleteTarea(tareaId);
+    }
+  };
+
+  // Manejar eliminar tarea
+  const handleDeleteTarea = async (tareaId) => {
+    if (onDeleteTarea) {
+      await onDeleteTarea(tareaId);
+    }
+  };
+
   return (
     <TableRow
+      ref={rowRef}
       editing={editing}
       onContextMenu={editing ? handleEditRowRightClick : (e) => handleRowRightClick(e, pedido.id_pedido)}
       onDoubleClick={e => {
@@ -79,6 +134,7 @@ const PedidoRow = ({
           startEdit(pedido);
         }
       }}
+      style={{ position: 'relative' }}
     >
       {/* Fecha */}
       <TableCell>
@@ -93,7 +149,7 @@ const PedidoRow = ({
           />
         ) : (
           <span style={{ color: '#a1a1aa', fontSize: '13px' }}>
-            {pedido.fecha_compra ? new Date(pedido.fecha_compra).toLocaleDateString() : '-'}
+            {pedido.fecha_compra || '-'}
           </span>
         )}
       </TableCell>
@@ -357,6 +413,29 @@ const PedidoRow = ({
           </div>
         )}
       </TableCell>
+
+      {/* Contenedor de tareas pendientes */}
+      <div className="tareas-container" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none' }}>
+        {tareasDelPedido.map((tarea) => (
+          <TareaPendiente
+            key={tarea.id_tarea}
+            tarea={tarea}
+            onUpdatePosition={handleUpdateTareaPosition}
+            onComplete={handleCompleteTarea}
+            onDelete={handleDeleteTarea}
+            containerWidth={containerDimensions.width}
+            containerHeight={containerDimensions.height}
+          />
+        ))}
+      </div>
+
+      {/* Modal para agregar tarea */}
+      <AddTareaModal
+        isOpen={showAddTareaModal}
+        onClose={() => setShowAddTareaModal(false)}
+        pedido={pedido}
+        onCreateTarea={handleAddTarea}
+      />
     </TableRow>
   );
 };

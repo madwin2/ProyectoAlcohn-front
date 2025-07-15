@@ -12,6 +12,16 @@ const PedidoContextMenu = ({ contextMenu, pedidos, startEdit, handleEliminar }) 
       Editar
     </ContextMenuItem>
     <ContextMenuItem
+      onClick={() => {
+        const pedido = pedidos.find(p => p.id_pedido === contextMenu.pedidoId);
+        if (pedido && pedido.addTareaModalRef && pedido.addTareaModalRef.current) {
+          pedido.addTareaModalRef.current.open();
+        }
+      }}
+    >
+      Agregar tarea
+    </ContextMenuItem>
+    <ContextMenuItem
       color="#ef4444"
       onClick={() => handleEliminar(contextMenu.pedidoId)}
     >

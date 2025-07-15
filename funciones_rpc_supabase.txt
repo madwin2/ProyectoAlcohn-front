@@ -252,105 +252,194 @@ RETURNS TABLE (
 LANGUAGE plpgsql
 AS $$
 DECLARE
-  pedido_existe boolean;
-  programa_existe boolean;
+  programa_exists boolean;
 BEGIN
-  -- Verificar que el pedido existe y no está asignado
-  SELECT EXISTS(
-    SELECT 1 FROM pedidos 
-    WHERE pedidos.id_pedido = asignar_pedido_programa.pedido_id 
-    AND pedidos.id_programa IS NULL
-  ) INTO pedido_existe;
-
-  -- Verificar que el programa existe
-  SELECT EXISTS(
-    SELECT 1 FROM programas 
-    WHERE programas.id_programa = asignar_pedido_programa.programa_id
-  ) INTO programa_existe;
-
-  -- Validaciones
-  IF NOT pedido_existe THEN
+  -- Verificar si el programa existe
+  SELECT EXISTS(SELECT 1 FROM programas WHERE id_programa = programa_id) INTO programa_exists;
+  
+  IF NOT programa_exists THEN
     RETURN QUERY SELECT 
-      asignar_pedido_programa.pedido_id,
-      asignar_pedido_programa.programa_id,
+      pedido_id::integer,
+      programa_id::text,
       NOW()::timestamp with time zone,
-      false,
-      'El pedido no existe o ya está asignado a otro programa'::text;
+      false::boolean,
+      'El programa especificado no existe'::text;
     RETURN;
   END IF;
 
-  IF NOT programa_existe THEN
-    RETURN QUERY SELECT 
-      asignar_pedido_programa.pedido_id,
-      asignar_pedido_programa.programa_id,
-      NOW()::timestamp with time zone,
-      false,
-      'El programa no existe'::text;
-    RETURN;
-  END IF;
-
-  -- Asignar pedido al programa
+  -- Asignar el pedido al programa
   UPDATE pedidos 
   SET 
-    id_programa = asignar_pedido_programa.programa_id,
+    id_programa = programa_id,
     updated_at = NOW()
-  WHERE pedidos.id_pedido = asignar_pedido_programa.pedido_id;
+  WHERE id_pedido = pedido_id;
 
-  -- Retornar resultado exitoso
-  RETURN QUERY
-  SELECT 
-    p.id_pedido,
-    p.id_programa,
-    p.updated_at,
-    true,
-    'Pedido asignado exitosamente'::text
-  FROM pedidos p
-  WHERE p.id_pedido = asignar_pedido_programa.pedido_id;
+  -- Retornar resultado
+  RETURN QUERY SELECT 
+    pedido_id::integer,
+    programa_id::text,
+    NOW()::timestamp with time zone,
+    true::boolean,
+    'Pedido asignado exitosamente al programa'::text;
 END;
 $$;
 
--- 7. FUNCIÓN PARA REMOVER PEDIDO DE PROGRAMA
--- ===========================================
+-- 7. FUNCIÓN PARA ACTUALIZAR ESTADO DE PROGRAMA Y SUS PEDIDOS
+-- ===========================================================
 
-CREATE OR REPLACE FUNCTION remover_pedido_programa(pedido_id integer)
+CREATE OR REPLACE FUNCTION actualizar_estado_programa_con_pedidos(
+  programa_id text,
+  nuevo_estado character varying
+)
 RETURNS TABLE (
-  id_pedido integer,
   id_programa text,
-  updated_at timestamp with time zone,
+  estado_programa character varying,
+  pedidos_actualizados bigint,
   success boolean,
   message text
 )
 LANGUAGE plpgsql
 AS $$
+DECLARE
+  pedidos_count bigint;
 BEGIN
-  -- Remover asignación del pedido
+  -- Verificar que el programa existe
+  IF NOT EXISTS(SELECT 1 FROM programas WHERE id_programa = programa_id) THEN
+    RETURN QUERY SELECT 
+      programa_id::text,
+      nuevo_estado::character varying,
+      0::bigint,
+      false::boolean,
+      'El programa especificado no existe'::text;
+    RETURN;
+  END IF;
+
+  -- Actualizar el estado del programa
+  UPDATE programas 
+  SET 
+    estado_programa = nuevo_estado,
+    updated_at = NOW()
+  WHERE id_programa = programa_id;
+
+  -- Actualizar el estado de fabricación de todos los pedidos asociados
+  UPDATE pedidos 
+  SET 
+    estado_fabricacion = nuevo_estado::text,
+    updated_at = NOW()
+  WHERE id_programa = programa_id;
+
+  -- Contar cuántos pedidos fueron actualizados
+  GET DIAGNOSTICS pedidos_count = ROW_COUNT;
+
+  -- Retornar resultado
+  RETURN QUERY SELECT 
+    programa_id::text,
+    nuevo_estado::character varying,
+    pedidos_count::bigint,
+    true::boolean,
+    'Programa y pedidos actualizados exitosamente'::text;
+END;
+$$;
+
+-- 8. FUNCIÓN PARA ELIMINAR PROGRAMA Y DESASOCIAR PEDIDOS
+-- ======================================================
+
+CREATE OR REPLACE FUNCTION eliminar_programa_y_desasociar_pedidos(
+  programa_id text
+)
+RETURNS TABLE (
+  id_programa text,
+  pedidos_desasociados bigint,
+  success boolean,
+  message text
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  pedidos_count bigint;
+BEGIN
+  -- Verificar que el programa existe
+  IF NOT EXISTS(SELECT 1 FROM programas WHERE id_programa = programa_id) THEN
+    RETURN QUERY SELECT 
+      programa_id::text,
+      0::bigint,
+      false::boolean,
+      'El programa especificado no existe'::text;
+    RETURN;
+  END IF;
+
+  -- Desasociar todos los pedidos del programa (establecer id_programa = NULL)
   UPDATE pedidos 
   SET 
     id_programa = NULL,
     updated_at = NOW()
-  WHERE pedidos.id_pedido = remover_pedido_programa.pedido_id;
+  WHERE id_programa = programa_id;
 
-  -- Verificar que se actualizó al menos un registro
-  IF FOUND THEN
-    RETURN QUERY
-    SELECT 
-      p.id_pedido,
-      p.id_programa,
-      p.updated_at,
-      true,
-      'Pedido removido del programa exitosamente'::text
-    FROM pedidos p
-    WHERE p.id_pedido = remover_pedido_programa.pedido_id;
-  ELSE
-    RETURN QUERY SELECT 
-      remover_pedido_programa.pedido_id,
-      NULL::text,
-      NOW()::timestamp with time zone,
-      false,
-      'Pedido no encontrado'::text;
-  END IF;
+  -- Contar cuántos pedidos fueron desasociados
+  GET DIAGNOSTICS pedidos_count = ROW_COUNT;
+
+  -- Eliminar el programa
+  DELETE FROM programas WHERE id_programa = programa_id;
+
+  -- Retornar resultado
+  RETURN QUERY SELECT 
+    programa_id::text,
+    pedidos_count::bigint,
+    true::boolean,
+    'Programa eliminado y pedidos desasociados exitosamente'::text;
 END;
 $$;
+
+-- 9. TRIGGER PARA ACTUALIZAR PEDIDOS AUTOMÁTICAMENTE CUANDO CAMBIA EL ESTADO DEL PROGRAMA
+-- =======================================================================================
+
+CREATE OR REPLACE FUNCTION trigger_actualizar_pedidos_por_estado_programa()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Si el estado del programa cambió
+  IF OLD.estado_programa IS DISTINCT FROM NEW.estado_programa THEN
+    -- Actualizar el estado de fabricación de todos los pedidos asociados
+    UPDATE pedidos 
+    SET 
+      estado_fabricacion = NEW.estado_programa::text,
+      updated_at = NOW()
+    WHERE id_programa = NEW.id_programa;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Crear el trigger
+DROP TRIGGER IF EXISTS trigger_actualizar_pedidos_estado_programa ON programas;
+CREATE TRIGGER trigger_actualizar_pedidos_estado_programa
+  AFTER UPDATE ON programas
+  FOR EACH ROW
+  EXECUTE FUNCTION trigger_actualizar_pedidos_por_estado_programa();
+
+-- 10. TRIGGER PARA DESASOCIAR PEDIDOS CUANDO SE ELIMINA UN PROGRAMA
+-- ==================================================================
+
+CREATE OR REPLACE FUNCTION trigger_desasociar_pedidos_al_eliminar_programa()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Desasociar todos los pedidos del programa que se está eliminando
+  UPDATE pedidos 
+  SET 
+    id_programa = NULL,
+    updated_at = NOW()
+  WHERE id_programa = OLD.id_programa;
+  
+  RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Crear el trigger
+DROP TRIGGER IF EXISTS trigger_desasociar_pedidos_eliminar_programa ON programas;
+CREATE TRIGGER trigger_desasociar_pedidos_eliminar_programa
+  BEFORE DELETE ON programas
+  FOR EACH ROW
+  EXECUTE FUNCTION trigger_desasociar_pedidos_al_eliminar_programa();
 
 -- Función RPC para búsqueda de pedidos con ordenamiento múltiple
 -- Permite ordenar por: fecha_compra, estado_fabricacion, estado_venta, estado_envio, vectorizacion, id_programa
