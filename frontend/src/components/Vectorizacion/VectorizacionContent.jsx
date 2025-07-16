@@ -12,10 +12,13 @@ const VectorizacionContent = ({
   dimensionesSVG,
   opcionesEscalado,
   procesando,
+  removerFondo,
+  setRemoverFondo,
   onVectorizar,
   onPrevisualizar,
   onDimensionar,
-  onDescargar
+  onDescargar,
+  onCargarVector
 }) => {
   if (loading) {
     return (
@@ -57,10 +60,13 @@ const VectorizacionContent = ({
           dimensionesSVG={dimensionesSVG}
           opcionesEscalado={opcionesEscalado}
           procesando={procesando}
+          removerFondo={removerFondo}
+          setRemoverFondo={setRemoverFondo}
           handleVectorizar={onVectorizar}
           handlePrevisualizar={onPrevisualizar}
           handleDimensionar={onDimensionar}
           handleDescargar={onDescargar}
+          handleCargarVector={onCargarVector}
         />
       ))}
     </div>

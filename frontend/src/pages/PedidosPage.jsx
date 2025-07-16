@@ -48,6 +48,16 @@ function PedidosPage() {
     setEditForm: state.setEditForm, setContextMenu, sortCriteria: multiSort.sortCriteria
   });
 
+  // API optimista que envuelve las funciones originales
+  const apiOptimistic = {
+    ...api,
+    saveEdit: async (id) => {
+      await handleSaveEditOptimistic(id, editForm);
+      state.setEditingId(null);
+      state.setEditForm({});
+    }
+  };
+
   const { user, loading: authLoading } = useAuth();
   const [showSortPopover, setShowSortPopover] = useState(false);
   const sortButtonRef = useRef();
@@ -74,8 +84,8 @@ function PedidosPage() {
 
   // Actualizar pedidos cuando cambien los filtros o búsqueda
   useEffect(() => {
-    api.getPedidos();
-  }, [debouncedSearchTerm, debouncedFilters, state.sortOrder, api.getPedidos]);
+    apiOptimistic.getPedidos();
+  }, [debouncedSearchTerm, debouncedFilters, state.sortOrder, apiOptimistic.getPedidos]);
 
   useEffect(() => {
     const handleClickOutside = () => {
@@ -89,23 +99,23 @@ function PedidosPage() {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (editingId) {
-        if (e.key === 'Escape') api.cancelEdit();
-        else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) api.saveEdit(editingId);
+        if (e.key === 'Escape') apiOptimistic.cancelEdit();
+        else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) apiOptimistic.saveEdit(editingId);
       }
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [editingId, api.cancelEdit, api.saveEdit]);
+  }, [editingId, apiOptimistic.cancelEdit, apiOptimistic.saveEdit]);
 
   useEffect(() => {
     if (!editingId) return () => {}; // Return empty cleanup function
     const handleDblClick = (e) => {
       const table = document.querySelector('.table-container');
-      if (table && !table.contains(e.target)) api.saveEdit(editingId);
+      if (table && !table.contains(e.target)) apiOptimistic.saveEdit(editingId);
     };
     document.addEventListener('dblclick', handleDblClick);
     return () => document.removeEventListener('dblclick', handleDblClick);
-  }, [editingId, api.saveEdit]);
+  }, [editingId, apiOptimistic.saveEdit]);
 
   // Handlers
   const handleRowRightClick = (e, pedidoId) => {
@@ -119,7 +129,7 @@ function PedidosPage() {
   };
 
   const handlePedidoAdded = (pedidoCreado) => {
-    api.handlePedidoAdded();
+    apiOptimistic.handlePedidoAdded();
     setIsModalOpen(false);
     
     // Si el pedido tiene vector y medida, abrir modal de verificación automáticamente
@@ -140,7 +150,7 @@ function PedidosPage() {
 
   const handleMedidaVerificada = (pedido) => {
     // Actualizar la lista de pedidos
-    api.getPedidos();
+    apiOptimistic.getPedidos();
     handleCloseVerificarMedida();
   };
 
@@ -153,8 +163,129 @@ function PedidosPage() {
   ];
 
   const handleApplySort = () => {
-    api.getPedidos();
+    apiOptimistic.getPedidos();
     setSortAplicado(true);
+  };
+
+  // Función para actualizaciones optimistas de estados
+  const handleEstadoChangeOptimistic = async (pedido, campo, valor) => {
+    try {
+      // Actualización optimista: cambiar inmediatamente en la UI
+      state.setPedidos(prevPedidos => {
+        const updatedPedidos = prevPedidos.map(p => 
+          p.id_pedido === pedido.id_pedido 
+            ? { ...p, [campo]: valor }
+            : p
+        );
+        
+        // Re-aplicar ordenamiento local
+        return aplicarOrdenamientoLocal(updatedPedidos);
+      });
+      
+      // Actualizar en BD en segundo plano
+      const pedidoFields = {
+        p_id: pedido.id_pedido,
+        p_estado_fabricacion: campo === 'estado_fabricacion' ? valor : pedido.estado_fabricacion,
+        p_estado_venta: campo === 'estado_venta' ? valor : pedido.estado_venta,
+        p_estado_envio: campo === 'estado_envio' ? valor : pedido.estado_envio,
+      };
+      await supabase.rpc('editar_pedido', pedidoFields);
+      
+    } catch (error) {
+      // Si hay error, revertir el cambio optimista
+      console.error('Error al actualizar el estado:', error);
+      alert('Error al actualizar el estado');
+      // Refrescar para asegurar consistencia
+      apiOptimistic.getPedidos();
+    }
+  };
+
+  // Función optimista para guardar ediciones
+  const handleSaveEditOptimistic = async (id, editForm) => {
+    try {
+      // Actualización optimista: cambiar inmediatamente en la UI
+      state.setPedidos(prevPedidos => {
+        const updatedPedidos = prevPedidos.map(p => {
+          if (p.id_pedido === id) {
+            return {
+              ...p,
+              fecha_compra: editForm.fecha_compra,
+              valor_sello: editForm.valor_sello ? parseFloat(editForm.valor_sello) : null,
+              valor_envio: editForm.valor_envio ? parseFloat(editForm.valor_envio) : null,
+              valor_senia: editForm.valor_senia ? parseFloat(editForm.valor_senia) : 0,
+              estado_fabricacion: editForm.estado_fabricacion,
+              estado_venta: editForm.estado_venta,
+              estado_envio: editForm.estado_envio,
+              notas: editForm.notas,
+              disenio: editForm.disenio,
+              archivo_base: editForm.archivo_base,
+              archivo_vector: editForm.archivo_vector,
+              foto_sello: editForm.foto_sello,
+              medida_pedida: editForm.medida_pedida || null,
+              numero_seguimiento: editForm.numero_seguimiento,
+              clientes: {
+                ...p.clientes,
+                nombre_cliente: editForm.nombre_cliente,
+                apellido_cliente: editForm.apellido_cliente,
+                telefono_cliente: editForm.telefono_cliente,
+                medio_contacto: editForm.medio_contacto,
+              }
+            };
+          }
+          return p;
+        });
+        
+        // Re-aplicar ordenamiento local
+        return aplicarOrdenamientoLocal(updatedPedidos);
+      });
+      
+      // Actualizar en BD en segundo plano
+      const clienteFields = {
+        p_id_pedido: id,
+        p_nombre_cliente: editForm.nombre_cliente,
+        p_apellido_cliente: editForm.apellido_cliente,
+        p_telefono_cliente: editForm.telefono_cliente,
+        p_medio_contacto: editForm.medio_contacto,
+      };
+
+      const pedidoFields = {
+        p_id: id,
+        p_fecha_compra: editForm.fecha_compra,
+        p_valor_sello: editForm.valor_sello ? parseFloat(editForm.valor_sello) : null,
+        p_valor_envio: editForm.valor_envio ? parseFloat(editForm.valor_envio) : null,
+        p_valor_senia: editForm.valor_senia ? parseFloat(editForm.valor_senia) : 0,
+        p_estado_fabricacion: editForm.estado_fabricacion,
+        p_estado_venta: editForm.estado_venta,
+        p_estado_envio: editForm.estado_envio,
+        p_notas: editForm.notas,
+        p_disenio: editForm.disenio,
+        p_archivo_base: editForm.archivo_base,
+        p_archivo_vector: editForm.archivo_vector,
+        p_foto_sello: editForm.foto_sello,
+        p_medida_pedida: editForm.medida_pedida || null,
+        p_numero_seguimiento: editForm.numero_seguimiento,
+      };
+
+      const [clienteResult, pedidoResult] = await Promise.all([
+        supabase.rpc('editar_cliente', clienteFields),
+        supabase.rpc('editar_pedido', pedidoFields)
+      ]);
+
+      if (clienteResult.error) {
+        throw new Error('Error al actualizar cliente: ' + clienteResult.error.message);
+      }
+
+      if (pedidoResult.error) {
+        throw new Error('Error al actualizar pedido: ' + pedidoResult.error.message);
+      }
+      
+    } catch (error) {
+      // Si hay error, revertir el cambio optimista
+      console.error('Error al guardar edición:', error);
+      alert('Error al guardar los cambios: ' + error.message);
+      // Refrescar para asegurar consistencia
+      apiOptimistic.getPedidos();
+    }
   };
 
   const publicUrl = (filePath) => {
@@ -186,9 +317,14 @@ function PedidosPage() {
   // Guardar la vista solo cuando se aplican los filtros (debouncedFilters cambia, pero no en cada input)
   useEffect(() => {
     if (configCargada && user) {
+      // Limpiar sortCriteria para evitar referencias circulares
+      const ordenLimpio = Array.isArray(multiSort.sortCriteria) 
+        ? multiSort.sortCriteria.map(c => ({ field: c.field, order: c.order }))
+        : [];
+        
       guardarVistaUsuario(user, 'pedidos', {
         filtros: debouncedFilters,
-        orden: multiSort.sortCriteria,
+        orden: ordenLimpio,
         ordenEstadosFabricacion
       });
     }
@@ -198,9 +334,14 @@ function PedidosPage() {
   // Guardar la vista solo cuando se aplica el sort
   useEffect(() => {
     if (sortAplicado && configCargada && user) {
+      // Limpiar sortCriteria para evitar referencias circulares
+      const ordenLimpio = Array.isArray(multiSort.sortCriteria) 
+        ? multiSort.sortCriteria.map(c => ({ field: c.field, order: c.order }))
+        : [];
+        
       guardarVistaUsuario(user, 'pedidos', {
         filtros: filters,
-        orden: multiSort.sortCriteria,
+        orden: ordenLimpio,
         ordenEstadosFabricacion
       });
       setSortAplicado(false);
@@ -208,33 +349,60 @@ function PedidosPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortAplicado, ordenEstadosFabricacion]);
 
-  // Ordenar los pedidos según los criterios seleccionados
-  const pedidosOrdenados = [...pedidos].sort((a, b) => {
-    // Buscar si hay criterio de estado de fabricación
-    const criterioEstado = multiSort.sortCriteria.find(c => c.field === 'estado_fabricacion');
-    if (criterioEstado) {
-      const idxA = ordenEstadosFabricacion.indexOf(a.estado_fabricacion);
-      const idxB = ordenEstadosFabricacion.indexOf(b.estado_fabricacion);
-      const asc = criterioEstado.order === 'asc';
-      if (idxA !== idxB) {
-        return asc
-          ? (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB)
-          : (idxB === -1 ? 999 : idxB) - (idxA === -1 ? 999 : idxA);
-      }
-    }
-    // Si hay otros criterios, aplicarlos (ejemplo: fecha)
-    for (const criterio of multiSort.sortCriteria) {
-      if (criterio.field === 'fecha_compra') {
-        const dateA = new Date(a.fecha_compra);
-        const dateB = new Date(b.fecha_compra);
-        if (dateA.getTime() !== dateB.getTime()) {
-          return criterio.order === 'asc' ? dateA - dateB : dateB - dateA;
+  // Función helper para aplicar ordenamiento local
+  const aplicarOrdenamientoLocal = (pedidos) => {
+    if (multiSort.sortCriteria.length === 0) return pedidos;
+    
+    return [...pedidos].sort((a, b) => {
+      // Aplicar todos los criterios de ordenamiento en orden de prioridad
+      for (const criterio of multiSort.sortCriteria) {
+        let comparison = 0;
+        
+        switch (criterio.field) {
+          case 'fecha_compra':
+            const dateA = new Date(a.fecha_compra);
+            const dateB = new Date(b.fecha_compra);
+            comparison = dateA - dateB;
+            break;
+            
+          case 'estado_fabricacion':
+            const idxA = ordenEstadosFabricacion.indexOf(a.estado_fabricacion);
+            const idxB = ordenEstadosFabricacion.indexOf(b.estado_fabricacion);
+            comparison = (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
+            break;
+            
+          case 'estado_venta':
+            const valA = a.estado_venta || '';
+            const valB = b.estado_venta || '';
+            comparison = valA.localeCompare(valB);
+            break;
+            
+          case 'estado_envio':
+            const envA = a.estado_envio || '';
+            const envB = b.estado_envio || '';
+            comparison = envA.localeCompare(envB);
+            break;
+            
+          default:
+            const fieldA = a[criterio.field] || '';
+            const fieldB = b[criterio.field] || '';
+            comparison = fieldA.localeCompare(fieldB);
+            break;
+        }
+        
+        // Si hay diferencia, aplicar la dirección del ordenamiento y retornar
+        if (comparison !== 0) {
+          return criterio.order === 'asc' ? comparison : -comparison;
         }
       }
-      // Agregar más criterios si es necesario
-    }
-    return 0;
-  });
+      
+      // Si todos los criterios son iguales, mantener el orden original
+      return 0;
+    });
+  };
+
+  // Ordenar los pedidos según los criterios seleccionados
+  const pedidosOrdenados = aplicarOrdenamientoLocal(pedidos);
 
   return (
     <div style={{
@@ -292,12 +460,12 @@ function PedidosPage() {
       />
 
       <PedidoContextMenu
-        contextMenu={contextMenu} pedidos={pedidos} startEdit={api.startEdit}
-        handleEliminar={api.handleEliminar}
+        contextMenu={contextMenu} pedidos={pedidos} startEdit={apiOptimistic.startEdit}
+        handleEliminar={apiOptimistic.handleEliminar}
       />
 
       <EditContextMenu
-        editContextMenu={editContextMenu} saveEdit={api.saveEdit} cancelEdit={api.cancelEdit}
+        editContextMenu={editContextMenu} saveEdit={apiOptimistic.saveEdit} cancelEdit={apiOptimistic.cancelEdit}
         editingId={editingId} setEditContextMenu={setEditContextMenu}
       />
 
@@ -332,10 +500,10 @@ function PedidosPage() {
                 return (
                   <PedidoRow
                     key={pedido.id_pedido} pedido={pedido} editing={editingId === pedido.id_pedido}
-                    editForm={editForm} handleEditFormChange={api.handleEditFormChange}
+                    editForm={editForm} handleEditFormChange={apiOptimistic.handleEditFormChange}
                     handleEditRowRightClick={handleEditRowRightClick} handleRowRightClick={handleRowRightClick}
-                    startEdit={api.startEdit} getEstadoStyle={getEstadoStyle} handlePedidoAdded={handlePedidoAdded}
-                    handleEliminarArchivo={api.handleEliminarArchivo} supabase={supabase} getPedidos={api.getPedidos}
+                    startEdit={apiOptimistic.startEdit} getEstadoStyle={getEstadoStyle} handlePedidoAdded={handlePedidoAdded}
+                    handleEliminarArchivo={apiOptimistic.handleEliminarArchivo} supabase={supabase} getPedidos={apiOptimistic.getPedidos}
                     ESTADOS_FABRICACION={ordenEstadosFabricacion} ESTADOS_VENTA={ESTADOS_VENTA}
                     ESTADOS_ENVIO={ESTADOS_ENVIO} setEditForm={state.setEditForm} editingId={editingId}
                     tareasPendientes={tareasPendientes.tareas}
@@ -344,6 +512,7 @@ function PedidosPage() {
                     onCompleteTarea={tareasPendientes.completarTarea}
                     onDeleteTarea={tareasPendientes.eliminarTarea}
                     addTareaModalRef={pedido.addTareaModalRef}
+                    handleEstadoChangeOptimistic={handleEstadoChangeOptimistic}
                   />
                 );
               })

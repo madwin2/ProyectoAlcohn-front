@@ -277,7 +277,7 @@ const SortPopover = ({
           </div>
         )}
         <button
-          onClick={addSortCriterion}
+          onClick={() => addSortCriterion(fields[0]?.value || 'fecha_compra', 'asc')}
           style={{
             background: 'rgba(59, 130, 246, 0.1)',
             border: '1px solid rgba(59, 130, 246, 0.3)',
@@ -338,9 +338,9 @@ const SortPopover = ({
           <button
             onClick={onApply}
             style={{
-              background: '#3b82f6',
+              background: 'white',
               border: 'none',
-              color: 'white',
+              color: 'black',
               borderRadius: 8,
               padding: '10px 20px',
               cursor: 'pointer',
@@ -348,6 +348,8 @@ const SortPopover = ({
               fontWeight: 500,
               transition: 'all 0.3s ease'
             }}
+            onMouseEnter={(e) => e.target.style.background = '#e5e7eb'}
+            onMouseLeave={(e) => e.target.style.background = 'white'}
           >
             Aplicar ordenamiento
           </button>

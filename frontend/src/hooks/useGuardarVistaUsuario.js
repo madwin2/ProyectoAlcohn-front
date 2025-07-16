@@ -27,6 +27,15 @@ export function useGuardarVistaUsuario(pagina, configuracion, habilitado = true)
     console.log('useGuardarVistaUsuario useEffect disparado', { pagina, configuracion, user });
     const guardar = async () => {
       console.log('Intentando guardar vista', { user, pagina, configuracion });
+      
+      // Limpiar configuracion para evitar referencias circulares
+      const configuracionLimpia = {
+        ...configuracion,
+        orden: Array.isArray(configuracion?.orden) 
+          ? configuracion.orden.map(c => ({ field: c.field, order: c.order }))
+          : configuracion?.orden || []
+      };
+      
       const { error } = await supabase
         .from('vistas_usuario')
         .upsert([
@@ -34,7 +43,7 @@ export function useGuardarVistaUsuario(pagina, configuracion, habilitado = true)
             usuario_id: user.id,
             pagina,
             nombre_vista: 'default',
-            configuracion,
+            configuracion: configuracionLimpia,
             actualizado_en: new Date().toISOString()
           }
         ], { onConflict: ['usuario_id', 'pagina', 'nombre_vista'] });
@@ -46,13 +55,21 @@ export function useGuardarVistaUsuario(pagina, configuracion, habilitado = true)
     };
     guardar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, loading, habilitado, pagina, JSON.stringify(configuracion)]);
+  }, [user, loading, habilitado, pagina, configuracion?.orden?.length, configuracion?.filtros, configuracion?.ordenEstadosFabricacion]);
 }
 
 // Nueva función normal para guardar la vista del usuario
 export async function guardarVistaUsuario(user, pagina, configuracion) {
   if (!user) return;
   try {
+    // Limpiar configuracion para evitar referencias circulares
+    const configuracionLimpia = {
+      ...configuracion,
+      orden: Array.isArray(configuracion?.orden) 
+        ? configuracion.orden.map(c => ({ field: c.field, order: c.order }))
+        : configuracion?.orden || []
+    };
+    
     const { error } = await supabase
       .from('vistas_usuario')
       .upsert([
@@ -60,7 +77,7 @@ export async function guardarVistaUsuario(user, pagina, configuracion) {
           usuario_id: user.id,
           pagina,
           nombre_vista: 'default',
-          configuracion,
+          configuracion: configuracionLimpia,
           actualizado_en: new Date().toISOString()
         }
       ], { onConflict: ['usuario_id', 'pagina', 'nombre_vista'] });

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { medirSVG, dimensionarSVG, calcularOpcionesEscalado, calcularTipoPlanchuela, calcularLargoPlanchuela, calcularTiemposCNC } from '../utils/svgUtils';
+import { removeBackground } from '../services/pixianService';
 
 export const useVectorizacion = () => {
   const [pedidos, setPedidos] = useState([]);
@@ -13,6 +14,7 @@ export const useVectorizacion = () => {
   const [svgLoading, setSvgLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('pendientes');
   const [busqueda, setBusqueda] = useState('');
+  const [removerFondo, setRemoverFondo] = useState(false);
 
   // Función para obtener URL pública
   const publicUrl = (path) => {
@@ -26,13 +28,32 @@ export const useVectorizacion = () => {
   const fetchPedidos = async () => {
     setLoading(true);
     try {
+      console.log('Fetching pedidos from Supabase...');
       const { data, error } = await supabase
         .from('pedidos')
         .select('*')
         .neq('estado_fabricacion', 'Hecho');
       
       if (!error) {
+        console.log('Pedidos cargados:', data?.length || 0);
+        
+        // Log detallado de pedidos con medida_real
+        const pedidosConMedida = data?.filter(p => p.medida_real) || [];
+        console.log('Pedidos con medida_real:', pedidosConMedida.length);
+        pedidosConMedida.forEach(p => {
+          console.log(`- Pedido ${p.id_pedido}: ${p.disenio} - Medida: ${p.medida_real} - Tiempo: ${p.tiempo_estimado}`);
+        });
+        
+        // Log detallado de pedidos con archivo_vector pero sin medida_real
+        const pedidosParaVerificar = data?.filter(p => p.archivo_vector && !p.medida_real) || [];
+        console.log('Pedidos para verificar:', pedidosParaVerificar.length);
+        pedidosParaVerificar.forEach(p => {
+          console.log(`- Pedido ${p.id_pedido}: ${p.disenio} - Vector: ${p.archivo_vector}`);
+        });
+        
         setPedidos(data || []);
+      } else {
+        console.error('Error en fetchPedidos:', error);
       }
     } catch (error) {
       console.error('Error fetching pedidos:', error);
@@ -44,6 +65,14 @@ export const useVectorizacion = () => {
   const grupoVerificados = pedidos.filter(p => p.medida_real);
   const grupoVector = pedidos.filter(p => p.archivo_vector && !p.medida_real);  
   const grupoBase = pedidos.filter(p => !p.archivo_vector && p.archivo_base && !p.medida_real);
+  
+  // Debug logs
+  console.log('Grupos separados:', {
+    total: pedidos.length,
+    verificados: grupoVerificados.length,
+    vector: grupoVector.length,
+    base: grupoBase.length
+  });
 
   // Medir SVGs y calcular opciones de escalado
   const medirTodos = async () => {
@@ -53,6 +82,12 @@ export const useVectorizacion = () => {
     for (const pedido of pedidos) {
       if (pedido.archivo_vector && pedido.medida_pedida && pedido.medida_pedida.includes("x")) {
         const url = publicUrl(pedido.archivo_vector);
+        
+        // Agregar un pequeño delay para archivos recién subidos
+        if (pedido.archivo_vector.includes('_manual-') || pedido.archivo_vector.includes('archivo_vector_')) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        
         const dimensiones = await medirSVG(url);
         nuevasDim[pedido.id_pedido] = dimensiones;
         
@@ -82,7 +117,19 @@ export const useVectorizacion = () => {
     try {
       // Descargar la imagen base
       const imageResponse = await fetch(baseUrl);
-      const imageBlob = await imageResponse.blob();
+      let imageBlob = await imageResponse.blob();
+      
+      // Si está activado remover fondo, procesar primero con Pixian
+      if (removerFondo) {
+        try {
+          console.log('Removiendo fondo con Pixian...');
+          imageBlob = await removeBackground(imageBlob);
+          console.log('Fondo removido exitosamente');
+        } catch (bgError) {
+          console.error('Error removiendo fondo:', bgError);
+          alert(`Error removiendo fondo: ${bgError.message}. Continuando con vectorización sin remover fondo.`);
+        }
+      }
       
       // Preparar FormData para el proxy local
       const formData = new FormData();
@@ -143,7 +190,11 @@ export const useVectorizacion = () => {
     
     try {
       const url = publicUrl(pedido.archivo_vector);
+      console.log('🔗 URL del SVG original:', url);
+      
+      console.log('📐 Dimensionando SVG...');
       const svgDimensionado = await dimensionarSVG(url, medidaReal);
+      console.log('📐 SVG dimensionado obtenido:', svgDimensionado ? 'SÍ' : 'NO');
       
       if (svgDimensionado) {
         // 1. Subir el SVG redimensionado a Supabase Storage
@@ -164,33 +215,57 @@ export const useVectorizacion = () => {
         console.log('Nuevo path del vector:', fileName);
 
         // 3. Calcular tiempos CNC y otros valores
+        console.log('🔧 Calculando valores...');
         const [cmW, cmH] = medidaReal.split("x").map(parseFloat);
         const widthMm = cmW * 10;
         const heightMm = cmH * 10;
-        const tiempos = await calcularTiemposCNC(svgDimensionado, widthMm, heightMm);
+        console.log('📏 Medidas en mm:', widthMm, 'x', heightMm);
         
+        console.log('⏱️ Calculando tiempos CNC...');
+        const tiempos = await calcularTiemposCNC(svgDimensionado, widthMm, heightMm);
+        console.log('⏱️ Tiempos calculados:', tiempos);
+        
+        console.log('🔧 Calculando tipo planchuela...');
         const tipoPlanchuela = calcularTipoPlanchuela(medidaReal);
+        console.log('🔧 Tipo planchuela:', tipoPlanchuela);
+        
+        console.log('📏 Calculando largo planchuela...');
         const largoPlanchuela = calcularLargoPlanchuela(medidaReal);
+        console.log('📏 Largo planchuela:', largoPlanchuela);
         
         // 4. Actualizar el pedido con el nuevo archivo vector y todos los datos
-        console.log('Actualizando pedido con nuevo path y medidas');
+        console.log('💾 Actualizando pedido en Supabase...');
+        const datosActualizacion = {
+          archivo_vector: fileName, // ¡IMPORTANTE! Guardar path relativo
+          medida_real: medidaReal,
+          tiempo_estimado: Math.round(tiempos.totalTime),
+          tipo_planchuela: tipoPlanchuela,
+          largo_planchuela: largoPlanchuela
+        };
+        console.log('📊 Datos a actualizar:', datosActualizacion);
+        
         const { error } = await supabase
           .from('pedidos')
-          .update({
-            archivo_vector: fileName, // ¡IMPORTANTE! Guardar path relativo
-            medida_real: medidaReal,
-            tiempo_estimado: Math.round(tiempos.totalTime),
-            tipo_planchuela: tipoPlanchuela,
-            largo_planchuela: largoPlanchuela
-          })
+          .update(datosActualizacion)
           .eq('id_pedido', pedido.id_pedido);
         
         if (error) {
           console.error('Supabase error:', error);
           alert(`Error actualizando pedido: ${error.message}`);
         } else {
-          console.log('Pedido actualizado exitosamente con SVG redimensionado');
+          console.log('✅ Pedido actualizado exitosamente con SVG redimensionado');
+          console.log('📊 Datos actualizados:', {
+            id_pedido: pedido.id_pedido,
+            archivo_vector: fileName,
+            medida_real: medidaReal,
+            tiempo_estimado: Math.round(tiempos.totalTime),
+            tipo_planchuela: tipoPlanchuela,
+            largo_planchuela: largoPlanchuela
+          });
+          // Forzar recarga de datos desde Supabase para asegurar sincronización
+          console.log('🔄 Recargando datos desde Supabase...');
           await fetchPedidos();
+          console.log('✅ Datos recargados');
         }
       }
     } catch (error) {
@@ -248,6 +323,56 @@ export const useVectorizacion = () => {
     link.click();
   };
 
+  // Cargar vector manualmente
+  const handleCargarVector = async (pedido, file) => {
+    if (!file || procesando[pedido.id_pedido]) return;
+    
+    setProcesando(prev => ({ ...prev, [pedido.id_pedido]: true }));
+    
+    try {
+      console.log('Cargando vector manual:', file.name);
+      
+      // Leer el contenido del archivo SVG
+      const svgContent = await file.text();
+      
+      // Subir el SVG a Supabase Storage
+      const fileName = `vector/${pedido.id_pedido}-manual-${Date.now()}.svg`;
+      const svgBlob = new Blob([svgContent], { type: 'image/svg+xml' });
+      
+      const { error: uploadError } = await supabase.storage
+        .from('archivos-ventas')
+        .upload(fileName, svgBlob, {
+          cacheControl: '3600',
+          upsert: true
+        });
+      
+      if (uploadError) {
+        console.error('Error subiendo SVG:', uploadError);
+        throw uploadError;
+      }
+
+      // Actualizar el pedido con el nuevo archivo vector
+      const { error: updateError } = await supabase
+        .from('pedidos')
+        .update({ archivo_vector: fileName })
+        .eq('id_pedido', pedido.id_pedido);
+      
+      if (updateError) {
+        console.error('Error actualizando pedido:', updateError);
+        throw updateError;
+      }
+
+      console.log('Vector cargado exitosamente:', fileName);
+      await fetchPedidos();
+      
+    } catch (error) {
+      console.error('Error cargando vector:', error);
+      alert(`Error al cargar el vector: ${error.message}`);
+    } finally {
+      setProcesando(prev => ({ ...prev, [pedido.id_pedido]: false }));
+    }
+  };
+
   // Effects
   useEffect(() => {
     fetchPedidos();
@@ -271,6 +396,7 @@ export const useVectorizacion = () => {
     svgLoading,
     activeTab,
     busqueda,
+    removerFondo,
     
     // Groups
     grupoBase,
@@ -280,12 +406,14 @@ export const useVectorizacion = () => {
     // Actions
     setActiveTab,
     setBusqueda,
+    setRemoverFondo,
     handleVectorizar,
     handlePrevisualizar,
     handleDimensionar,
     handleGuardarSVG,
     handleRechazarSVG,
     handleDescargar,
+    handleCargarVector,
     
     // Utils
     publicUrl,

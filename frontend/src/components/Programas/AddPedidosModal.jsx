@@ -116,10 +116,33 @@ const AddPedidosModal = ({ isOpen, onClose, programa, onPedidosUpdated, publicUr
     return pedidosEnPrograma.reduce((total, pedido) => total + (pedido.tiempo_estimado || 0), 0);
   };
 
+  const calcularLargosPlanchuelas = () => {
+    const largos = {
+      63: 0,
+      38: 0,
+      25: 0,
+      19: 0,
+      12: 0
+    };
+    
+    pedidosEnPrograma.forEach(pedido => {
+      if (pedido.tipo_planchuela && pedido.largo_planchuela) {
+        const tipo = pedido.tipo_planchuela;
+        if (largos.hasOwnProperty(tipo)) {
+          largos[tipo] += pedido.largo_planchuela;
+        }
+      }
+    });
+    
+    return largos;
+  };
+
   const formatearTiempo = (minutos) => {
     if (!minutos) return '0 min';
     return `${minutos} min`;
   };
+
+
 
   if (!isOpen || !programa) return null;
 
@@ -488,19 +511,70 @@ const AddPedidosModal = ({ isOpen, onClose, programa, onPedidosUpdated, publicUr
               </div>
               
               {pedidosEnPrograma.length > 0 && (
-                <div style={{
-                  background: 'rgba(16, 185, 129, 0.1)',
-                  border: '1px solid rgba(16, 185, 129, 0.3)',
-                  borderRadius: '6px',
-                  padding: '8px 12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}>
-                  <Clock style={{ width: '12px', height: '12px', color: '#10b981' }} />
-                  <span style={{ color: '#10b981', fontSize: '12px', fontWeight: '500' }}>
-                    Tiempo total: {formatearTiempo(calcularTiempoTotal())}
-                  </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {/* Tiempo total */}
+                  <div style={{
+                    background: 'rgba(16, 185, 129, 0.1)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    borderRadius: '6px',
+                    padding: '8px 12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}>
+                    <Clock style={{ width: '12px', height: '12px', color: '#10b981' }} />
+                    <span style={{ color: '#10b981', fontSize: '12px', fontWeight: '500' }}>
+                      Tiempo total: {formatearTiempo(calcularTiempoTotal())}
+                    </span>
+                  </div>
+                  
+                  {/* Largos de planchuelas */}
+                  {(() => {
+                    const largos = calcularLargosPlanchuelas();
+                    const largosConValor = Object.entries(largos).filter(([tipo, largo]) => largo > 0);
+                    
+                    if (largosConValor.length > 0) {
+                      return (
+                        <div style={{
+                          background: 'rgba(59, 130, 246, 0.1)',
+                          border: '1px solid rgba(59, 130, 246, 0.3)',
+                          borderRadius: '6px',
+                          padding: '8px 12px'
+                        }}>
+                          <div style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '6px',
+                            marginBottom: '4px'
+                          }}>
+                            <Package style={{ width: '12px', height: '12px', color: '#3b82f6' }} />
+                            <span style={{ color: '#3b82f6', fontSize: '12px', fontWeight: '500' }}>
+                              Planchuelas utilizadas:
+                            </span>
+                          </div>
+                          <div style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '8px'
+                          }}>
+                            {largosConValor.map(([tipo, largo]) => (
+                              <div key={tipo} style={{
+                                background: 'rgba(59, 130, 246, 0.2)',
+                                borderRadius: '4px',
+                                padding: '4px 8px',
+                                fontSize: '11px',
+                                color: '#3b82f6',
+                                fontWeight: '500'
+                              }}>
+                                {tipo}mm: {largo.toFixed(1)} cm
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
               )}
             </div>

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Plus, AlertCircle } from 'lucide-react';
 import './AddTareaModal.css';
 
@@ -39,7 +40,7 @@ const AddTareaModal = ({ isOpen, onClose, pedido, onCreateTarea }) => {
 
   if (!isOpen || !pedido) return null;
 
-  return (
+  const modalContent = (
     <div className="add-tarea-modal-overlay" onClick={handleClose}>
       <div className="add-tarea-modal" onClick={(e) => e.stopPropagation()}>
         <div className="add-tarea-modal-header">
@@ -117,6 +118,8 @@ const AddTareaModal = ({ isOpen, onClose, pedido, onCreateTarea }) => {
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default AddTareaModal; 

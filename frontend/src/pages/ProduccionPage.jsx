@@ -178,18 +178,84 @@ function ProduccionPage() {
     getPedidos();
   }, [sortOrder, debouncedSearchTerm, debouncedFilters, multiSort.sortCriteria, ordenEstadosFabricacion]);
 
+  // Función para refrescar pedidos manteniendo filtros y ordenamiento
+  const refreshPedidosWithFilters = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Usar RPC optimizada para búsqueda de pedidos con ordenamiento múltiple
+      const { data, error: fetchError } = await supabase.rpc('buscar_pedidos_ordenado_multiple', {
+        termino_busqueda: debouncedSearchTerm || '',
+        filtro_estado_fabricacion: debouncedFilters.estado_fabricacion.length === 1 ? debouncedFilters.estado_fabricacion[0] : '',
+        filtro_estado_venta: '',
+        filtro_estado_envio: '',
+        filtro_fecha_desde: debouncedFilters.fecha_compra_gte || null,
+        filtro_fecha_hasta: debouncedFilters.fecha_compra_lte || null,
+        limite_resultados: 500,
+        criterios_orden: multiSort.sortCriteria
+      });
+
+      if (fetchError) throw fetchError;
+
+      // Aplicar ordenamiento (la RPC ordena por fecha desc por defecto)
+      let pedidosOrdenados = data || [];
+      if (sortOrder === 'asc') {
+        pedidosOrdenados.sort((a, b) => new Date(a.fecha_compra) - new Date(b.fecha_compra));
+      }
+
+      // Aplicar filtros múltiples que la RPC no soporta directamente
+      if (debouncedFilters.estado_fabricacion.length > 1) {
+        pedidosOrdenados = pedidosOrdenados.filter(p => 
+          debouncedFilters.estado_fabricacion.includes(p.estado_fabricacion)
+        );
+      }
+
+      // Ordenar por estado de fabricación personalizado si corresponde
+      const criterioEstado = multiSort.sortCriteria.find(c => c.field === 'estado_fabricacion');
+      if (criterioEstado) {
+        const asc = criterioEstado.order === 'asc';
+        pedidosOrdenados.sort((a, b) => {
+          const idxA = ordenEstadosFabricacion.indexOf(a.estado_fabricacion);
+          const idxB = ordenEstadosFabricacion.indexOf(b.estado_fabricacion);
+          if (idxA !== idxB) {
+            return asc
+              ? (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB)
+              : (idxB === -1 ? 999 : idxB) - (idxA === -1 ? 999 : idxA);
+          }
+          return 0;
+        });
+      }
+
+      setPedidos(pedidosOrdenados);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handlePedidoAdded = () => {
     setIsModalOpen(false);
-    // Refrescar pedidos
-    setLoading(true);
-    supabase.from('pedidos').select('*').then(({ data }) => {
-      setPedidos(data || []);
-      setLoading(false);
-    });
+    // Refrescar pedidos manteniendo filtros y ordenamiento
+    refreshPedidosWithFilters();
   };
 
   const handleEstadoChange = async (pedido, campo, valor) => {
     try {
+      // Actualización optimista: cambiar inmediatamente en la UI
+      setPedidos(prevPedidos => {
+        const updatedPedidos = prevPedidos.map(p => 
+          p.id_pedido === pedido.id_pedido 
+            ? { ...p, [campo]: valor }
+            : p
+        );
+        
+        // Re-aplicar ordenamiento local
+        return aplicarOrdenamientoLocal(updatedPedidos);
+      });
+      
+      // Actualizar en BD en segundo plano
       const pedidoFields = {
         p_id: pedido.id_pedido,
         p_estado_fabricacion: campo === 'estado_fabricacion' ? valor : pedido.estado_fabricacion,
@@ -197,11 +263,13 @@ function ProduccionPage() {
         p_estado_envio: campo === 'estado_envio' ? valor : pedido.estado_envio,
       };
       await supabase.rpc('editar_pedido', pedidoFields);
-      // Refrescar pedidos
-      const { data } = await supabase.from('pedidos').select('*');
-      setPedidos(data || []);
-    } catch {
+      
+    } catch (error) {
+      // Si hay error, revertir el cambio optimista
+      console.error('Error al actualizar el estado:', error);
       alert('Error al actualizar el estado');
+      // Refrescar para asegurar consistencia
+      await refreshPedidosWithFilters();
     }
   };
 
@@ -211,9 +279,8 @@ function ProduccionPage() {
   //       p_id: pedido.id_pedido,
   //       p_tipo_maquina: nuevaMaquina
   //     });
-  //     // Refrescar pedidos
-  //     const { data } = await supabase.from('pedidos').select('*');
-  //     setPedidos(data || []);
+  //     // Refrescar pedidos manteniendo filtros y ordenamiento
+  //     await refreshPedidosWithFilters();
   //   } catch {
   //     alert('Error al actualizar la máquina');
   //   }
@@ -221,16 +288,77 @@ function ProduccionPage() {
 
   const handleVectorizacionChange = async (pedido, nuevaVectorizacion) => {
     try {
+      // Actualización optimista: cambiar inmediatamente en la UI
+      setPedidos(prevPedidos => {
+        const updatedPedidos = prevPedidos.map(p => 
+          p.id_pedido === pedido.id_pedido 
+            ? { ...p, vectorizacion: nuevaVectorizacion }
+            : p
+        );
+        
+        // Re-aplicar ordenamiento local
+        return aplicarOrdenamientoLocal(updatedPedidos);
+      });
+      
+      // Actualizar en BD en segundo plano
       await supabase.rpc('editar_pedido', {
         p_id: pedido.id_pedido,
         p_vectorizacion: nuevaVectorizacion
       });
-      // Refrescar pedidos
-      const { data } = await supabase.from('pedidos').select('*');
-      setPedidos(data || []);
-    } catch {
+      
+    } catch (error) {
+      // Si hay error, revertir el cambio optimista
+      console.error('Error al actualizar la vectorización:', error);
       alert('Error al actualizar la vectorización');
+      // Refrescar para asegurar consistencia
+      await refreshPedidosWithFilters();
     }
+  };
+
+  // Función helper para aplicar ordenamiento local
+  const aplicarOrdenamientoLocal = (pedidos) => {
+    if (multiSort.sortCriteria.length === 0) return pedidos;
+    
+    return [...pedidos].sort((a, b) => {
+      // Aplicar todos los criterios de ordenamiento en orden de prioridad
+      for (const criterio of multiSort.sortCriteria) {
+        let comparison = 0;
+        
+        switch (criterio.field) {
+          case 'fecha_compra':
+            const dateA = new Date(a.fecha_compra);
+            const dateB = new Date(b.fecha_compra);
+            comparison = dateA - dateB;
+            break;
+            
+          case 'estado_fabricacion':
+            const idxA = ordenEstadosFabricacion.indexOf(a.estado_fabricacion);
+            const idxB = ordenEstadosFabricacion.indexOf(b.estado_fabricacion);
+            comparison = (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
+            break;
+            
+          case 'vectorizacion':
+            const valA = a.vectorizacion || '';
+            const valB = b.vectorizacion || '';
+            comparison = valA.localeCompare(valB);
+            break;
+            
+          default:
+            const fieldA = a[criterio.field] || '';
+            const fieldB = b[criterio.field] || '';
+            comparison = fieldA.localeCompare(fieldB);
+            break;
+        }
+        
+        // Si hay diferencia, aplicar la dirección del ordenamiento y retornar
+        if (comparison !== 0) {
+          return criterio.order === 'asc' ? comparison : -comparison;
+        }
+      }
+      
+      // Si todos los criterios son iguales, mantener el orden original
+      return 0;
+    });
   };
 
   const hayFiltrosActivos = Object.values(filters).some((filtro) => filtro !== "" && filtro !== null && (!Array.isArray(filtro) || filtro.length > 0));
@@ -245,46 +373,7 @@ function ProduccionPage() {
 
   const handleApplySort = () => {
     // Refrescar pedidos con el nuevo ordenamiento
-    setLoading(true);
-    supabase.rpc('buscar_pedidos_ordenado_multiple', {
-      termino_busqueda: debouncedSearchTerm || '',
-      filtro_estado_fabricacion: debouncedFilters.estado_fabricacion.length === 1 ? debouncedFilters.estado_fabricacion[0] : '',
-      filtro_estado_venta: '',
-      filtro_estado_envio: '',
-      filtro_fecha_desde: debouncedFilters.fecha_compra_gte || null,
-      filtro_fecha_hasta: debouncedFilters.fecha_compra_lte || null,
-      limite_resultados: 500,
-      criterios_orden: multiSort.sortCriteria
-    }).then(({ data, error }) => {
-      if (error) {
-        setError(error.message);
-      } else {
-        let pedidosOrdenados = data || [];
-        // Aplicar filtros múltiples que la RPC no soporta directamente
-        if (debouncedFilters.estado_fabricacion.length > 1) {
-          pedidosOrdenados = pedidosOrdenados.filter(p => 
-            debouncedFilters.estado_fabricacion.includes(p.estado_fabricacion)
-          );
-        }
-        // Ordenar por estado de fabricación personalizado si corresponde
-        const criterioEstado = multiSort.sortCriteria.find(c => c.field === 'estado_fabricacion');
-        if (criterioEstado) {
-          const asc = criterioEstado.order === 'asc';
-          pedidosOrdenados.sort((a, b) => {
-            const idxA = ordenEstadosFabricacion.indexOf(a.estado_fabricacion);
-            const idxB = ordenEstadosFabricacion.indexOf(b.estado_fabricacion);
-            if (idxA !== idxB) {
-              return asc
-                ? (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB)
-                : (idxB === -1 ? 999 : idxB) - (idxA === -1 ? 999 : idxA);
-            }
-            return 0;
-          });
-        }
-        setPedidos(pedidosOrdenados);
-      }
-      setLoading(false);
-    });
+    refreshPedidosWithFilters();
     setSortAplicado(true);
   };
 
@@ -634,6 +723,7 @@ function ProduccionPage() {
                           nombre="Archivo Base"
                           pedidoId={pedido.id_pedido}
                           field="archivo_base"
+                          onUpload={refreshPedidosWithFilters}
                         />
                       </td>
                       <td style={{ padding: '16px 12px', textAlign: 'center', verticalAlign: 'middle' }}>
@@ -642,6 +732,7 @@ function ProduccionPage() {
                           nombre="Archivo Vector"
                           pedidoId={pedido.id_pedido}
                           field="archivo_vector"
+                          onUpload={refreshPedidosWithFilters}
                         />
                       </td>
                       <td style={{ padding: '16px 12px', textAlign: 'center', verticalAlign: 'middle' }}>
@@ -650,6 +741,7 @@ function ProduccionPage() {
                           nombre="Foto Sello"
                           pedidoId={pedido.id_pedido}
                           field="foto_sello"
+                          onUpload={refreshPedidosWithFilters}
                         />
                       </td>
                     </tr>

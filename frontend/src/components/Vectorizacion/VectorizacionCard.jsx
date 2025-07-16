@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { 
   Upload, 
   Download, 
@@ -24,11 +24,15 @@ const VectorizacionCard = ({
   dimensionesSVG, 
   opcionesEscalado, 
   procesando, 
+  removerFondo,
+  setRemoverFondo,
   handleVectorizar, 
   handlePrevisualizar, 
   handleDimensionar, 
-  handleDescargar 
+  handleDescargar,
+  handleCargarVector
 }) => {
+  const fileInputRef = useRef(null);
   const isProcessing = procesando[pedido.id_pedido];
   const prioridadColor = {
     'Muy Baja': '#71717a',
@@ -94,7 +98,7 @@ const VectorizacionCard = ({
       <div style={{
         position: 'relative',
         width: '100%',
-        height: '200px',
+        aspectRatio: '1',
         background: 'rgba(24, 24, 27, 0.5)',
         display: 'flex',
         alignItems: 'center',
@@ -102,16 +106,41 @@ const VectorizacionCard = ({
         overflow: 'hidden'
       }}>
         {imageUrl ? (
-          <img 
-            src={imageUrl} 
-            alt={pedido.disenio}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: tipo === 'base' ? 'cover' : 'contain',
-              transition: 'transform 0.3s ease'
-            }}
-          />
+          <div style={{
+            width: '100%',
+            height: '100%',
+            background: tipo === 'base' ? 'transparent' : 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(240, 240, 240, 0.2) 50%, rgba(255, 255, 255, 0.3) 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: tipo === 'base' ? '0' : '8px',
+            margin: tipo === 'base' ? '0' : '8px',
+            transition: 'all 0.3s ease',
+            backdropFilter: tipo === 'base' ? 'none' : 'blur(4px)'
+          }}
+          onMouseEnter={(e) => {
+            if (tipo !== 'base') {
+              e.target.style.background = 'linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.6) 50%, rgba(255, 255, 255, 0.7) 100%)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (tipo !== 'base') {
+              e.target.style.background = 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(240, 240, 240, 0.2) 50%, rgba(255, 255, 255, 0.3) 100%)';
+            }
+          }}
+          >
+            <img 
+              src={imageUrl} 
+              alt={pedido.disenio}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: tipo === 'base' ? 'cover' : 'contain',
+                transition: 'transform 0.3s ease',
+                borderRadius: tipo === 'base' ? '0' : '6px'
+              }}
+            />
+          </div>
         ) : (
           <div style={{
             display: 'flex',
@@ -160,126 +189,223 @@ const VectorizacionCard = ({
           {getTitle()}
         </div>
 
-        {pedido.medida_pedida && (
-          <div style={{
-            position: 'absolute',
-            bottom: '12px',
-            left: '12px',
-            background: 'rgba(0, 0, 0, 0.7)',
-            backdropFilter: 'blur(8px)',
-            color: '#d4d4d8',
-            padding: '4px 8px',
-            borderRadius: '6px',
-            fontSize: '12px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px'
-          }}>
-            <Ruler style={{ width: '12px', height: '12px' }} />
-            {pedido.medida_pedida} cm
-          </div>
-        )}
 
-        {pedido.medida_real && (
-          <div style={{
-            position: 'absolute',
-            bottom: '12px',
-            right: '12px',
-            background: 'rgba(34, 197, 94, 0.2)',
-            backdropFilter: 'blur(8px)',
-            color: '#86efac',
-            padding: '4px 8px',
-            borderRadius: '6px',
-            fontSize: '12px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            border: '1px solid rgba(34, 197, 94, 0.3)'
-          }}>
-            <CheckCircle style={{ width: '12px', height: '12px' }} />
-            {pedido.medida_real} cm
-          </div>
-        )}
       </div>
 
-      {/* Content */}
-      <div style={{ padding: '16px' }}>
-        <div style={{ marginBottom: '16px' }}>
-          <h3 style={{
-            fontSize: '16px',
-            fontWeight: '500',
-            color: 'white',
-            margin: '0 0 4px 0',
-            lineHeight: '1.2'
-          }}>
-            {pedido.disenio}
-          </h3>
-          <p style={{
-            fontSize: '12px',
-            color: '#71717a',
-            margin: '0 0 8px 0'
-          }}>
-            ID: {pedido.id_pedido}
-          </p>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontSize: '12px',
-            color: '#a1a1aa'
-          }}>
-            <Package style={{ width: '12px', height: '12px' }} />
-            {pedido.cliente || 'Sin cliente'}
+              {/* Content */}
+        <div style={{ padding: '16px' }}>
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              marginBottom: '8px'
+            }}>
+              <h3 style={{
+                fontSize: '16px',
+                fontWeight: '500',
+                color: 'white',
+                margin: 0,
+                lineHeight: '1.2'
+              }}>
+                {pedido.disenio}
+              </h3>
+              
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {tipo === 'vector' && pedido.medida_pedida && (
+                  <div style={{
+                    background: 'rgba(245, 158, 11, 0.2)',
+                    color: '#f59e0b',
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    border: '1px solid rgba(245, 158, 11, 0.3)',
+                    fontWeight: '500'
+                  }}>
+                    <Ruler style={{ width: '12px', height: '12px' }} />
+                    {pedido.medida_pedida} cm
+                  </div>
+                )}
+                
+                {pedido.medida_real && (
+                  <div style={{
+                    background: 'rgba(34, 197, 94, 0.2)',
+                    color: '#22c55e',
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    border: '1px solid rgba(34, 197, 94, 0.3)',
+                    fontWeight: '500'
+                  }}>
+                    <CheckCircle style={{ width: '12px', height: '12px' }} />
+                    {pedido.medida_real} cm
+                  </div>
+                )}
+                
+                {pedido.tiempo_estimado && (
+                  <div style={{
+                    background: 'rgba(59, 130, 246, 0.2)',
+                    color: '#60a5fa',
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                    fontWeight: '500'
+                  }}>
+                    <Clock style={{ width: '12px', height: '12px' }} />
+                    {pedido.tiempo_estimado}min
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
 
         {/* Actions based on type */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {tipo === 'base' && (
-            <button
-              onClick={() => handleVectorizar(pedido)}
-              disabled={isProcessing}
-              style={{
-                width: '100%',
-                background: isProcessing ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.2)',
-                border: '1px solid rgba(59, 130, 246, 0.5)',
-                color: isProcessing ? '#93c5fd' : '#60a5fa',
-                height: '36px',
-                fontWeight: '500',
-                borderRadius: '8px',
+            <>
+              {/* Checkbox Remover Fondo */}
+              <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
                 gap: '8px',
-                cursor: isProcessing ? 'not-allowed' : 'pointer',
-                transition: 'all 0.3s ease',
-                opacity: isProcessing ? 0.6 : 1
-              }}
-              onMouseEnter={(e) => {
-                if (!isProcessing) {
-                  e.target.style.background = 'rgba(59, 130, 246, 0.3)';
-                  e.target.style.color = 'white';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isProcessing) {
-                  e.target.style.background = 'rgba(59, 130, 246, 0.2)';
-                  e.target.style.color = '#60a5fa';
-                }
-              }}
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
-                  Vectorizando...
-                </>
-              ) : (
-                <>
-                  <Sparkles style={{ width: '16px', height: '16px' }} />
-                  Vectorizar con IA
-                </>
-              )}
-            </button>
+                padding: '8px 12px',
+                background: 'rgba(39, 39, 42, 0.3)',
+                borderRadius: '6px',
+                border: '1px solid rgba(63, 63, 70, 0.5)'
+              }}>
+                <input
+                  type="checkbox"
+                  id={`remover-fondo-${pedido.id_pedido}`}
+                  checked={removerFondo}
+                  onChange={(e) => setRemoverFondo(e.target.checked)}
+                  style={{
+                    width: '16px',
+                    height: '16px',
+                    accentColor: '#60a5fa',
+                    cursor: 'pointer'
+                  }}
+                />
+                <label
+                  htmlFor={`remover-fondo-${pedido.id_pedido}`}
+                  style={{
+                    fontSize: '12px',
+                    color: '#d4d4d8',
+                    cursor: 'pointer',
+                    userSelect: 'none'
+                  }}
+                >
+                  Remover fondo
+                </label>
+              </div>
+              
+              <button
+                onClick={() => handleVectorizar(pedido)}
+                disabled={isProcessing}
+                style={{
+                  width: '100%',
+                  background: isProcessing ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.2)',
+                  border: '1px solid rgba(59, 130, 246, 0.5)',
+                  color: isProcessing ? '#93c5fd' : '#60a5fa',
+                  height: '36px',
+                  fontWeight: '500',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  cursor: isProcessing ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.3s ease',
+                  opacity: isProcessing ? 0.6 : 1
+                }}
+                onMouseEnter={(e) => {
+                  if (!isProcessing) {
+                    e.target.style.background = 'rgba(59, 130, 246, 0.3)';
+                    e.target.style.color = 'white';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isProcessing) {
+                    e.target.style.background = 'rgba(59, 130, 246, 0.2)';
+                    e.target.style.color = '#60a5fa';
+                  }
+                }}
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
+                    Vectorizando...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles style={{ width: '16px', height: '16px' }} />
+                    Vectorizar con IA
+                  </>
+                )}
+              </button>
+
+              {/* Botón para cargar vector manualmente */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isProcessing}
+                style={{
+                  width: '100%',
+                  background: isProcessing ? 'rgba(34, 197, 94, 0.1)' : 'rgba(34, 197, 94, 0.2)',
+                  border: '1px solid rgba(34, 197, 94, 0.5)',
+                  color: isProcessing ? '#86efac' : '#22c55e',
+                  height: '32px',
+                  fontWeight: '500',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  cursor: isProcessing ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.3s ease',
+                  opacity: isProcessing ? 0.6 : 1
+                }}
+                onMouseEnter={(e) => {
+                  if (!isProcessing) {
+                    e.target.style.background = 'rgba(34, 197, 94, 0.3)';
+                    e.target.style.color = 'white';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isProcessing) {
+                    e.target.style.background = 'rgba(34, 197, 94, 0.2)';
+                    e.target.style.color = '#22c55e';
+                  }
+                }}
+              >
+                <Upload style={{ width: '14px', height: '14px' }} />
+                Cargar Vector
+              </button>
+
+              {/* Input file oculto */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".svg"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file && handleCargarVector) {
+                    handleCargarVector(pedido, file);
+                  }
+                  // Limpiar el input
+                  e.target.value = '';
+                }}
+              />
+            </>
           )}
 
           {tipo === 'vector' && (
@@ -288,9 +414,9 @@ const VectorizacionCard = ({
                 onClick={() => handlePrevisualizar(pedido)}
                 style={{
                   width: '100%',
-                  background: 'rgba(139, 92, 246, 0.2)',
-                  border: '1px solid rgba(139, 92, 246, 0.5)',
-                  color: '#c4b5fd',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%)',
+                  border: 'none',
+                  color: 'black',
                   height: '32px',
                   fontWeight: '500',
                   borderRadius: '8px',
@@ -299,15 +425,19 @@ const VectorizacionCard = ({
                   justifyContent: 'center',
                   gap: '8px',
                   cursor: 'pointer',
-                  transition: 'all 0.3s ease'
+                  transition: 'all 0.3s ease',
+                  backdropFilter: 'blur(8px)',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
                 }}
                 onMouseEnter={(e) => {
-                  e.target.style.background = 'rgba(139, 92, 246, 0.3)';
-                  e.target.style.color = 'white';
+                  e.target.style.background = 'linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.9) 100%)';
+                  e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
+                  e.target.style.transform = 'translateY(-1px)';
                 }}
                 onMouseLeave={(e) => {
-                  e.target.style.background = 'rgba(139, 92, 246, 0.2)';
-                  e.target.style.color = '#c4b5fd';
+                  e.target.style.background = 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%)';
+                  e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+                  e.target.style.transform = 'translateY(0)';
                 }}
               >
                 <Eye style={{ width: '12px', height: '12px' }} />
@@ -396,9 +526,9 @@ const VectorizacionCard = ({
                 onClick={() => handleDescargar(publicUrl(pedido.archivo_vector), `vector-${pedido.id_pedido}.svg`)}
                 style={{
                   width: '100%',
-                  background: 'rgba(39, 39, 42, 0.5)',
-                  border: '1px solid rgba(63, 63, 70, 0.5)',
-                  color: '#d4d4d8',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%)',
+                  border: 'none',
+                  color: 'black',
                   height: '32px',
                   fontWeight: '500',
                   borderRadius: '8px',
@@ -407,66 +537,24 @@ const VectorizacionCard = ({
                   justifyContent: 'center',
                   gap: '8px',
                   cursor: 'pointer',
-                  transition: 'all 0.3s ease'
+                  transition: 'all 0.3s ease',
+                  backdropFilter: 'blur(8px)',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
                 }}
                 onMouseEnter={(e) => {
-                  e.target.style.background = 'rgba(63, 63, 70, 0.5)';
-                  e.target.style.color = 'white';
+                  e.target.style.background = 'linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.9) 100%)';
+                  e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
+                  e.target.style.transform = 'translateY(-1px)';
                 }}
                 onMouseLeave={(e) => {
-                  e.target.style.background = 'rgba(39, 39, 42, 0.5)';
-                  e.target.style.color = '#d4d4d8';
+                  e.target.style.background = 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%)';
+                  e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+                  e.target.style.transform = 'translateY(0)';
                 }}
               >
                 <Download style={{ width: '12px', height: '12px' }} />
                 Descargar
               </button>
-              {pedido.tiempo_estimado && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '12px' }}>
-                  <div style={{
-                    textAlign: 'center',
-                    padding: '8px',
-                    background: 'rgba(39, 39, 42, 0.3)',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(63, 63, 70, 0.5)'
-                  }}>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '4px',
-                      color: '#71717a',
-                      marginBottom: '4px'
-                    }}>
-                      <Clock style={{ width: '12px', height: '12px' }} />
-                      <span>CNC</span>
-                    </div>
-                    <div style={{ color: 'white', fontWeight: '500' }}>{pedido.tiempo_estimado}min</div>
-                  </div>
-                  {pedido.tiempo_estimado_ultrafino && (
-                    <div style={{
-                      textAlign: 'center',
-                      padding: '8px',
-                      background: 'rgba(39, 39, 42, 0.3)',
-                      borderRadius: '8px',
-                      border: '1px solid rgba(63, 63, 70, 0.5)'
-                    }}>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '4px',
-                        color: '#71717a',
-                        marginBottom: '4px'
-                      }}>
-                        <Zap style={{ width: '12px', height: '12px' }} />
-                        <span>Ultra</span>
-                      </div>
-                      <div style={{ color: 'white', fontWeight: '500' }}>{pedido.tiempo_estimado_ultrafino}min</div>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           )}
         </div>

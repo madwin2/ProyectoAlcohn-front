@@ -2,6 +2,98 @@
 -- FUNCIONES RPC PARA SUPABASE - PROYECTO ALCOHN
 -- ================================================
 
+-- 1. FUNCIÓN PARA ACTUALIZAR RESUMEN DE PROGRAMA
+-- ===============================================
+
+CREATE OR REPLACE FUNCTION actualizar_resumen_programa(programa_id text)
+RETURNS TABLE (
+  id_programa text,
+  tiempo_usado integer,
+  largo_usado_38 numeric,
+  largo_usado_25 numeric,
+  largo_usado_19 numeric,
+  largo_usado_12 numeric,
+  largo_usado_63 numeric,
+  success boolean,
+  message text
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  tiempo_total integer;
+  largo_38 numeric := 0;
+  largo_25 numeric := 0;
+  largo_19 numeric := 0;
+  largo_12 numeric := 0;
+  largo_63 numeric := 0;
+BEGIN
+  -- Verificar que el programa existe
+  IF NOT EXISTS(SELECT 1 FROM programas WHERE id_programa = programa_id) THEN
+    RETURN QUERY SELECT 
+      programa_id::text,
+      0::integer,
+      0::numeric,
+      0::numeric,
+      0::numeric,
+      0::numeric,
+      0::numeric,
+      false::boolean,
+      'El programa especificado no existe'::text;
+    RETURN;
+  END IF;
+
+  -- Calcular la suma del tiempo_estimado de todos los pedidos del programa
+  SELECT COALESCE(SUM(p.tiempo_estimado), 0) INTO tiempo_total
+  FROM pedidos p
+  WHERE p.id_programa = programa_id;
+
+  -- Calcular la suma de largo_planchuela por tipo de planchuela
+  SELECT COALESCE(SUM(p.largo_planchuela), 0) INTO largo_38
+  FROM pedidos p
+  WHERE p.id_programa = programa_id AND p.tipo_planchuela = 38;
+
+  SELECT COALESCE(SUM(p.largo_planchuela), 0) INTO largo_25
+  FROM pedidos p
+  WHERE p.id_programa = programa_id AND p.tipo_planchuela = 25;
+
+  SELECT COALESCE(SUM(p.largo_planchuela), 0) INTO largo_19
+  FROM pedidos p
+  WHERE p.id_programa = programa_id AND p.tipo_planchuela = 19;
+
+  SELECT COALESCE(SUM(p.largo_planchuela), 0) INTO largo_12
+  FROM pedidos p
+  WHERE p.id_programa = programa_id AND p.tipo_planchuela = 12;
+
+  SELECT COALESCE(SUM(p.largo_planchuela), 0) INTO largo_63
+  FROM pedidos p
+  WHERE p.id_programa = programa_id AND p.tipo_planchuela = 63;
+
+  -- Actualizar el programa con los valores calculados
+  UPDATE programas 
+  SET 
+    tiempo_usado = tiempo_total,
+    largo_usado_38 = largo_38,
+    largo_usado_25 = largo_25,
+    largo_usado_19 = largo_19,
+    largo_usado_12 = largo_12,
+    largo_usado_63 = largo_63,
+    updated_at = NOW()
+  WHERE id_programa = programa_id;
+
+  -- Retornar los valores actualizados
+  RETURN QUERY SELECT 
+    programa_id::text,
+    tiempo_total::integer,
+    largo_38::numeric,
+    largo_25::numeric,
+    largo_19::numeric,
+    largo_12::numeric,
+    largo_63::numeric,
+    true::boolean,
+    'Resumen del programa actualizado exitosamente'::text;
+END;
+$$;
+
 -- 2. FUNCIÓN PARA OBTENER PEDIDOS DE UN PROGRAMA
 -- ================================================
 
@@ -453,7 +545,32 @@ create or replace function buscar_pedidos_ordenado_multiple(
   limite_resultados integer default 500,
   criterios_orden jsonb default '[]'
 )
-returns setof pedidos as $$
+returns table (
+  id_pedido integer,
+  id_cliente integer,
+  id_programa text,
+  disenio text,
+  medida_pedida text,
+  medida_real text,
+  archivo_vector text,
+  archivo_base text,
+  tiempo_estimado numeric,
+  fecha_compra date,
+  valor_sello numeric,
+  valor_envio numeric,
+  valor_senia numeric,
+  estado_fabricacion text,
+  estado_venta text,
+  estado_envio text,
+  numero_seguimiento text,
+  notas text,
+  foto_sello text,
+  restante_pagar numeric,
+  nombre_cliente text,
+  apellido_cliente text,
+  telefono_cliente text,
+  medio_contacto text
+) as $$
 declare
   query text;
   order_clause text := '';
@@ -464,27 +581,27 @@ begin
   where_conditions := '1=1'; -- Siempre verdadero como base
   
   if termino_busqueda != '' then
-    where_conditions := where_conditions || ' and (disenio ilike ''%' || termino_busqueda || '%'' or cliente ilike ''%' || termino_busqueda || '%'')';
+    where_conditions := where_conditions || ' and (p.disenio ilike ''%' || termino_busqueda || '%'' or c.nombre_cliente ilike ''%' || termino_busqueda || '%'' or c.apellido_cliente ilike ''%' || termino_busqueda || '%'')';
   end if;
   
   if filtro_estado_fabricacion != '' then
-    where_conditions := where_conditions || ' and estado_fabricacion = ''' || filtro_estado_fabricacion || '''';
+    where_conditions := where_conditions || ' and p.estado_fabricacion = ''' || filtro_estado_fabricacion || '''';
   end if;
   
   if filtro_estado_venta != '' then
-    where_conditions := where_conditions || ' and estado_venta = ''' || filtro_estado_venta || '''';
+    where_conditions := where_conditions || ' and p.estado_venta = ''' || filtro_estado_venta || '''';
   end if;
   
   if filtro_estado_envio != '' then
-    where_conditions := where_conditions || ' and estado_envio = ''' || filtro_estado_envio || '''';
+    where_conditions := where_conditions || ' and p.estado_envio = ''' || filtro_estado_envio || '''';
   end if;
   
   if filtro_fecha_desde is not null then
-    where_conditions := where_conditions || ' and fecha_compra >= ''' || filtro_fecha_desde || '''';
+    where_conditions := where_conditions || ' and p.fecha_compra >= ''' || filtro_fecha_desde || '''';
   end if;
   
   if filtro_fecha_hasta is not null then
-    where_conditions := where_conditions || ' and fecha_compra <= ''' || filtro_fecha_hasta || '''';
+    where_conditions := where_conditions || ' and p.fecha_compra <= ''' || filtro_fecha_hasta || '''';
   end if;
 
   -- Construir la cláusula ORDER BY dinámicamente
@@ -498,17 +615,17 @@ begin
       -- Validar que el campo sea uno de los permitidos
       case criterio->>'field'
         when 'fecha_compra' then
-          order_clause := order_clause || 'fecha_compra ' || (criterio->>'order');
+          order_clause := order_clause || 'p.fecha_compra ' || (criterio->>'order');
         when 'estado_fabricacion' then
-          order_clause := order_clause || 'estado_fabricacion ' || (criterio->>'order');
+          order_clause := order_clause || 'p.estado_fabricacion ' || (criterio->>'order');
         when 'estado_venta' then
-          order_clause := order_clause || 'estado_venta ' || (criterio->>'order');
+          order_clause := order_clause || 'p.estado_venta ' || (criterio->>'order');
         when 'estado_envio' then
-          order_clause := order_clause || 'estado_envio ' || (criterio->>'order');
+          order_clause := order_clause || 'p.estado_envio ' || (criterio->>'order');
         when 'vectorizacion' then
-          order_clause := order_clause || 'vectorizacion ' || (criterio->>'order');
+          order_clause := order_clause || 'p.vectorizacion ' || (criterio->>'order');
         when 'id_programa' then
-          order_clause := order_clause || 'id_programa ' || (criterio->>'order');
+          order_clause := order_clause || 'p.id_programa ' || (criterio->>'order');
         else
           -- Campo no válido, ignorar
           continue;
@@ -518,11 +635,11 @@ begin
   
   -- Si no hay criterios de ordenamiento, usar ordenamiento por defecto
   if order_clause = '' then
-    order_clause := 'fecha_compra desc';
+    order_clause := 'p.fecha_compra desc';
   end if;
 
-  -- Construir la consulta final con los parámetros interpolados
-  query := 'select * from pedidos where ' || where_conditions || ' order by ' || order_clause || ' limit ' || limite_resultados;
+  -- Construir la consulta final con JOIN a clientes
+  query := 'select p.id_pedido, p.id_cliente, p.id_programa, p.disenio, p.medida_pedida, p.medida_real, p.archivo_vector, p.archivo_base, p.tiempo_estimado, p.fecha_compra, p.valor_sello, p.valor_envio, p.valor_senia, p.estado_fabricacion, p.estado_venta, p.estado_envio, p.numero_seguimiento, p.notas, p.foto_sello, p.restante_pagar, c.nombre_cliente, c.apellido_cliente, c.telefono_cliente, c.medio_contacto from pedidos p left join clientes c on p.id_cliente = c.id_cliente where ' || where_conditions || ' order by ' || order_clause || ' limit ' || limite_resultados;
   
   -- Retornar los resultados directamente
   return query execute (query);
@@ -557,16 +674,19 @@ $$ language plpgsql;
 /*
 Para usar estas funciones desde tu aplicación React:
 
-1. get_pedidos_maquina_c() / get_pedidos_maquina_g() / get_pedidos_maquina_xl()
+1. actualizar_resumen_programa(programa_id)
+   const { data } = await supabase.rpc('actualizar_resumen_programa', { programa_id: 'PROG123' });
+
+2. get_pedidos_maquina_c() / get_pedidos_maquina_g() / get_pedidos_maquina_xl()
    const { data } = await supabase.rpc('get_pedidos_maquina_c');
 
-2. get_pedidos_programa(programa_id)
+3. get_pedidos_programa(programa_id)
    const { data } = await supabase.rpc('get_pedidos_programa', { programa_id: 'PROG123' });
 
-3. get_programas_activos()
+4. get_programas_activos()
    const { data } = await supabase.rpc('get_programas_activos');
 
-4. actualizar_pedido_con_medida(pedido_id, datos...)
+5. actualizar_pedido_con_medida(pedido_id, datos...)
    const { data } = await supabase.rpc('actualizar_pedido_con_medida', {
      pedido_id: 123,
      archivo_vector_path: 'vector/archivo.svg',
@@ -576,21 +696,220 @@ Para usar estas funciones desde tu aplicación React:
      largo_planchuela_value: 5.0
    });
 
-5. buscar_pedidos(filtros...)
+6. buscar_pedidos(filtros...)
    const { data } = await supabase.rpc('buscar_pedidos', {
      termino_busqueda: 'texto',
      filtro_estado_fabricacion: 'Sin Hacer',
      limite_resultados: 50
    });
 
-6. asignar_pedido_programa(pedido_id, programa_id)
+7. asignar_pedido_programa(pedido_id, programa_id)
    const { data } = await supabase.rpc('asignar_pedido_programa', {
      pedido_id: 123,
      programa_id: 'PROG123'
    });
 
-7. remover_pedido_programa(pedido_id)
+8. remover_pedido_programa(pedido_id)
    const { data } = await supabase.rpc('remover_pedido_programa', {
      pedido_id: 123
    });
 */
+
+-- ================================================
+-- FUNCIÓN PARA EDITAR PEDIDO
+-- ================================================
+
+CREATE OR REPLACE FUNCTION editar_pedido(
+  p_id integer,
+  p_fecha_compra date DEFAULT NULL,
+  p_valor_sello numeric DEFAULT NULL,
+  p_valor_envio numeric DEFAULT NULL,
+  p_valor_senia numeric DEFAULT NULL,
+  p_estado_fabricacion text DEFAULT NULL,
+  p_estado_venta text DEFAULT NULL,
+  p_estado_envio text DEFAULT NULL,
+  p_notas text DEFAULT NULL,
+  p_disenio text DEFAULT NULL,
+  p_archivo_base text DEFAULT NULL,
+  p_archivo_vector text DEFAULT NULL,
+  p_foto_sello text DEFAULT NULL,
+  p_numero_seguimiento text DEFAULT NULL,
+  p_medida_pedida text DEFAULT NULL
+)
+RETURNS TABLE (
+  id_pedido integer,
+  success boolean,
+  message text
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  -- Verificar que el pedido existe
+  IF NOT EXISTS (SELECT 1 FROM pedidos WHERE id_pedido = p_id) THEN
+    RETURN QUERY SELECT 
+      p_id,
+      false,
+      'Pedido no encontrado'::text;
+    RETURN;
+  END IF;
+
+  -- Actualizar el pedido
+  UPDATE pedidos SET
+    fecha_compra = COALESCE(p_fecha_compra, fecha_compra),
+    valor_sello = COALESCE(p_valor_sello, valor_sello),
+    valor_envio = COALESCE(p_valor_envio, valor_envio),
+    valor_senia = COALESCE(p_valor_senia, valor_senia),
+    estado_fabricacion = COALESCE(p_estado_fabricacion, estado_fabricacion),
+    estado_venta = COALESCE(p_estado_venta, estado_venta),
+    estado_envio = COALESCE(p_estado_envio, estado_envio),
+    notas = COALESCE(p_notas, notas),
+    disenio = COALESCE(p_disenio, disenio),
+    archivo_base = COALESCE(p_archivo_base, archivo_base),
+    archivo_vector = COALESCE(p_archivo_vector, archivo_vector),
+    foto_sello = COALESCE(p_foto_sello, foto_sello),
+    numero_seguimiento = COALESCE(p_numero_seguimiento, numero_seguimiento),
+    medida_pedida = COALESCE(p_medida_pedida, medida_pedida),
+    updated_at = NOW()
+  WHERE id_pedido = p_id;
+
+  -- Retornar resultado
+  RETURN QUERY SELECT 
+    p_id,
+    true,
+    'Pedido actualizado correctamente'::text;
+END;
+$$;
+
+-- ================================================
+-- FUNCIÓN PARA EDITAR CLIENTE
+-- ================================================
+
+CREATE OR REPLACE FUNCTION editar_cliente(
+  p_id_pedido integer,
+  p_nombre_cliente text DEFAULT NULL,
+  p_apellido_cliente text DEFAULT NULL,
+  p_telefono_cliente text DEFAULT NULL,
+  p_medio_contacto text DEFAULT NULL
+)
+RETURNS TABLE (
+  id_cliente integer,
+  success boolean,
+  message text
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  cliente_id integer;
+BEGIN
+  -- Obtener el ID del cliente del pedido
+  SELECT id_cliente INTO cliente_id FROM pedidos WHERE id_pedido = p_id_pedido;
+  
+  IF cliente_id IS NULL THEN
+    RETURN QUERY SELECT 
+      NULL::integer,
+      false,
+      'Pedido no encontrado'::text;
+    RETURN;
+  END IF;
+
+  -- Verificar que el cliente existe
+  IF NOT EXISTS (SELECT 1 FROM clientes WHERE id_cliente = cliente_id) THEN
+    RETURN QUERY SELECT 
+      cliente_id,
+      false,
+      'Cliente no encontrado'::text;
+    RETURN;
+  END IF;
+
+  -- Actualizar el cliente
+  UPDATE clientes SET
+    nombre_cliente = COALESCE(p_nombre_cliente, nombre_cliente),
+    apellido_cliente = COALESCE(p_apellido_cliente, apellido_cliente),
+    telefono_cliente = COALESCE(p_telefono_cliente, telefono_cliente),
+    medio_contacto = COALESCE(p_medio_contacto, medio_contacto),
+    updated_at = NOW()
+  WHERE id_cliente = cliente_id;
+
+  -- Retornar resultado
+  RETURN QUERY SELECT 
+    cliente_id,
+    true,
+    'Cliente actualizado correctamente'::text;
+END;
+$$;
+
+-- ================================================
+-- FUNCIÓN PARA ELIMINAR PEDIDO
+-- ================================================
+
+CREATE OR REPLACE FUNCTION eliminar_pedido(p_id integer)
+RETURNS TABLE (
+  success boolean,
+  message text
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  -- Verificar que el pedido existe
+  IF NOT EXISTS (SELECT 1 FROM pedidos WHERE id_pedido = p_id) THEN
+    RETURN QUERY SELECT 
+      false,
+      'Pedido no encontrado'::text;
+    RETURN;
+  END IF;
+
+  -- Eliminar el pedido
+  DELETE FROM pedidos WHERE id_pedido = p_id;
+
+  -- Retornar resultado
+  RETURN QUERY SELECT 
+    true,
+    'Pedido eliminado correctamente'::text;
+END;
+$$;
+
+-- ================================================
+-- TRIGGER PARA ACTUALIZAR RESUMEN DE PROGRAMA AUTOMÁTICAMENTE
+-- ================================================
+
+CREATE OR REPLACE FUNCTION trigger_actualizar_resumen_programa()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Si se insertó un nuevo pedido con programa asignado
+  IF TG_OP = 'INSERT' AND NEW.id_programa IS NOT NULL THEN
+    PERFORM actualizar_resumen_programa(NEW.id_programa);
+  END IF;
+  
+  -- Si se actualizó un pedido y cambió el programa
+  IF TG_OP = 'UPDATE' THEN
+    -- Si cambió el programa, actualizar ambos programas (el anterior y el nuevo)
+    IF OLD.id_programa IS DISTINCT FROM NEW.id_programa THEN
+      IF OLD.id_programa IS NOT NULL THEN
+        PERFORM actualizar_resumen_programa(OLD.id_programa);
+      END IF;
+      IF NEW.id_programa IS NOT NULL THEN
+        PERFORM actualizar_resumen_programa(NEW.id_programa);
+      END IF;
+    -- Si no cambió el programa pero sí cambió tiempo_estimado o tipo_planchuela o largo_planchuela
+    ELSIF OLD.tiempo_estimado IS DISTINCT FROM NEW.tiempo_estimado OR 
+          OLD.tipo_planchuela IS DISTINCT FROM NEW.tipo_planchuela OR 
+          OLD.largo_planchuela IS DISTINCT FROM NEW.largo_planchuela THEN
+      PERFORM actualizar_resumen_programa(NEW.id_programa);
+    END IF;
+  END IF;
+  
+  -- Si se eliminó un pedido
+  IF TG_OP = 'DELETE' AND OLD.id_programa IS NOT NULL THEN
+    PERFORM actualizar_resumen_programa(OLD.id_programa);
+  END IF;
+  
+  RETURN COALESCE(NEW, OLD);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Crear el trigger
+DROP TRIGGER IF EXISTS trigger_actualizar_resumen_programa ON pedidos;
+CREATE TRIGGER trigger_actualizar_resumen_programa
+  AFTER INSERT OR UPDATE OR DELETE ON pedidos
+  FOR EACH ROW
+  EXECUTE FUNCTION trigger_actualizar_resumen_programa();

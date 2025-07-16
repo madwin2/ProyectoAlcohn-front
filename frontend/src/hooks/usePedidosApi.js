@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
 import { getInclusiveEndDateISOString } from '../utils/pedidosUtils';
 
@@ -17,6 +17,12 @@ export const usePedidosApi = ({
   setContextMenu,
   sortCriteria
 }) => {
+  // Memoizar los criterios de orden para evitar recreaciones innecesarias
+  const stableSortCriteria = useMemo(() => {
+    return Array.isArray(sortCriteria) 
+      ? sortCriteria.map(c => ({ field: c.field, order: c.order }))
+      : [];
+  }, [sortCriteria]);
   
   // Obtener opciones de filtros
   useEffect(() => {
@@ -53,24 +59,27 @@ export const usePedidosApi = ({
         filtro_fecha_desde: debouncedFilters.fecha_compra_gte || null,
         filtro_fecha_hasta: debouncedFilters.fecha_compra_lte || null,
         limite_resultados: 500,
-        criterios_orden: sortCriteria || []
+        criterios_orden: stableSortCriteria
       });
 
       if (fetchError) throw fetchError;
 
       // Transformar los datos para mantener compatibilidad con la estructura anterior
-      const pedidosTransformados = (data || []).map(pedido => ({
-        ...pedido,
-        clientes: {
-          nombre_cliente: pedido.nombre_cliente,
-          apellido_cliente: pedido.apellido_cliente,
-          telefono_cliente: pedido.telefono_cliente,
-          medio_contacto: pedido.medio_contacto
-        }
-      }));
+      const pedidosTransformados = (data || []).map(pedido => {
+        return {
+          ...pedido,
+          clientes: {
+            nombre_cliente: pedido.nombre_cliente,
+            apellido_cliente: pedido.apellido_cliente,
+            telefono_cliente: pedido.telefono_cliente,
+            medio_contacto: pedido.medio_contacto
+          }
+        };
+      });
 
-      // Aplicar ordenamiento en el frontend (la RPC ordena por fecha desc por defecto)
-      if (sortOrder === 'asc') {
+      // No aplicar ordenamiento aquí, se hará en el componente padre
+      // Solo aplicar ordenamiento básico por fecha si no hay criterios específicos
+      if (stableSortCriteria.length === 0 && sortOrder === 'asc') {
         pedidosTransformados.sort((a, b) => new Date(a.fecha_compra) - new Date(b.fecha_compra));
       }
 
@@ -102,7 +111,7 @@ export const usePedidosApi = ({
     } finally {
       setLoading(false);
     }
-  }, [sortOrder, debouncedSearchTerm, debouncedFilters, setPedidos, setLoading, setError, sortCriteria]);
+  }, [sortOrder, debouncedSearchTerm, debouncedFilters, setPedidos, setLoading, setError, stableSortCriteria]);
 
   const handlePedidoAdded = () => {
     getPedidos();

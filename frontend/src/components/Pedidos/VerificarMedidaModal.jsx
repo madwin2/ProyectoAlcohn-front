@@ -23,7 +23,7 @@ const VerificarMedidaModal = ({
       medirVector(vectorUrl, pedido.medida_pedida);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, pedido, publicUrl]);
+  }, [isOpen, pedido?.archivo_vector, pedido?.medida_pedida]);
 
   useEffect(() => {
     if (!isOpen) {

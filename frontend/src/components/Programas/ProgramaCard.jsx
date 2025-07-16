@@ -15,16 +15,19 @@ import {
   Edit,
   Trash2,
   Plus,
-  Users
+  Users,
+  RefreshCw,
+  Download
 } from 'lucide-react';
 import { useProgramas } from '../../hooks/useProgramas';
 import { useNotification } from '../../hooks/useNotification';
 import EditProgramaModal from './EditProgramaModal';
 import AddPedidosModal from './AddPedidosModal';
 import SVGPreview from '../ui/SVGPreview';
+import JSZip from 'jszip';
 
 const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
-  const { actualizarPrograma, actualizarEstadoProgramaConPedidos, eliminarPrograma, eliminarProgramaConPedidos, obtenerPedidosPrograma } = useProgramas();
+  const { actualizarPrograma, actualizarEstadoProgramaConPedidos, eliminarPrograma, eliminarProgramaConPedidos, obtenerPedidosPrograma, actualizarResumenPrograma } = useProgramas();
   const { addNotification } = useNotification();
   const [loading, setLoading] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -49,6 +52,84 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
       setPedidosVectorPreview(pedidosConVector);
     } catch (error) {
       console.error('Error cargando cantidad de pedidos:', error);
+    }
+  };
+
+  const handleActualizarResumen = async () => {
+    setLoading(true);
+    try {
+      await actualizarResumenPrograma(programa.id_programa);
+      addNotification('Resumen del programa actualizado exitosamente', 'success');
+      if (onProgramaUpdated) {
+        onProgramaUpdated();
+      }
+    } catch (error) {
+      console.error('Error actualizando resumen:', error);
+      addNotification('Error al actualizar el resumen del programa', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const descargarVectoresComoZip = async () => {
+    try {
+      setLoading(true);
+      
+      // Obtener pedidos del programa
+      const pedidos = await obtenerPedidosPrograma(programa.id_programa);
+      
+      // Filtrar pedidos que tienen archivo_vector
+      const pedidosConVector = pedidos.filter(pedido => pedido.archivo_vector);
+      
+      if (pedidosConVector.length === 0) {
+        addNotification('No hay vectores para descargar en este programa', 'warning');
+        return;
+      }
+
+      const zip = new JSZip();
+      
+      // Descargar cada vector y agregarlo al ZIP
+      for (const pedido of pedidosConVector) {
+        try {
+          const vectorUrl = publicUrl(pedido.archivo_vector);
+          const response = await fetch(vectorUrl);
+          
+          if (!response.ok) {
+            console.warn(`No se pudo descargar el vector del pedido ${pedido.id_pedido}`);
+            continue;
+          }
+          
+          const svgContent = await response.text();
+          
+          // Crear nombre de archivo descriptivo
+          const nombreArchivo = `pedido_${pedido.id_pedido}_${pedido.disenio?.replace(/[^a-zA-Z0-9]/g, '_') || 'sin_nombre'}.svg`;
+          
+          zip.file(nombreArchivo, svgContent);
+        } catch (error) {
+          console.error(`Error descargando vector del pedido ${pedido.id_pedido}:`, error);
+        }
+      }
+      
+      // Generar y descargar el ZIP
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(zipBlob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `vectores_programa_${programa.id_programa}_${new Date().toISOString().split('T')[0]}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      URL.revokeObjectURL(url);
+      
+      addNotification(`Descargados ${pedidosConVector.length} vectores exitosamente`, 'success');
+      
+    } catch (error) {
+      console.error('Error descargando vectores:', error);
+      addNotification('Error al descargar los vectores', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -314,6 +395,46 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
                 Gestionar Pedidos
               </button>
               <button
+                onClick={handleActualizarResumen}
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'white',
+                  padding: '8px 12px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <RefreshCw style={{ width: '14px', height: '14px' }} />
+                Actualizar Resumen
+              </button>
+              <button
+                onClick={descargarVectoresComoZip}
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'white',
+                  padding: '8px 12px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <Download style={{ width: '14px', height: '14px' }} />
+                Descargar Vectores
+              </button>
+              <button
                 onClick={handleToggleBloqueo}
                 style={{
                   width: '100%',
@@ -555,6 +676,86 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
           </div>
         </div>
       </div>
+
+      {/* Información de planchuelas utilizadas */}
+      {(programa.largo_usado_38 > 0 || programa.largo_usado_25 > 0 || programa.largo_usado_19 > 0 || programa.largo_usado_12 > 0 || programa.largo_usado_63 > 0) && (
+        <div style={{ marginBottom: '16px' }}>
+          <div style={{ fontSize: '12px', color: '#a1a1aa', marginBottom: '8px' }}>
+            Planchuelas Utilizadas
+          </div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))',
+            gap: '8px'
+          }}>
+            {programa.largo_usado_63 > 0 && (
+              <div style={{
+                background: 'rgba(39, 39, 42, 0.5)',
+                borderRadius: '4px',
+                padding: '6px 8px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '10px', color: '#a1a1aa' }}>63mm</div>
+                <div style={{ fontSize: '12px', color: 'white', fontWeight: '500' }}>
+                  {programa.largo_usado_63.toFixed(1)} cm
+                </div>
+              </div>
+            )}
+            {programa.largo_usado_38 > 0 && (
+              <div style={{
+                background: 'rgba(39, 39, 42, 0.5)',
+                borderRadius: '4px',
+                padding: '6px 8px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '10px', color: '#a1a1aa' }}>38mm</div>
+                <div style={{ fontSize: '12px', color: 'white', fontWeight: '500' }}>
+                  {programa.largo_usado_38.toFixed(1)} cm
+                </div>
+              </div>
+            )}
+            {programa.largo_usado_25 > 0 && (
+              <div style={{
+                background: 'rgba(39, 39, 42, 0.5)',
+                borderRadius: '4px',
+                padding: '6px 8px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '10px', color: '#a1a1aa' }}>25mm</div>
+                <div style={{ fontSize: '12px', color: 'white', fontWeight: '500' }}>
+                  {programa.largo_usado_25.toFixed(1)} cm
+                </div>
+              </div>
+            )}
+            {programa.largo_usado_19 > 0 && (
+              <div style={{
+                background: 'rgba(39, 39, 42, 0.5)',
+                borderRadius: '4px',
+                padding: '6px 8px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '10px', color: '#a1a1aa' }}>19mm</div>
+                <div style={{ fontSize: '12px', color: 'white', fontWeight: '500' }}>
+                  {programa.largo_usado_19.toFixed(1)} cm
+                </div>
+              </div>
+            )}
+            {programa.largo_usado_12 > 0 && (
+              <div style={{
+                background: 'rgba(39, 39, 42, 0.5)',
+                borderRadius: '4px',
+                padding: '6px 8px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '10px', color: '#a1a1aa' }}>12mm</div>
+                <div style={{ fontSize: '12px', color: 'white', fontWeight: '500' }}>
+                  {programa.largo_usado_12.toFixed(1)} cm
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Barra de progreso de tiempo */}
       {programa.limite_tiempo > 0 && (

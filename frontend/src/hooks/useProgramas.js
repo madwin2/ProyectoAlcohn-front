@@ -189,6 +189,43 @@ export const useProgramas = () => {
     }
   };
 
+  // Actualizar resumen de programa (tiempo_usado y largo_usado_xx)
+  const actualizarResumenPrograma = async (programaId) => {
+    try {
+      const { data, error } = await supabase.rpc('actualizar_resumen_programa', {
+        programa_id: programaId
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // Si la actualización fue exitosa, actualizar el estado local
+      if (data && data[0] && data[0].success) {
+        setProgramas(prev => prev.map(programa => {
+          if (programa.id_programa === programaId) {
+            return {
+              ...programa,
+              tiempo_usado: data[0].tiempo_usado,
+              largo_usado_38: data[0].largo_usado_38,
+              largo_usado_25: data[0].largo_usado_25,
+              largo_usado_19: data[0].largo_usado_19,
+              largo_usado_12: data[0].largo_usado_12,
+              largo_usado_63: data[0].largo_usado_63,
+              updated_at: new Date().toISOString()
+            };
+          }
+          return programa;
+        }));
+      }
+
+      return data;
+    } catch (err) {
+      console.error('Error actualizando resumen del programa:', err);
+      throw err;
+    }
+  };
+
   // Obtener pedidos de un programa específico
   const obtenerPedidosPrograma = async (programaId) => {
     try {
@@ -296,6 +333,7 @@ export const useProgramas = () => {
     eliminarPrograma,
     eliminarProgramaConPedidos, // Nueva función RPC
     obtenerPedidosDisponibles,
+    actualizarResumenPrograma, // Nueva función RPC
     obtenerPedidosPrograma,
     agregarPedidoAPrograma,
     removerPedidoDePrograma,

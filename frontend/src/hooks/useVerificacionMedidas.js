@@ -80,31 +80,34 @@ export const useVerificacionMedidas = () => {
       const tipoPlanchuela = calcularTipoPlanchuela(medidaReal);
       const largoPlanchuela = calcularLargoPlanchuela(medidaReal);
 
-      // 5. Actualizar el pedido usando RPC optimizada
-      console.log('Actualizando pedido con RPC:', {
+      // 5. Actualizar el pedido usando el método directo (como en vectorización)
+      console.log('Actualizando pedido con método directo:', {
         pedido_id: pedidoId,
-        archivo_vector_path: fileName,
-        medida_real_value: medidaReal,
-        tiempo_estimado_value: Math.round(tiempos.totalTime),
-        tipo_planchuela_value: tipoPlanchuela,
-        largo_planchuela_value: largoPlanchuela
+        archivo_vector: fileName,
+        medida_real: medidaReal,
+        tiempo_estimado: Math.round(tiempos.totalTime),
+        tipo_planchuela: tipoPlanchuela,
+        largo_planchuela: largoPlanchuela
       });
       
-      const { data: updateResult, error: updateError } = await supabase.rpc('actualizar_pedido_con_medida', {
-        pedido_id: pedidoId,
-        archivo_vector_path: fileName,
-        medida_real_value: medidaReal,
-        tiempo_estimado_value: Math.round(tiempos.totalTime),
-        tipo_planchuela_value: tipoPlanchuela,
-        largo_planchuela_value: largoPlanchuela
-      });
+      const { data: updateResult, error: updateError } = await supabase
+        .from('pedidos')
+        .update({
+          archivo_vector: fileName,
+          medida_real: medidaReal,
+          tiempo_estimado: Math.round(tiempos.totalTime),
+          tipo_planchuela: tipoPlanchuela,
+          largo_planchuela: largoPlanchuela
+        })
+        .eq('id_pedido', pedidoId)
+        .select();
 
       if (updateError) {
-        console.error('Error actualizando pedido con RPC:', updateError);
+        console.error('Error actualizando pedido:', updateError);
         throw updateError;
       }
 
-      console.log('Pedido actualizado exitosamente con RPC:', updateResult);
+      console.log('Pedido actualizado exitosamente:', updateResult);
 
       return {
         svgDimensionado,

@@ -8,6 +8,13 @@
 export const medirSVG = async (url) => {
   try {
     const response = await fetch(url);
+    
+    if (!response.ok) {
+      // Silenciar el error para archivos que no existen o están corruptos
+      console.debug('SVG no disponible para medir:', response.status, response.statusText, url);
+      return { width: 0, height: 0 };
+    }
+    
     const svgText = await response.text();
     const parser = new DOMParser();
     const svgDoc = parser.parseFromString(svgText, "image/svg+xml");
@@ -21,6 +28,12 @@ export const medirSVG = async (url) => {
     
     // Obtener todos los elementos que tienen dimensiones
     const elementos = svgDoc.querySelectorAll("path, rect, circle, ellipse, line, polyline, polygon");
+    
+    if (elementos.length === 0) {
+      console.debug('SVG sin elementos medibles:', url);
+      document.body.removeChild(tempSvg);
+      return { width: 0, height: 0 };
+    }
     
     elementos.forEach(elemento => {
       const clon = elemento.cloneNode(true);
@@ -40,9 +53,15 @@ export const medirSVG = async (url) => {
     const width = maxX - minX;
     const height = maxY - minY;
     
+    // Verificar que las dimensiones sean válidas
+    if (width <= 0 || height <= 0 || !isFinite(width) || !isFinite(height)) {
+      console.debug('Dimensiones SVG inválidas:', { width, height }, url);
+      return { width: 0, height: 0 };
+    }
+    
     return { width, height };
   } catch (error) {
-    console.error('Error midiendo SVG:', error);
+    console.debug('Error midiendo SVG:', error.message, url);
     return { width: 0, height: 0 };
   }
 };
@@ -142,21 +161,78 @@ export const calcularOpcionesEscalado = (dimensionesSVG, medidaPedida) => {
     return null;
   }
   
+  // Verificar que las dimensiones SVG sean válidas
+  if (dimensionesSVG.width <= 0 || dimensionesSVG.height <= 0) {
+    console.debug('Dimensiones SVG inválidas para escalado:', dimensionesSVG);
+    return null;
+  }
+  
   // Convertir dimensiones SVG de mm a cm para las comparaciones
   const svgWidthCm = dimensionesSVG.width / 10;
   const svgHeightCm = dimensionesSVG.height / 10;
-  const [medidaX, medidaY] = medidaPedida.split("x").map(parseFloat);
+  
+  // Extraer las medidas pedidas manteniendo los decimales originales
+  const medidas = medidaPedida.split("x");
+  const medidaXStr = medidas[0].trim();
+  const medidaYStr = medidas[1].trim();
+  // Convertir coma a punto para parseFloat
+  const medidaX = parseFloat(medidaXStr.replace(',', '.'));
+  const medidaY = parseFloat(medidaYStr.replace(',', '.'));
+  
+  // Verificar que las medidas pedidas sean válidas
+  if (!medidaX || !medidaY || !isFinite(medidaX) || !isFinite(medidaY)) {
+    console.debug('Medidas pedidas inválidas:', medidaPedida);
+    return null;
+  }
+  
   const svgRatio = svgWidthCm / svgHeightCm;
+  
+  // Verificar que la proporción sea válida
+  if (!isFinite(svgRatio) || svgRatio <= 0) {
+    console.debug('Proporción SVG inválida:', svgRatio);
+    return null;
+  }
+  
+  // console.log('Calcular opciones escalado:', {
+  //   dimensionesSVG,
+  //   medidaPedida,
+  //   svgWidthCm,
+  //   svgHeightCm,
+  //   medidaX,
+  //   medidaY,
+  //   svgRatio
+  // });
   
   let opcion1X, opcion1Y, opcion2X, opcion2Y;
   
-  // Opción 1: Escalar manteniendo el ancho pedido (3) y ajustar alto según proporción del SVG
-  opcion1X = medidaX;
-  opcion1Y = parseFloat((medidaX / svgRatio).toFixed(1));
+  // Opción 1: Escalar manteniendo el ancho pedido y ajustar alto según proporción del SVG
+  opcion1X = medidaXStr; // Usar el string original para mantener decimales
+  opcion1Y = (medidaX / svgRatio).toFixed(2);
   
-  // Opción 2: Escalar manteniendo el alto pedido (2) y ajustar ancho según proporción del SVG  
-  opcion2Y = medidaY;
-  opcion2X = parseFloat((medidaY * svgRatio).toFixed(1));
+  // Opción 2: Escalar manteniendo el alto pedido y ajustar ancho según proporción del SVG  
+  opcion2Y = medidaYStr; // Usar el string original para mantener decimales
+  opcion2X = (medidaY * svgRatio).toFixed(2);
+  
+  // console.log('Cálculos detallados:', {
+  //   medidaXStr,
+  //   medidaYStr,
+  //   medidaX,
+  //   medidaY,
+  //   svgRatio,
+  //   opcion1Y_calc: `${medidaX} / ${svgRatio} = ${medidaX / svgRatio}`,
+  //   opcion2X_calc: `${medidaY} * ${svgRatio} = ${medidaY * svgRatio}`,
+  //   opcion1Y_result: opcion1Y,
+  //   opcion2X_result: opcion2X
+  // });
+  
+  // console.log('Opciones calculadas:', {
+  //   opcion1X,
+  //   opcion1Y,
+  //   opcion2X,
+  //   opcion2Y,
+  //   normal: `${opcion1X}x${opcion1Y}`,
+  //   invertido: `${opcion2X}x${opcion2Y}`
+  // });
   
   return {
     normal: `${opcion1X}x${opcion1Y}`,

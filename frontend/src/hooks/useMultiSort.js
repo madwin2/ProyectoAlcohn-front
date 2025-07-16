@@ -5,6 +5,11 @@ export const useMultiSort = (initialCriteria = []) => {
 
   // Agregar un nuevo criterio de ordenamiento
   const addSortCriterion = useCallback((field, order = 'asc') => {
+    // Validar que field no sea undefined o null
+    if (!field) {
+      console.warn('addSortCriterion: field es requerido');
+      return;
+    }
     setSortCriteria(prev => [...prev, { field, order }]);
   }, []);
 
@@ -15,15 +20,17 @@ export const useMultiSort = (initialCriteria = []) => {
 
   // Cambiar el campo de un criterio
   const updateSortCriterionField = useCallback((index, field) => {
+    if (!field) return; // No permitir campos vacíos
     setSortCriteria(prev => prev.map((criterion, i) => 
-      i === index ? { ...criterion, field } : criterion
+      i === index ? { field, order: criterion.order } : criterion
     ));
   }, []);
 
   // Cambiar la dirección de un criterio
   const updateSortCriterionOrder = useCallback((index, order) => {
+    if (!order) return; // No permitir órdenes vacíos
     setSortCriteria(prev => prev.map((criterion, i) => 
-      i === index ? { ...criterion, order } : criterion
+      i === index ? { field: criterion.field, order } : criterion
     ));
   }, []);
 
@@ -57,9 +64,14 @@ export const useMultiSort = (initialCriteria = []) => {
     return sortCriteria;
   }, [sortCriteria]);
 
+  // Limpiar criterios para evitar referencias circulares
+  const getCleanSortCriteria = useCallback(() => {
+    return sortCriteria.map(c => ({ field: c.field, order: c.order }));
+  }, [sortCriteria]);
+
   return {
     sortCriteria,
-    setSortCriteria, // <-- agregar esto
+    setSortCriteria,
     addSortCriterion,
     removeSortCriterion,
     updateSortCriterionField,
@@ -67,6 +79,7 @@ export const useMultiSort = (initialCriteria = []) => {
     moveCriterionUp,
     moveCriterionDown,
     clearSortCriteria,
-    getSortCriteriaForRPC
+    getSortCriteriaForRPC,
+    getCleanSortCriteria
   };
 }; 

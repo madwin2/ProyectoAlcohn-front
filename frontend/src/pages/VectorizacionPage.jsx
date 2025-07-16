@@ -16,6 +16,7 @@ function VectorizacionPage() {
     dimensionesSVG,
     opcionesEscalado,
     procesando,
+    removerFondo,
     
     // Groups
     grupoBase,
@@ -25,12 +26,14 @@ function VectorizacionPage() {
     // Actions
     setActiveTab,
     setBusqueda,
+    setRemoverFondo,
     handleVectorizar,
     handlePrevisualizar,
     handleDimensionar,
     handleGuardarSVG,
     handleRechazarSVG,
     handleDescargar,
+    handleCargarVector,
     
     // Utils
     publicUrl
@@ -79,10 +82,13 @@ function VectorizacionPage() {
           dimensionesSVG={dimensionesSVG}
           opcionesEscalado={opcionesEscalado}
           procesando={procesando}
+          removerFondo={removerFondo}
+          setRemoverFondo={setRemoverFondo}
           onVectorizar={handleVectorizar}
           onPrevisualizar={handlePrevisualizar}
           onDimensionar={handleDimensionar}
           onDescargar={handleDescargar}
+          onCargarVector={handleCargarVector}
         />
       </div>
     </div>
