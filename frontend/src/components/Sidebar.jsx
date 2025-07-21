@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FiChevronRight, FiHome, FiBox } from "react-icons/fi";
 import { Shapes, Computer, CheckCircle } from "lucide-react";
-import UserMenu from './UserMenu';
+import { useAuth } from '../hooks/useAuth.jsx';
 import { useTareasPendientes } from '../hooks/useTareasPendientes';
 import './Sidebar.css';
 
@@ -13,6 +13,7 @@ export default function Sidebar() {
   
   // Hook para tareas pendientes
   const { totalTareasPendientes } = useTareasPendientes();
+  const { user, signOut } = useAuth();
 
   const isExpanded = expanded || fixed;
 
@@ -68,14 +69,71 @@ export default function Sidebar() {
             </Link>
           ))}
         </nav>
-        
-        {/* User Menu */}
+        {/* User Section simplificada */}
         <div className="sidebar-user" style={{
           marginTop: 'auto',
           padding: isExpanded ? '16px' : '8px',
-          borderTop: '1px solid rgba(39, 39, 42, 0.5)'
+          borderTop: '1px solid rgba(39, 39, 42, 0.5)',
+          display: 'flex',
+          flexDirection: isExpanded ? 'column' : 'row',
+          alignItems: isExpanded ? 'flex-start' : 'center',
+          gap: isExpanded ? '8px' : '0'
         }}>
-          <UserMenu />
+          {user && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  background: '#3b82f6',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  color: 'white',
+                  flexShrink: 0
+                }}>
+                  {(user.profile?.nombre || user.email)?.[0]?.toUpperCase() || 'U'}
+                </div>
+                {isExpanded && (
+                  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                    <span style={{ fontWeight: 500, color: 'white', fontSize: '15px', lineHeight: 1, maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {user.profile?.nombre || user.email?.split('@')[0] || 'Usuario'}
+                    </span>
+                    <span style={{ color: '#a1a1aa', fontSize: '12px', maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {user.email}
+                    </span>
+                  </div>
+                )}
+              </div>
+              {isExpanded && (
+                <button
+                  onClick={async () => {
+                    if (window.confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                      await signOut();
+                    }
+                  }}
+                  style={{
+                    marginTop: '8px',
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#ef4444',
+                    padding: '6px 0',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    width: '100%'
+                  }}
+                >
+                  Cerrar Sesión
+                </button>
+              )}
+            </>
+          )}
         </div>
       </div>
     </aside>

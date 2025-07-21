@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pillow
+torch
+opencv-python
+scikit-learn
+clip-by-openai
+cairosvg
+pdf2image 
