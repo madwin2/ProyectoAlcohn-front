@@ -1,9 +1,9 @@
 fastapi
 uvicorn
 pillow
-torch==1.7.1
+torch
 opencv-python
 scikit-learn
-clip-by-openai==0.1.0
+git+https://github.com/openai/CLIP.git
 cairosvg
-pdf2image 
+pdf2image
