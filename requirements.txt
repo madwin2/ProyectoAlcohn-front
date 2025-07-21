@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pillow
+torch==1.7.1
+opencv-python
+scikit-learn
+clip-by-openai==0.1.0
+cairosvg
+pdf2image 
