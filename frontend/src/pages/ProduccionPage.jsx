@@ -872,6 +872,9 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, _e
   const isImage = filePath.match(/\.(jpg|jpeg|png|gif|svg)$/i);
 
   if (isImage) {
+    // Para SVG y vectores, usar object-fit: contain para mostrar completo
+    const objectFit = field === 'archivo_vector' ? 'contain' : 'cover';
+    
     return (
       <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: '48px', width: '48px' }}>
         <div
@@ -893,10 +896,11 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, _e
               style={{
                 width: '48px',
                 height: '48px',
-                objectFit: 'cover',
+                objectFit: objectFit,
                 borderRadius: '6px',
                 border: '1px solid rgba(63, 63, 70, 0.5)',
-                transition: 'border-color 0.3s ease'
+                transition: 'border-color 0.3s ease',
+                background: 'white' // Agregar fondo blanco para mejor visibilidad
               }}
             />
           </a>
