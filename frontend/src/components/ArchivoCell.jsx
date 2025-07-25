@@ -158,7 +158,8 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, _e
                 objectFit: objectFit,
                 borderRadius: '6px',
                 border: '1px solid rgba(63, 63, 70, 0.5)',
-                transition: 'border-color 0.3s ease'
+                transition: 'border-color 0.3s ease',
+                background: 'white' // Agregar fondo blanco para mejor visibilidad
               }}
             />
           </a>
