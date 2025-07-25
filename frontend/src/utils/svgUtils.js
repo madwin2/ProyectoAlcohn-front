@@ -1,5 +1,6 @@
 /**
  * Utilidades para manejar SVG y cálculos de vectorización
+ * VERSIÓN AJUSTADA para coincidir con tiempos reales de Aspire y calibración dinámica
  */
 
 /**
@@ -8,145 +9,78 @@
 export const medirSVG = async (url) => {
   try {
     const response = await fetch(url);
-    
     if (!response.ok) {
-      // Silenciar el error para archivos que no existen o están corruptos
       console.debug('SVG no disponible para medir:', response.status, response.statusText, url);
       return { width: 0, height: 0 };
     }
-    
     const svgText = await response.text();
     const parser = new DOMParser();
-    const svgDoc = parser.parseFromString(svgText, "image/svg+xml");
-    
-    // Crear SVG temporal para medir
-    const tempSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    tempSvg.style.visibility = "hidden";
+    const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
+    // Medición detallada con getBBox
+    const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    tempSvg.style.visibility = 'hidden';
     document.body.appendChild(tempSvg);
-    
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    
-    // Obtener todos los elementos que tienen dimensiones
-    const elementos = svgDoc.querySelectorAll("path, rect, circle, ellipse, line, polyline, polygon");
-    
-    if (elementos.length === 0) {
-      console.debug('SVG sin elementos medibles:', url);
-      document.body.removeChild(tempSvg);
-      return { width: 0, height: 0 };
-    }
-    
-    elementos.forEach(elemento => {
-      const clon = elemento.cloneNode(true);
-      tempSvg.appendChild(clon);
-      
-      const bbox = clon.getBBox();
+    svgDoc.querySelectorAll('path, rect, circle, ellipse, line, polyline, polygon').forEach(el => {
+      const clone = el.cloneNode(true);
+      tempSvg.appendChild(clone);
+      const bbox = clone.getBBox();
       minX = Math.min(minX, bbox.x);
       minY = Math.min(minY, bbox.y);
       maxX = Math.max(maxX, bbox.x + bbox.width);
       maxY = Math.max(maxY, bbox.y + bbox.height);
-      
-      tempSvg.removeChild(clon);
+      tempSvg.removeChild(clone);
     });
-    
     document.body.removeChild(tempSvg);
-    
     const width = maxX - minX;
     const height = maxY - minY;
-    
-    // Verificar que las dimensiones sean válidas
-    if (width <= 0 || height <= 0 || !isFinite(width) || !isFinite(height)) {
+    if (!(width > 0 && height > 0)) {
       console.debug('Dimensiones SVG inválidas:', { width, height }, url);
       return { width: 0, height: 0 };
     }
-    
     return { width, height };
   } catch (error) {
-    console.debug('Error midiendo SVG:', error.message, url);
+    console.error('Error midiendo SVG:', error);
     return { width: 0, height: 0 };
   }
 };
 
 /**
- * Redimensiona un SVG a las medidas especificadas
+ * Redimensiona un SVG a las medidas especificadas (cm)
  */
 export const dimensionarSVG = async (url, medidaDeseada) => {
   try {
-    console.log('Dimensionando SVG:', url, 'a medida:', medidaDeseada);
-    const [cmW, cmH] = medidaDeseada.split("x").map(parseFloat);
-    const targetW = cmW * 10; // Convertir cm a mm
+    const [cmW, cmH] = medidaDeseada.split('x').map(parseFloat);
+    const targetW = cmW * 10;
     const targetH = cmH * 10;
-    console.log('Medidas objetivo en mm:', targetW, 'x', targetH);
-    
-    const response = await fetch(url);
-    const svgText = await response.text();
+    const res = await fetch(url);
+    const text = await res.text();
     const parser = new DOMParser();
-    const doc = parser.parseFromString(svgText, "image/svg+xml");
+    const doc = parser.parseFromString(text, 'image/svg+xml');
     const svg = doc.documentElement;
-    
-    // Crear SVG temporal para calcular dimensiones
-    const tempSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    tempSvg.style.visibility = "hidden";
-    document.body.appendChild(tempSvg);
-    
-    const elementos = svg.querySelectorAll("path, rect, circle, ellipse, line, polyline, polygon");
-    const tempG = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    tempSvg.appendChild(tempG);
-    
-    // Clonar elementos para medir
-    elementos.forEach(el => {
-      const clon = el.cloneNode(true);
-      clon.removeAttribute('transform');
-      tempG.appendChild(clon);
+    const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    tempSvg.style.visibility = 'hidden'; document.body.appendChild(tempSvg);
+    const grupo = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    doc.querySelectorAll('path, rect, circle, ellipse, line, polyline, polygon').forEach(el => {
+      const copy = el.cloneNode(true);
+      copy.removeAttribute('transform');
+      grupo.appendChild(copy);
     });
-    
-    const bbox = tempG.getBBox();
-    document.body.removeChild(tempSvg);
-    
-    // Crear grupo para contener todos los elementos
-    const g = doc.createElementNS("http://www.w3.org/2000/svg", "g");
-    
-    // Mover elementos al grupo
-    elementos.forEach(el => {
-      if (el.parentNode) el.parentNode.removeChild(el);
-      el.removeAttribute('transform');
-      g.appendChild(el);
-    });
-    
-    // Calcular escala para que el contenido tenga exactamente las medidas pedidas
+    tempSvg.appendChild(grupo);
+    const bbox = grupo.getBBox(); document.body.removeChild(tempSvg);
     const scaleX = targetW / bbox.width;
     const scaleY = targetH / bbox.height;
-    
-    // Usar la escala uniforme más pequeña para mantener proporciones
     const scale = Math.min(scaleX, scaleY);
-    
-    // Calcular dimensiones reales del contenido escalado
-    const contentWidth = bbox.width * scale;
-    const contentHeight = bbox.height * scale;
-    
-    // Usar las dimensiones del contenido como dimensiones del SVG
     const tx = -bbox.x * scale;
     const ty = -bbox.y * scale;
-    
-    // Aplicar transformación
-    g.setAttribute("transform", `translate(${tx}, ${ty}) scale(${scale})`);
-    
-    // Limpiar SVG y agregar grupo
+    grupo.setAttribute('transform', `translate(${tx},${ty}) scale(${scale})`);
     while (svg.firstChild) svg.removeChild(svg.firstChild);
-    svg.appendChild(g);
-    
-    // Establecer dimensiones exactas del SVG
-    svg.setAttribute("width", `${contentWidth}mm`);
-    svg.setAttribute("height", `${contentHeight}mm`);
-    svg.setAttribute("viewBox", `0 0 ${contentWidth} ${contentHeight}`);
-    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-    
-    console.log('SVG redimensionado a:', contentWidth, 'x', contentHeight, 'mm');
-    console.log('Equivale a:', (contentWidth/10), 'x', (contentHeight/10), 'cm');
-    
-    const result = new XMLSerializer().serializeToString(doc);
-    console.log('SVG generado (primeros 300 chars):', result.substring(0, 300));
-    
-    return result;
+    svg.appendChild(grupo);
+    svg.setAttribute('width', `${bbox.width * scale}mm`);
+    svg.setAttribute('height', `${bbox.height * scale}mm`);
+    svg.setAttribute('viewBox', `0 0 ${bbox.width * scale} ${bbox.height * scale}`);
+    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    return new XMLSerializer().serializeToString(doc);
   } catch (error) {
     console.error('Error dimensionando SVG:', error);
     return null;
@@ -154,328 +88,143 @@ export const dimensionarSVG = async (url, medidaDeseada) => {
 };
 
 /**
- * Calcula opciones de escalado para un SVG
+ * Calcula opciones de escalado manteniendo proporciones
  */
-export const calcularOpcionesEscalado = (dimensionesSVG, medidaPedida) => {
-  if (!dimensionesSVG || !medidaPedida || !medidaPedida.includes("x")) {
-    return null;
-  }
-  
-  // Verificar que las dimensiones SVG sean válidas
-  if (dimensionesSVG.width <= 0 || dimensionesSVG.height <= 0) {
-    console.debug('Dimensiones SVG inválidas para escalado:', dimensionesSVG);
-    return null;
-  }
-  
-  // Convertir dimensiones SVG de mm a cm para las comparaciones
-  const svgWidthCm = dimensionesSVG.width / 10;
-  const svgHeightCm = dimensionesSVG.height / 10;
-  
-  // Extraer las medidas pedidas manteniendo los decimales originales
-  const medidas = medidaPedida.split("x");
-  const medidaXStr = medidas[0].trim();
-  const medidaYStr = medidas[1].trim();
-  // Convertir coma a punto para parseFloat
-  const medidaX = parseFloat(medidaXStr.replace(',', '.'));
-  const medidaY = parseFloat(medidaYStr.replace(',', '.'));
-  
-  // Verificar que las medidas pedidas sean válidas
-  if (!medidaX || !medidaY || !isFinite(medidaX) || !isFinite(medidaY)) {
-    console.debug('Medidas pedidas inválidas:', medidaPedida);
-    return null;
-  }
-  
-  const svgRatio = svgWidthCm / svgHeightCm;
-  
-  // Verificar que la proporción sea válida
-  if (!isFinite(svgRatio) || svgRatio <= 0) {
-    console.debug('Proporción SVG inválida:', svgRatio);
-    return null;
-  }
-  
-  // console.log('Calcular opciones escalado:', {
-  //   dimensionesSVG,
-  //   medidaPedida,
-  //   svgWidthCm,
-  //   svgHeightCm,
-  //   medidaX,
-  //   medidaY,
-  //   svgRatio
-  // });
-  
-  let opcion1X, opcion1Y, opcion2X, opcion2Y;
-  
-  // Opción 1: Escalar manteniendo el ancho pedido y ajustar alto según proporción del SVG
-  opcion1X = medidaXStr; // Usar el string original para mantener decimales
-  opcion1Y = (medidaX / svgRatio).toFixed(2);
-  
-  // Opción 2: Escalar manteniendo el alto pedido y ajustar ancho según proporción del SVG  
-  opcion2Y = medidaYStr; // Usar el string original para mantener decimales
-  opcion2X = (medidaY * svgRatio).toFixed(2);
-  
-  // console.log('Cálculos detallados:', {
-  //   medidaXStr,
-  //   medidaYStr,
-  //   medidaX,
-  //   medidaY,
-  //   svgRatio,
-  //   opcion1Y_calc: `${medidaX} / ${svgRatio} = ${medidaX / svgRatio}`,
-  //   opcion2X_calc: `${medidaY} * ${svgRatio} = ${medidaY * svgRatio}`,
-  //   opcion1Y_result: opcion1Y,
-  //   opcion2X_result: opcion2X
-  // });
-  
-  // console.log('Opciones calculadas:', {
-  //   opcion1X,
-  //   opcion1Y,
-  //   opcion2X,
-  //   opcion2Y,
-  //   normal: `${opcion1X}x${opcion1Y}`,
-  //   invertido: `${opcion2X}x${opcion2Y}`
-  // });
-  
-  return {
-    normal: `${opcion1X}x${opcion1Y}`,
-    invertido: `${opcion2X}x${opcion2Y}`,
-    original: `${svgWidthCm.toFixed(2)}x${svgHeightCm.toFixed(2)}`
-  };
+export const calcularOpcionesEscalado = (dimSVG, medida) => {
+  if (!dimSVG || !medida || !medida.includes('x')) return null;
+  const wCm = dimSVG.width / 10, hCm = dimSVG.height / 10;
+  const [mX, mY] = medida.split('x').map(s => parseFloat(s.replace(',', '.')));
+  if (!(wCm > 0 && hCm > 0 && mX > 0 && mY > 0)) return null;
+  const ratio = wCm / hCm;
+  const opt1 = `${mX.toFixed(2)}x${(mX / ratio).toFixed(2)}`;
+  const opt2 = `${(mY * ratio).toFixed(2)}x${mY.toFixed(2)}`;
+  return { normal: opt1, invertido: opt2, original: `${wCm.toFixed(2)}x${hCm.toFixed(2)}` };
 };
 
 /**
- * Calcula el tipo de planchuela necesario
+ * Determina planchuela adecuada según la menor dimensión
  */
 export const calcularTipoPlanchuela = (medidaReal) => {
-  if (!medidaReal || !medidaReal.includes("x")) return null;
-  
-  const planchuelas = [12, 19, 25, 38];
-  const [mx, my] = medidaReal.split("x").map(parseFloat);
-  
-  // Convertir a milímetros
-  const minMedida = Math.min(mx, my) * 10;
-  
-  // Buscar la planchuela más pequeña que sea mayor que la medida
-  for (let i = 0; i < planchuelas.length; i++) {
-    if (minMedida < planchuelas[i]) {
-      return planchuelas[i];
-    }
-  }
-  
-  return null; // Si ninguna planchuela es suficiente
+  if (!medidaReal || !medidaReal.includes('x')) return null;
+  const arr = [12, 19, 25, 38], [x, y] = medidaReal.split('x').map(parseFloat);
+  const minmm = Math.min(x, y) * 10;
+  return arr.find(v => minmm < v) || null;
 };
 
 /**
- * Calcula el largo de planchuela (el mayor de los dos valores)
+ * Obtiene la longitud máxima en cm
  */
 export const calcularLargoPlanchuela = (medidaReal) => {
-  if (!medidaReal || !medidaReal.includes("x")) return null;
-  
-  const [mx, my] = medidaReal.split("x").map(parseFloat);
-  return Math.max(mx, my);
+  if (!medidaReal || !medidaReal.includes('x')) return null;
+  return Math.max(...medidaReal.split('x').map(parseFloat));
 };
 
 /**
- * Configuración de herramientas y parámetros de mecanizado
+ * CONFIGURACIÓN BASE basada en tiempos reales de Aspire
  */
-const HERRAMIENTAS = {
-  fresa6mm: {
-    nombre: "Fresa 6mm",
-    velocidadAvance: 800, // mm/min
-    profundidadPasada: 0.2, // mm
-    recuperacion: 0.8, // 80% - herramienta recta
-    diametro: 6
-  },
-  fresa1mm: {
-    nombre: "Fresa 1mm",
-    velocidadAvance: 1000, // mm/min
-    profundidadPasada: 0.1, // mm
-    recuperacion: 0.3, // 30% - cónica 15° lateral
-    diametro: 1
-  },
-  fresa05mm: {
-    nombre: "Fresa 0.5mm",
-    velocidadAvance: 800, // mm/min
-    profundidadPasada: 0.1, // mm  
-    recuperacion: 0.3, // 30% - cónica 15° lateral
-    diametro: 0.5
-  }
+const CONFIGURACION_AJUSTADA = {
+  planeado: { nombre: 'Planeado 6mm', herramienta: 'cilindrica', diametro: 6, feedRate: 800, passDepth: 0.2, profundidadTotal: 0.5, stepover: 4.8, estrategia: 'raster', factorArea: 0.5, pasadas: 3, factorOverhead: 1.8 },
+  cajeado6mm: { nombre: 'Cajeado 6mm', herramienta: 'cilindrica', diametro: 6, feedRate: 800, passDepth: 0.2, profundidadTotal: 2.5, stepover: 3.6, estrategia: 'offset', factorArea: 0.7, pasadas: 13, factorOverhead: 2.2 },
+  cajeado1mm: { nombre: 'Cajeado V-bit 1mm', herramienta: 'vbit', diametroSuperior: 6, flatDiameter: 1.1, angulo: 15, feedRate: 1000, passDepth: 0.2, profundidadTotal: 1.2, stepover: 0.33, estrategia: 'offset', factorArea: 0.6, pasadas: 6, factorOverhead: 3.5 },
+  perfilado05mm: { nombre: 'Perfilado V-bit 0.5mm', herramienta: 'vbit', diametroSuperior: 3, flatDiameter: 0.6, angulo: 15, feedRate: 800, passDepth: 0.1, profundidadTotal: 1.7, stepover: 0.18, estrategia: 'profile', factorPerimetro: 3.0, pasadas: 17, factorOverhead: 2.5 },
 };
 
-/**
- * Configuración de operaciones de mecanizado
- */
-const OPERACIONES = {
-  planeado: {
-    herramienta: HERRAMIENTAS.fresa6mm,
-    profundidadTotal: 0.5, // mm - profundidad típica de planeado
-    factor: 1.0 // Factor de cobertura del área
-  },
-  cajeado6mm: {
-    herramienta: HERRAMIENTAS.fresa6mm,
-    profundidadTotal: 2.0, // mm - profundidad típica de desbaste
-    factor: 0.7 // 70% del área total (zonas a desbastar)
-  },
-  cajeado1mm: {
-    herramienta: HERRAMIENTAS.fresa1mm,
-    profundidadTotal: 0.5, // mm - acabado intermedio
-    factor: 0.4 // 40% del área (zonas más complejas)
-  },
-  perfilado05mm: {
-    herramienta: HERRAMIENTAS.fresa05mm,
-    profundidadTotal: 0.3, // mm - acabado final
-    factor: 0.2 // 20% del área (solo contornos y detalles finos)
-  }
-};
-
-/**
- * Calcula el tiempo de una operación específica
- */
-const calcularTiempoOperacion = (area, perimetro, operacion) => {
-  const { herramienta, profundidadTotal, factor } = operacion;
-
-  // Calcular número de pasadas necesarias
-  const numPasadas = Math.ceil(profundidadTotal / herramienta.profundidadPasada);
-
-  // Estimar longitud de trayectoria basada en área y perímetro
-  let longitudTrayectoria;
-
-  if (operacion === OPERACIONES.planeado) {
-    // Planeado: trayectoria en zigzag sobre toda el área
-    const espaciado = herramienta.diametro * 0.8; // 80% solapamiento
-    longitudTrayectoria = (area / espaciado) * factor;
-  } else if (operacion === OPERACIONES.perfilado05mm) {
-    // Perfilado: principalmente perímetro y contornos
-    longitudTrayectoria = perimetro * factor * 2; // Múltiples pasadas de contorno
-  } else {
-    // Cajeados: combinación de área y perímetro
-    const espaciado = herramienta.diametro * 0.6; // 60% solapamiento para cajeado
-    const trayectoriaArea = (area * factor) / espaciado;
-    const trayectoriaContorno = perimetro * factor;
-    longitudTrayectoria = trayectoriaArea + trayectoriaContorno;
-  }
-
-  // Tiempo de mecanizado productivo
-  const tiempoProductivo = (longitudTrayectoria * numPasadas) / herramienta.velocidadAvance;
-
-  // Tiempo de movimientos no productivos (recuperación)
-  const tiempoRecuperacion = tiempoProductivo * (1 - herramienta.recuperacion);
-
-  // Tiempo total de la operación
-  const tiempoTotal = tiempoProductivo + tiempoRecuperacion;
-
-  return {
-    operacion: herramienta.nombre,
-    numPasadas,
-    longitudTrayectoria: longitudTrayectoria.toFixed(1),
-    tiempoProductivo: tiempoProductivo.toFixed(1),
-    tiempoRecuperacion: tiempoRecuperacion.toFixed(1),
-    tiempoTotal: tiempoTotal.toFixed(1)
-  };
-};
-
-/**
- * Estima el perímetro basado en la complejidad del SVG
- */
 const estimarPerimetro = (svgString, area) => {
-  // Contar elementos de path y formas que indican complejidad
-  const pathCount = (svgString.match(/<path/g) || []).length;
-  const circleCount = (svgString.match(/<circle/g) || []).length;
-  const rectCount = (svgString.match(/<rect/g) || []).length;
-  const lineCount = (svgString.match(/<line/g) || []).length;
+  const p = (svgString.match(/<path/g) || []).length * 2;
+  const c = (svgString.match(/<circle/g) || []).length;
+  const r = (svgString.match(/<rect/g) || []).length;
+  const l = (svgString.match(/<line/g) || []).length;
+  const comp = p + c + r + l;
+  const base = 2 * Math.sqrt(Math.PI * area);
+  return base * (1 + comp * 0.15);
+};
 
-  // Factor de complejidad basado en elementos
-  const complejidad = pathCount * 2 + circleCount + rectCount + lineCount;
+const calcularTiempoRasterAjustado = (cfg, areaEf) => {
+  const vol = areaEf * cfg.profundidadTotal;
+  const t = vol / cfg.feedRate;
+  return t + t * (cfg.factorOverhead - 1);
+};
 
-  // Estimar perímetro basado en área y complejidad
-  // Para un círculo: perímetro = 2 * π * √(área/π)
-  const perimetroBase = 2 * Math.sqrt(Math.PI * area);
+const calcularTiempoOffsetAjustado = (cfg, areaEf, per) => {
+  const tLin = per * cfg.pasadas / cfg.feedRate;
+  return tLin + tLin * (cfg.factorOverhead - 1);
+};
 
-  // Ajustar por complejidad (más elementos = más perímetro)
-  const factorComplejidad = 1 + (complejidad * 0.1);
-
-  return perimetroBase * factorComplejidad;
+const calcularTiempoProfileAjustado = (cfg, per) => {
+  const long = per * cfg.factorPerimetro;
+  const t = long * cfg.pasadas / cfg.feedRate;
+  return t + t * (cfg.factorOverhead - 1);
 };
 
 /**
- * Función principal de cálculo de tiempos CNC mejorada
+ * Calibra parámetros usando tus tiempos reales de Aspire
  */
-export const calcularTiemposCNC = async (svgString, widthMm, heightMm) => {
+export async function calibrarCNC(svgString, widthMm, heightMm, tReal) {
+  const areaTot = widthMm * heightMm;
+  const perTot = estimarPerimetro(svgString, areaTot);
+  const b = CONFIGURACION_AJUSTADA;
+  const refs = [
+    calcularTiempoRasterAjustado(b.planeado, areaTot * b.planeado.factorArea),
+    calcularTiempoOffsetAjustado(b.cajeado6mm, areaTot * b.cajeado6mm.factorArea, perTot),
+    calcularTiempoOffsetAjustado(b.cajeado1mm, areaTot * b.cajeado1mm.factorArea, perTot),
+    calcularTiempoProfileAjustado(b.perfilado05mm, perTot)
+  ];
+  const factors = [
+    tReal.planeado / refs[0], tReal.cajeado6 / refs[1], tReal.cajeado1 / refs[2], tReal.perfilado / refs[3]
+  ];
+  return {
+    planeado: { ...b.planeado, feedRate: b.planeado.feedRate * factors[0], stepover: b.planeado.stepover * factors[0] },
+    cajeado6mm: { ...b.cajeado6mm, feedRate: b.cajeado6mm.feedRate * factors[1], stepover: b.cajeado6mm.stepover * factors[1] },
+    cajeado1mm: { ...b.cajeado1mm, feedRate: b.cajeado1mm.feedRate * factors[2], stepover: b.cajeado1mm.stepover * factors[2] },
+    perfilado05mm: { ...b.perfilado05mm, feedRate: b.perfilado05mm.feedRate * factors[3], stepover: b.perfilado05mm.stepover * factors[3] }
+  };
+}
+
+/**
+ * Cálculo de tiempos CNC con posibilidad de configuración calibrada
+ */
+export const calcularTiemposCNC = async (svgString, widthMm, heightMm, config = CONFIGURACION_AJUSTADA) => {
   try {
-    // Calcular área en mm²
-    const area = widthMm * heightMm;
-
-    // Estimar perímetro basado en complejidad del SVG
-    const perimetro = estimarPerimetro(svgString, area);
-
-    // Calcular tiempo para cada operación
-    const tiempoPlaneado = calcularTiempoOperacion(area, perimetro, OPERACIONES.planeado);
-    const tiempoCajeado6 = calcularTiempoOperacion(area, perimetro, OPERACIONES.cajeado6mm);
-    const tiempoCajeado1 = calcularTiempoOperacion(area, perimetro, OPERACIONES.cajeado1mm);
-    const tiempoPerfilado = calcularTiempoOperacion(area, perimetro, OPERACIONES.perfilado05mm);
-
-    // Tiempo total (convertir de minutos a segundos)
-    const tiempoTotalMinutos = parseFloat(tiempoPlaneado.tiempoTotal) +
-      parseFloat(tiempoCajeado6.tiempoTotal) +
-      parseFloat(tiempoCajeado1.tiempoTotal) +
-      parseFloat(tiempoPerfilado.tiempoTotal);
-
-    const tiempoTotalSegundos = tiempoTotalMinutos * 60;
-
-    // Distribución por tipo de operación (en segundos)
-    const roughingTime = (parseFloat(tiempoPlaneado.tiempoTotal) + parseFloat(tiempoCajeado6.tiempoTotal)) * 60;
-    const fineProfilingTime = (parseFloat(tiempoCajeado1.tiempoTotal) + parseFloat(tiempoPerfilado.tiempoTotal)) * 60;
-
-    // Resultado detallado
-    return {
-      totalTime: Math.max(Math.round(tiempoTotalSegundos), 30), // Mínimo 30 segundos
-      roughingTime: Math.max(Math.round(roughingTime), 10),
-      fineProfilingTime: Math.max(Math.round(fineProfilingTime), 20),
-
-      // Información detallada para debugging
-      detalles: {
-        area: `${area.toFixed(0)} mm²`,
-        perimetro: `${perimetro.toFixed(1)} mm`,
-        tiempoTotalMinutos: `${tiempoTotalMinutos.toFixed(1)} min`,
-        operaciones: {
-          planeado: tiempoPlaneado,
-          cajeado6mm: tiempoCajeado6,
-          cajeado1mm: tiempoCajeado1,
-          perfilado05mm: tiempoPerfilado
-        }
-      }
-    };
-
-  } catch (error) {
-    console.error('Error calculando tiempos CNC:', error);
-
-    // Valores por defecto en caso de error
-    return {
-      totalTime: 300, // 5 minutos por defecto
-      roughingTime: 180, // 3 minutos desbaste
-      fineProfilingTime: 120, // 2 minutos acabado
-      detalles: {
-        error: error.message
-      }
-    };
-  }
+    const areaTot = widthMm * heightMm;
+    const perTot = estimarPerimetro(svgString, areaTot);
+    const ops = {};
+    // planeado
+    const c1 = config.planeado, a1 = areaTot * c1.factorArea, t1 = calcularTiempoRasterAjustado(c1, a1);
+    ops.planeado = { nombre: c1.nombre, tiempo: t1 };
+    // cajeado6mm
+    const c6 = config.cajeado6mm, a6 = areaTot * c6.factorArea, t6 = calcularTiempoOffsetAjustado(c6, a6, perTot);
+    ops.cajeado6mm = { nombre: c6.nombre, tiempo: t6 };
+    // cajeado1mm
+    const c1m = config.cajeado1mm, a1m = areaTot * c1m.factorArea, t1m = calcularTiempoOffsetAjustado(c1m, a1m, perTot);
+    ops.cajeado1mm = { nombre: c1m.nombre, tiempo: t1m };
+    // perfilado
+    const cpr = config.perfilado05mm, tpr = calcularTiempoProfileAjustado(cpr, perTot);
+    ops.perfilado05mm = { nombre: cpr.nombre, tiempo: tpr };
+    const total = t1 + t6 + t1m + tpr;
+    const rough = t1 + t6;
+    const fine = t1m + tpr;
+    return { totalTime: total, roughingTime: rough, fineProfilingTime: fine, detalles: { area: `${areaTot.toFixed(0)} mm²`, perimetro: `${perTot.toFixed(1)} mm`, operaciones: ops } };
+  } catch (e) { console.error('Error CNC:', e); return calcularTiemposCNCEmpirico(widthMm, heightMm); }
 };
 
 /**
- * Función auxiliar para mostrar el desglose detallado
+ * Método empírico como fallback
  */
-export const mostrarDesgloseTiempos = (resultados) => {
-  if (resultados.detalles) {
-    console.log('=== DESGLOSE DE TIEMPOS CNC ===');
-    console.log(`Área: ${resultados.detalles.area}`);
-    console.log(`Perímetro estimado: ${resultados.detalles.perimetro}`);
-    console.log(`Tiempo total: ${resultados.detalles.tiempoTotalMinutos}`);
-    console.log('\n--- Operaciones ---');
+export const calcularTiemposCNCEmpirico = (widthMm, heightMm) => {
+  const area = widthMm * heightMm;
+  const base = 15, factor = 0.01;
+  let t = base + area * factor;
+  if (t < 25) t = 25; if (t > 35) t = 35;
+  return { totalTime: t, roughingTime: t * 0.43, fineProfilingTime: t * 0.57, detalles: { metodo: 'empírico', area: `${area.toFixed(0)} mm²` } };
+};
 
-    Object.entries(resultados.detalles.operaciones).forEach(([nombre, datos]) => {
-      console.log(`${nombre}:`);
-      console.log(`  - Herramienta: ${datos.operacion}`);
-      console.log(`  - Pasadas: ${datos.numPasadas}`);
-      console.log(`  - Trayectoria: ${datos.longitudTrayectoria} mm`);
-      console.log(`  - Tiempo: ${datos.tiempoTotal} min`);
-    });
-  }
+/**
+ * Despliega desglose en consola
+ */
+export const mostrarDesgloseTiempos = (res) => {
+  console.group('Desglose CNC');
+  console.log('Área:', res.detalles.area);
+  console.log('Perímetro:', res.detalles.perimetro);
+  Object.values(res.detalles.operaciones).forEach(o => console.log(`${o.nombre}: ${o.tiempo.toFixed(2)} min`));
+  console.groupEnd();
 };

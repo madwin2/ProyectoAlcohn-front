@@ -1,0 +1,47 @@
+.pedidos-scroll-container {
+  height: 400px !important;
+  overflow-y: scroll !important;
+  overflow-x: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  padding-right: 8px !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+.pedidos-scroll-container::-webkit-scrollbar {
+  width: 12px;
+}
+
+.pedidos-scroll-container::-webkit-scrollbar-track {
+  background: rgba(24, 24, 27, 0.5);
+  border-radius: 6px;
+}
+
+.pedidos-scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(96, 165, 250, 0.8);
+  border-radius: 6px;
+  border: 2px solid rgba(24, 24, 27, 0.5);
+}
+
+.pedidos-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(96, 165, 250, 1);
+}
+
+.pedidos-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(96, 165, 250, 0.8) rgba(24, 24, 27, 0.5);
+}
+
+/* Forzar scroll en Firefox */
+.pedidos-scroll-container {
+  scrollbar-width: auto;
+}
+
+/* Asegurar que el contenedor tenga altura fija */
+.pedidos-column {
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+} 

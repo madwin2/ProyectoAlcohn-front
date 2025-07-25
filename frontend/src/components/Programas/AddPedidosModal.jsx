@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useProgramas } from '../../hooks/useProgramas';
 import SVGPreview from '../ui/SVGPreview';
+import './AddPedidosModal.css';
 
 const AddPedidosModal = ({ isOpen, onClose, programa, onPedidosUpdated, publicUrl }) => {
   const { 
@@ -197,7 +198,8 @@ const AddPedidosModal = ({ isOpen, onClose, programa, onPedidosUpdated, publicUr
         borderRadius: '12px',
         overflow: 'hidden',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        minHeight: '600px'
       }}>
         {/* Header */}
         <div style={{ 
@@ -266,16 +268,17 @@ const AddPedidosModal = ({ isOpen, onClose, programa, onPedidosUpdated, publicUr
         <div style={{ 
           display: 'grid', 
           gridTemplateColumns: '1fr 1fr', 
-          height: '100%',
+          flex: 1,
           overflow: 'hidden'
         }}>
           {/* Pedidos disponibles */}
-          <div style={{
-            padding: '24px',
-            borderRight: '1px solid rgba(39, 39, 42, 0.5)',
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
+          <div 
+            className="pedidos-column"
+            style={{
+              padding: '24px',
+              borderRight: '1px solid rgba(39, 39, 42, 0.5)'
+            }}
+          >
             <div style={{ marginBottom: '20px' }}>
               <h3 style={{ 
                 fontSize: '18px', 
@@ -352,13 +355,7 @@ const AddPedidosModal = ({ isOpen, onClose, programa, onPedidosUpdated, publicUr
               </div>
             )}
 
-            <div style={{ 
-              flex: 1, 
-              overflowY: 'auto',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px'
-            }}>
+            <div className="pedidos-scroll-container">
               {loading ? (
                 <div style={{ 
                   display: 'flex', 
@@ -478,11 +475,12 @@ const AddPedidosModal = ({ isOpen, onClose, programa, onPedidosUpdated, publicUr
           </div>
 
           {/* Pedidos en el programa */}
-          <div style={{
-            padding: '24px',
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
+          <div 
+            className="pedidos-column"
+            style={{
+              padding: '24px'
+            }}
+          >
             <div style={{ marginBottom: '20px' }}>
               <div style={{ 
                 display: 'flex', 
@@ -579,13 +577,7 @@ const AddPedidosModal = ({ isOpen, onClose, programa, onPedidosUpdated, publicUr
               )}
             </div>
 
-            <div style={{ 
-              flex: 1, 
-              overflowY: 'auto',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px'
-            }}>
+            <div className="pedidos-scroll-container">
               {pedidosEnPrograma.length === 0 ? (
                 <div style={{ 
                   textAlign: 'center', 
@@ -732,5 +724,7 @@ const AddPedidosModal = ({ isOpen, onClose, programa, onPedidosUpdated, publicUr
     </div>
   );
 };
+
+
 
 export default AddPedidosModal;
