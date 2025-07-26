@@ -85,9 +85,8 @@ const AddPedidosModal = ({ isOpen, onClose, programa, onPedidosUpdated, publicUr
       setSelectedPedidos([]);
       await cargarPedidos();
       
-      if (onPedidosUpdated) {
-        onPedidosUpdated();
-      }
+      // Solo llamar onPedidosUpdated cuando el usuario cierre el modal
+      // No llamarlo aquí para evitar que se cierre automáticamente
     } catch (err) {
       console.error('Error agregando pedidos:', err);
       setError('Error al agregar pedidos al programa');
@@ -102,9 +101,8 @@ const AddPedidosModal = ({ isOpen, onClose, programa, onPedidosUpdated, publicUr
       await removerPedidoDePrograma(pedidoId);
       await cargarPedidos();
       
-      if (onPedidosUpdated) {
-        onPedidosUpdated();
-      }
+      // Solo llamar onPedidosUpdated cuando el usuario cierre el modal
+      // No llamarlo aquí para evitar que se cierre automáticamente
     } catch (err) {
       console.error('Error removiendo pedido:', err);
       setError('Error al remover pedido del programa');
@@ -241,7 +239,13 @@ const AddPedidosModal = ({ isOpen, onClose, programa, onPedidosUpdated, publicUr
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={() => {
+              // Llamar onPedidosUpdated cuando el usuario cierre el modal
+              if (onPedidosUpdated) {
+                onPedidosUpdated();
+              }
+              onClose();
+            }}
             style={{
               background: 'transparent',
               border: 'none',
@@ -409,7 +413,7 @@ const AddPedidosModal = ({ isOpen, onClose, programa, onPedidosUpdated, publicUr
                         <SVGPreview
                           vectorUrl={pedido.archivo_vector ? publicUrl(pedido.archivo_vector) : null}
                           size={90}
-                          backgroundColor="rgba(24, 24, 27, 0.8)"
+                          backgroundColor="white"
                         />
                         
                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -614,7 +618,7 @@ const AddPedidosModal = ({ isOpen, onClose, programa, onPedidosUpdated, publicUr
                       <SVGPreview
                         vectorUrl={pedido.archivo_vector ? publicUrl(pedido.archivo_vector) : null}
                         size={90}
-                        backgroundColor="rgba(24, 24, 27, 0.8)"
+                        backgroundColor="white"
                       />
                       
                       <div style={{ flex: 1, minWidth: 0 }}>
@@ -720,6 +724,43 @@ const AddPedidosModal = ({ isOpen, onClose, programa, onPedidosUpdated, publicUr
             {error}
           </div>
         )}
+
+        {/* Footer con botón de cerrar */}
+        <div style={{
+          padding: '16px 24px',
+          borderTop: '1px solid rgba(39, 39, 42, 0.5)',
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }}>
+          <button
+            onClick={() => {
+              // Llamar onPedidosUpdated cuando el usuario cierre el modal
+              if (onPedidosUpdated) {
+                onPedidosUpdated();
+              }
+              onClose();
+            }}
+            style={{
+              background: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '10px 20px',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = '#2563eb';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = '#3b82f6';
+            }}
+          >
+            Cerrar
+          </button>
+        </div>
       </div>
     </div>
   );

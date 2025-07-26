@@ -587,7 +587,7 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
                 <SVGPreview
                   vectorUrl={pedido.archivo_vector ? publicUrl(pedido.archivo_vector) : null}
                   size={56} // Aumentado el tamaño de 32 a 56
-                  backgroundColor="rgba(24, 24, 27, 0.8)"
+                  backgroundColor="white"
                   borderRadius="4px"
                 />
                 <span style={{ 
@@ -661,7 +661,7 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
 
         <div>
           <div style={{ fontSize: '12px', color: '#a1a1aa', marginBottom: '4px' }}>
-            Tiempo Límite
+            Tiempo
           </div>
           <div style={{
             display: 'flex',
@@ -672,7 +672,8 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
             fontWeight: '500'
           }}>
             <Clock style={{ width: '14px', height: '14px' }} />
-            {programa.limite_tiempo} min
+            {programa.tiempo_usado}
+            {programa.limite_tiempo > 0 ? ` / ${programa.limite_tiempo}` : ''} min
           </div>
         </div>
       </div>
