@@ -20,7 +20,7 @@ export class SimpleFileUploadService {
     const folderMap = {
       'archivo_base': 'base',
       'archivo_vector': 'vector',
-      'foto_sello': '' // Raíz del bucket
+      'foto_sello': 'fotos' // Carpeta fotos
     };
     
     const folder = folderMap[field] || '';

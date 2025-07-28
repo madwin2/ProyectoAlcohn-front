@@ -71,7 +71,7 @@ export const useVerificacion = () => {
 
         const timestamp = Date.now();
         const fileExtension = file.name.split('.').pop();
-        const fileName = `verificacion_${pedidoId}_${timestamp}.${fileExtension}`;
+        const fileName = `fotos/verificacion_${pedidoId}_${timestamp}.${fileExtension}`;
         
         const { error: uploadError } = await supabase.storage
           .from('archivos-ventas')

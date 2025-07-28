@@ -260,7 +260,7 @@ export const uploadPhotoToStorage = async (file, prefix = 'verificacion_masiva')
     const timestamp = Date.now();
     const randomId = Math.random().toString(36).substr(2, 9);
     const fileExtension = file.name.split('.').pop();
-    const fileName = `${prefix}_${timestamp}_${randomId}.${fileExtension}`;
+    const fileName = `fotos/${prefix}_${timestamp}_${randomId}.${fileExtension}`;
     
     const { error: uploadError } = await supabase.storage
       .from('archivos-ventas')

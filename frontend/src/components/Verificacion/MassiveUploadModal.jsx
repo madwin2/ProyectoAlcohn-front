@@ -62,7 +62,7 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
         const timestamp = Date.now();
         const randomId = Math.random().toString(36).substr(2, 9);
         const fileExtension = file.name.split('.').pop();
-        const fileName = `verificacion_masiva_${timestamp}_${randomId}.${fileExtension}`;
+        const fileName = `fotos/verificacion_masiva_${timestamp}_${randomId}.${fileExtension}`;
         
         const { error: uploadError } = await supabase.storage
           .from('archivos-ventas')

@@ -65,7 +65,7 @@ function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublic
 
         const timestamp = Date.now();
         const fileExtension = file.name.split('.').pop();
-        const fileName = `verificacion_${pedido.id_pedido}_${timestamp}.${fileExtension}`;
+        const fileName = `fotos/verificacion_${pedido.id_pedido}_${timestamp}.${fileExtension}`;
         
         const { error: uploadError } = await supabase.storage
           .from('archivos-ventas')

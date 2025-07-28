@@ -19,7 +19,7 @@ function VerificacionPage() {
   const [isPendingPhotosOpen, setIsPendingPhotosOpen] = useState(false);
   const [verificationResults, setVerificationResults] = useState({});
   const [pendingPhotosCount, setPendingPhotosCount] = useState(0);
-  const { showNotification } = useNotification();
+  const { addNotification } = useNotification();
 
   useEffect(() => {
     getPedidosVerificar();
@@ -101,10 +101,10 @@ function VerificacionPage() {
       // Refrescar la lista de pedidos
       getPedidosVerificar();
       
-      showNotification('Fotos subidas y procesadas correctamente', 'success');
+      addNotification('Fotos subidas y procesadas correctamente', 'success');
     } catch (err) {
       console.error('Error al procesar fotos:', err);
-      showNotification('Error al procesar las fotos', 'error');
+      addNotification('Error al procesar las fotos', 'error');
     }
   };
 
@@ -112,14 +112,14 @@ function VerificacionPage() {
     // Refresh pedidos and pending photos count
     getPedidosVerificar();
     loadPendingPhotosCount();
-    showNotification('Carga masiva completada', 'success');
+    addNotification('Carga masiva completada', 'success');
   };
 
   const handlePendingPhotoMatched = (pedidoId, photoFileName) => {
     // Refresh pedidos and pending photos count
     getPedidosVerificar();
     loadPendingPhotosCount();
-    showNotification('Foto asignada correctamente', 'success');
+    addNotification('Foto asignada correctamente', 'success');
   };
 
   const handleOpenPendingPhotos = () => {
@@ -141,10 +141,10 @@ function VerificacionPage() {
       if (error) throw error;
 
       getPedidosVerificar();
-      showNotification('Pedido marcado como completado', 'success');
+      addNotification('Pedido marcado como completado', 'success');
     } catch (err) {
       console.error('Error al marcar como completo:', err);
-      showNotification('Error al marcar como completo', 'error');
+      addNotification('Error al marcar como completo', 'error');
     }
   };
 
