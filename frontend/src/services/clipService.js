@@ -1,7 +1,7 @@
 // Service for CLIP-based image matching
 // This service handles communication with the CLIP API for automatic photo-to-design matching
 
-const CLIP_API_URL = 'http://localhost:8000'; // URL of the CLIP API from Detector de Sellos
+import { CLIP_API_URL } from '../config/api';
 
 /**
  * Process photos against design files using CLIP
