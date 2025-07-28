@@ -5,7 +5,7 @@ services:
     plan: free
     buildCommand: |
       pip install --upgrade pip
-      pip install torch==2.1.1+cpu torchvision==0.16.1+cpu -f https://download.pytorch.org/whl/torch_stable.html
+      pip install torch==2.5.1+cpu torchvision==0.20.1+cpu -f https://download.pytorch.org/whl/torch_stable.html
       pip install -r requirements_render.txt
     startCommand: uvicorn api_transformers:app --host 0.0.0.0 --port $PORT --workers 1
     healthCheckPath: /health
