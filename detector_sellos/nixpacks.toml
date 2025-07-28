@@ -1,8 +1,13 @@
 [phases.setup]
-nixPkgs = ["python39", "python39Packages.pip", "git"]
+nixPkgs = ["python39", "python39Packages.pip", "git", "gcc", "gcc-unwrapped", "pkg-config"]
 
 [phases.install]
-cmds = ["pip install -r requirements.txt"]
+cmds = [
+  "pip install --upgrade pip",
+  "pip install torch==2.1.1+cpu torchvision==0.16.1+cpu -f https://download.pytorch.org/whl/torch_stable.html",
+  "pip install -r requirements.txt",
+  "pip install git+https://github.com/openai/CLIP.git"
+]
 
 [phases.build]
 cmds = ["echo 'Build completed'"]

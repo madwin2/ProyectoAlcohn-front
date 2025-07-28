@@ -41,13 +41,19 @@
    - Conecta tu repositorio de GitHub
    - Selecciona la carpeta `detector_sellos`
 
-3. **Configuración del servicio**
+3. **Configuración del servicio (Opción A - CLIP directo)**
    - **Name**: `clip-api` (o el nombre que prefieras)
    - **Environment**: `Python 3`
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `uvicorn api:app --host 0.0.0.0 --port $PORT`
+   - **Build Command**: `chmod +x build_render.sh && ./build_render.sh`
+   - **Start Command**: `uvicorn api:app --host 0.0.0.0 --port $PORT --workers 1`
 
-4. **Deploy**
+4. **Configuración del servicio (Opción B - Transformers - Recomendado)**
+   - **Name**: `clip-api-transformers`
+   - **Environment**: `Python 3`
+   - **Build Command**: `pip install --upgrade pip && pip install torch==2.1.1+cpu torchvision==0.16.1+cpu -f https://download.pytorch.org/whl/torch_stable.html && pip install -r requirements_render.txt`
+   - **Start Command**: `uvicorn api_transformers:app --host 0.0.0.0 --port $PORT --workers 1`
+
+5. **Deploy**
    - Haz click en "Create Web Service"
    - Render comenzará el deploy automáticamente
 
@@ -94,11 +100,34 @@ const CLIP_API_URL = 'https://tu-url.railway.app';
 
 ### Problemas comunes:
 
-1. **Error de memoria**: Railway y Render tienen límites de memoria. Si tienes problemas, considera usar un plan pago.
+1. **Error de build con CLIP**: Si tienes errores de compilación, usa la versión simplificada:
+   ```bash
+   # Cambia el startCommand en Render a:
+   uvicorn api_simple:app --host 0.0.0.0 --port $PORT
+   ```
 
-2. **Timeout en build**: CLIP es pesado, el build puede tardar varios minutos.
+2. **Error de memoria**: Railway y Render tienen límites de memoria. Si tienes problemas, considera usar un plan pago.
 
-3. **Error de dependencias**: Asegúrate de que todas las dependencias estén en `requirements.txt`.
+3. **Timeout en build**: CLIP es pesado, el build puede tardar varios minutos.
+
+4. **Error de dependencias**: Asegúrate de que todas las dependencias estén en `requirements.txt`.
+
+### Soluciones para errores de build:
+
+#### Opción 1: Usar versión simplificada (Recomendado para empezar)
+Si el build con CLIP falla, usa `api_simple.py`:
+- En Render: Cambia el Start Command a: `uvicorn api_simple:app --host 0.0.0.0 --port $PORT`
+- En Railway: Cambia el Procfile a: `web: uvicorn api_simple:app --host 0.0.0.0 --port $PORT`
+
+#### Opción 2: Usar build personalizado
+- En Render: Usa el Build Command: `chmod +x build.sh && ./build.sh`
+- En Railway: El `nixpacks.toml` ya está configurado
+
+#### Opción 3: Usar Docker
+```bash
+docker build -t clip-api .
+docker run -p 8000:8000 clip-api
+```
 
 ### Logs útiles:
 - Railway: Ve a la pestaña "Deployments" → "View Logs"
