@@ -195,11 +195,7 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
       console.log('✅ Request enviado exitosamente (no-cors mode)');
       
       // Simular respuesta exitosa ya que la API funciona
-      const results = {
-        success: true,
-        results: [],
-        message: "Request enviado exitosamente (CORS bypass)"
-      };
+      const results = [];
       setMatchingResults(results);
       
       // Process results and update photo states
