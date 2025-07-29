@@ -8,8 +8,8 @@ const config = {
     SUPABASE_ANON_KEY: process.env.REACT_APP_SUPABASE_ANON_KEY
   },
   production: {
-    // Cambia esta URL por la URL de tu API desplegada
-    CLIP_API_URL: 'https://tu-app.railway.app', // ← CAMBIA ESTA URL
+    // URL de la API desplegada en Vercel
+    CLIP_API_URL: 'https://detector-sellos-r4tj-alcohns-projects.vercel.app/api',
     SUPABASE_URL: process.env.REACT_APP_SUPABASE_URL,
     SUPABASE_ANON_KEY: process.env.REACT_APP_SUPABASE_ANON_KEY
   }

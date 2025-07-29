@@ -2,6 +2,7 @@
 // Handles storage, retrieval, and matching of photos that haven't been assigned to pedidos
 
 import { supabase } from '../supabaseClient';
+import { CLIP_API_URL } from '../config/api.js';
 
 const PENDING_PHOTOS_KEY = 'pendingVerificationPhotos';
 
@@ -194,7 +195,7 @@ export const autoMatchPendingPhotos = async (newPedidos) => {
       formData.append('fotos', file);
     });
     
-    const response = await fetch('http://localhost:8000/predict', {
+    const response = await fetch(`${CLIP_API_URL}/predict`, {
       method: 'POST',
       body: formData
     });

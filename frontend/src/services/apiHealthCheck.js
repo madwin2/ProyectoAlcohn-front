@@ -1,6 +1,5 @@
 // Service for checking API health and connectivity
-
-const CLIP_API_URL = 'http://localhost:8000';
+import { CLIP_API_URL } from '../config/api.js';
 
 /**
  * Check if CLIP API is available and responsive
