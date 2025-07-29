@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { CLIP_API_URL } from '../../config/api.js';
 import { 
   Clock, 
   Search, 
@@ -155,7 +156,7 @@ function PendingPhotosManager({ isOpen, onClose, onPhotoMatched }) {
         formData.append('fotos', file);
       });
       
-      const response = await fetch('http://localhost:8000/predict', {
+      const response = await fetch(`${CLIP_API_URL}/predict`, {
         method: 'POST',
         body: formData
       });

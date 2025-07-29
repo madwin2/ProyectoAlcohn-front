@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { CLIP_API_URL } from '../../config/api.js';
 import { 
   X, 
   Upload, 
@@ -110,7 +111,7 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
       console.log('🔍 Verificando API y CORS...');
       
       try {
-        const healthCheck = await fetch('http://localhost:8000/health', {
+        const healthCheck = await fetch(`${CLIP_API_URL}/health`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -204,7 +205,7 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
       
       console.log('📤 Enviando request a /predict...');
       
-      const response = await fetch('http://localhost:8000/predict', {
+      const response = await fetch(`${CLIP_API_URL}/predict`, {
         method: 'POST',
         body: formData
         // Don't set headers for FormData - let browser handle it automatically
