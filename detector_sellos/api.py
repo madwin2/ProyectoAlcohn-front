@@ -32,8 +32,8 @@ async def add_cors_headers(request, call_next):
     response.headers["Access-Control-Allow-Headers"] = "*"
     return response
 
-# Cargar los vectores de referencia al iniciar
-base_embeddings = cargar_vectores(VECTORES_DIR)
+# Cargar los vectores de referencia al iniciar (solo si existe el directorio)
+base_embeddings = cargar_vectores(VECTORES_DIR) if os.path.exists(VECTORES_DIR) else {}
 
 @app.get("/health")
 def health():
@@ -95,22 +95,28 @@ def predict(
                     print(f"  => Mejor match: {nombre_svg} (score: {score})")
                 else:
                     print("  No se encontraron matches para esta foto.")
-                if res and res[0][1] >= UMBRAL:
-                    match, score = res[0]
-                    nombre_svg = png_to_svg_name.get(match, match)
-                    resultados.append({
-                        "foto": foto.filename,
-                        "svg_match": nombre_svg,
-                        "score": float(score)
-                    })
-                else:
-                    resultados.append({
-                        "foto": foto.filename,
-                        "error": "No se encontró coincidencia con score suficiente"
-                    })
+                foto_resultado = {
+                    "foto": foto.filename,
+                    "matches": []
+                }
+                
+                if res:
+                    for nombre_svg_temp, score in res:
+                        nombre_svg = png_to_svg_name.get(nombre_svg_temp, nombre_svg_temp)
+                        foto_resultado["matches"].append({
+                            "svg": nombre_svg,
+                            "score": float(score),
+                            "match": score >= UMBRAL
+                        })
+                
+                resultados.append(foto_resultado)
             finally:
                 os.remove(tmp_foto_path)
-        return resultados
+        return {
+            "success": True,
+            "results": resultados,
+            "message": f"Procesadas {len(fotos)} fotos contra {len(svgs)} SVGs"
+        }
     finally:
         for path in svg_temp_paths:
             os.remove(path)
