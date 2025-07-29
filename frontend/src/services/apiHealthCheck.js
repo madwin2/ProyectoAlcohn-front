@@ -10,6 +10,7 @@ export const checkApiHealth = async () => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
     
+    console.log('Health check URL:', `${CLIP_API_URL}/health`);
     const response = await fetch(`${CLIP_API_URL}/health`, {
       method: 'GET',
       signal: controller.signal,
