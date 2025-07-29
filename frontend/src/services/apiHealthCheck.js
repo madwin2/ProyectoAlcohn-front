@@ -13,10 +13,7 @@ export const checkApiHealth = async () => {
     console.log('Health check URL:', `${CLIP_API_URL}/health`);
     const response = await fetch(`${CLIP_API_URL}/health`, {
       method: 'GET',
-      signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-      }
+      signal: controller.signal
     });
     
     clearTimeout(timeoutId);
