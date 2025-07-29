@@ -187,15 +187,16 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
       
       const response = await fetch(`${CLIP_API_URL}/predict`, {
         method: 'POST',
-        mode: 'no-cors',
         body: formData
       });
       
-      // Con mode: 'no-cors' no podemos leer la respuesta, pero sabemos que llegó
-      console.log('✅ Request enviado exitosamente (no-cors mode)');
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Unknown error');
+        throw new Error(`Error en API (${response.status}): ${errorText}`);
+      }
       
-      // Simular respuesta exitosa ya que la API funciona
-      const results = [];
+      const data = await response.json();
+      const results = data.results || [];
       setMatchingResults(results);
       
       // Process results and update photo states

@@ -8,7 +8,7 @@ const config = {
     SUPABASE_ANON_KEY: process.env.REACT_APP_SUPABASE_ANON_KEY
   },
   production: {
-    // Volver a la URL directa
+    // URL directa con CORS arreglado
     CLIP_API_URL: 'https://detector-sellos-r4tj-alcohns-projects.vercel.app/api',
     SUPABASE_URL: process.env.REACT_APP_SUPABASE_URL,
     SUPABASE_ANON_KEY: process.env.REACT_APP_SUPABASE_ANON_KEY
