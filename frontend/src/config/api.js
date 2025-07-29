@@ -8,8 +8,8 @@ const config = {
     SUPABASE_ANON_KEY: process.env.REACT_APP_SUPABASE_ANON_KEY
   },
   production: {
-    // Usar proxy interno para bypasear CORS
-    CLIP_API_URL: '/api/proxy',
+    // Volver a la URL directa
+    CLIP_API_URL: 'https://detector-sellos-r4tj-alcohns-projects.vercel.app/api',
     SUPABASE_URL: process.env.REACT_APP_SUPABASE_URL,
     SUPABASE_ANON_KEY: process.env.REACT_APP_SUPABASE_ANON_KEY
   }
