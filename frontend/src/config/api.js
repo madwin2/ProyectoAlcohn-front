@@ -8,8 +8,8 @@ const config = {
     SUPABASE_ANON_KEY: process.env.REACT_APP_SUPABASE_ANON_KEY
   },
   production: {
-    // URL de la API desplegada en Vercel
-    CLIP_API_URL: 'https://detector-sellos-r4tj-alcohns-projects.vercel.app/api',
+    // Usar proxy CORS para bypasear el problema de Vercel
+    CLIP_API_URL: 'https://cors-anywhere.herokuapp.com/https://detector-sellos-r4tj-alcohns-projects.vercel.app/api',
     SUPABASE_URL: process.env.REACT_APP_SUPABASE_URL,
     SUPABASE_ANON_KEY: process.env.REACT_APP_SUPABASE_ANON_KEY
   }
