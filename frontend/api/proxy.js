@@ -14,18 +14,33 @@ export default async function handler(req, res) {
   const url = `${targetUrl}${endpoint}`;
 
   try {
-    const response = await fetch(url, {
-      method: req.method,
-      headers: {
-        'Content-Type': req.headers['content-type'] || 'application/json',
-      },
-      body: req.method === 'POST' ? req.body : undefined,
-    });
+    // Get raw body for FormData
+    let body = undefined;
+    if (req.method === 'POST') {
+      body = req.body;
+    }
 
+    const fetchOptions = {
+      method: req.method,
+      body: body
+    };
+
+    // Don't set content-type for FormData, let browser handle it
+    if (req.headers['content-type'] && !req.headers['content-type'].includes('multipart/form-data')) {
+      fetchOptions.headers = {
+        'Content-Type': req.headers['content-type']
+      };
+    }
+
+    const response = await fetch(url, fetchOptions);
     const data = await response.text();
-    res.status(response.status).send(data);
+    
+    res.status(response.status);
+    res.setHeader('Content-Type', response.headers.get('content-type') || 'application/json');
+    res.send(data);
     
   } catch (error) {
+    console.error('Proxy error:', error);
     res.status(500).json({ error: 'Proxy error', details: error.message });
   }
 }
