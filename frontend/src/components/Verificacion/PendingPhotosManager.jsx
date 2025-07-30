@@ -34,17 +34,15 @@ function PendingPhotosManager({ isOpen, onClose, onPhotoMatched }) {
     try {
       setLoading(true);
       
-      // Load pending photos from localStorage or a dedicated table
-      const stored = localStorage.getItem('pendingVerificationPhotos');
-      if (stored) {
-        setPendingPhotos(JSON.parse(stored));
-      }
+      // Load pending photos from database
+      const { data, error } = await supabase
+        .from('fotos_pendientes')
+        .select('*')
+        .eq('estado', 'pendiente')
+        .order('fecha_subida', { ascending: false });
       
-      // TODO: Replace with actual database query when table is created
-      // const { data, error } = await supabase
-      //   .from('fotos_pendientes')
-      //   .select('*')
-      //   .eq('estado', 'pendiente');
+      if (error) throw error;
+      setPendingPhotos(data || []);
       
     } catch (err) {
       console.error('Error loading pending photos:', err);
@@ -222,17 +220,16 @@ function PendingPhotosManager({ isOpen, onClose, onPhotoMatched }) {
 
   const handleRemovePendingPhoto = async (photoId) => {
     try {
-      // Remove from storage
-      const { error: deleteError } = await supabase.storage
-        .from('archivos-ventas')
-        .remove([photoId]);
+      // Update status to 'eliminada' in database
+      const { error: updateError } = await supabase
+        .from('fotos_pendientes')
+        .update({ estado: 'eliminada' })
+        .eq('id', photoId);
       
-      if (deleteError) throw deleteError;
+      if (updateError) throw updateError;
       
       // Remove from pending list
-      const updatedPhotos = pendingPhotos.filter(photo => photo.id !== photoId);
-      setPendingPhotos(updatedPhotos);
-      localStorage.setItem('pendingVerificationPhotos', JSON.stringify(updatedPhotos));
+      setPendingPhotos(prev => prev.filter(photo => photo.id !== photoId));
       
     } catch (err) {
       console.error('Error removing photo:', err);
@@ -248,18 +245,28 @@ function PendingPhotosManager({ isOpen, onClose, onPhotoMatched }) {
       // Update pedido with the photo
       const { error: updateError } = await supabase.rpc('editar_pedido', {
         p_id: pedidoId,
-        p_foto_sello: photo.fileName
+        p_foto_sello: photo.nombre_archivo
       });
 
       if (updateError) throw updateError;
       
+      // Update photo status in database
+      const { error: photoUpdateError } = await supabase
+        .from('fotos_pendientes')
+        .update({ 
+          estado: 'asignada',
+          pedido_asignado: pedidoId,
+          fecha_asignacion: new Date().toISOString()
+        })
+        .eq('id', photoId);
+      
+      if (photoUpdateError) throw photoUpdateError;
+      
       // Remove from pending list
-      const updatedPhotos = pendingPhotos.filter(p => p.id !== photoId);
-      setPendingPhotos(updatedPhotos);
-      localStorage.setItem('pendingVerificationPhotos', JSON.stringify(updatedPhotos));
+      setPendingPhotos(prev => prev.filter(p => p.id !== photoId));
       
       // Notify parent
-      onPhotoMatched && onPhotoMatched(pedidoId, photo.fileName);
+      onPhotoMatched && onPhotoMatched(pedidoId, photo.nombre_archivo);
       
     } catch (err) {
       console.error('Error matching photo manually:', err);
@@ -268,7 +275,7 @@ function PendingPhotosManager({ isOpen, onClose, onPhotoMatched }) {
   };
 
   const filteredPhotos = pendingPhotos.filter(photo => 
-    photo.name.toLowerCase().includes(searchTerm.toLowerCase())
+    photo.nombre_archivo.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const filteredPedidos = availablePedidos.filter(pedido => 

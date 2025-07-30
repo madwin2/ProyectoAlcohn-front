@@ -17,8 +17,10 @@ import {
   ThumbsDown
 } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
+import { useNotification } from '../../hooks/useNotification';
 
 function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
+  const { addNotification } = useNotification();
   const [uploadedPhotos, setUploadedPhotos] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -314,51 +316,56 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
     return null;
   };
 
-  const handleConfirmMatch = async (matchIndex, confirmed) => {
+  const handleConfirmMatch = async (match, confirmed) => {
     try {
-      const match = pendingMatches[matchIndex];
-      
       if (confirmed) {
-        // Update pedido with the photo
-        const { error: updateError } = await supabase.rpc('editar_pedido', {
-          p_id: match.pedido.id_pedido,
-          p_foto_sello: match.photoId // Use the filename as stored in storage
-        });
-
-        if (updateError) throw updateError;
-        
-        // Mark photo as confirmed
+        // Mark as confirmed and assign to pedido
         setUploadedPhotos(prev => 
           prev.map(photo => 
             photo.id === match.photoId 
-              ? { ...photo, isConfirmed: true, status: 'confirmed' }
+              ? { ...photo, matchedPedido: match.pedido, status: 'confirmed' }
               : photo
           )
         );
         
         // Remove from pending matches
-        setPendingMatches(prev => prev.filter((_, i) => i !== matchIndex));
+        setPendingMatches(prev => prev.filter(m => m.photoId !== match.photoId));
         
-        // Notify parent component
-        onMatchingComplete && onMatchingComplete(match.pedido.id_pedido, match.photoId);
-        
+        // Call the callback to update the parent
+        onMatchingComplete();
       } else {
         // Mark as rejected, keep as pending
         setUploadedPhotos(prev => 
           prev.map(photo => 
             photo.id === match.photoId 
-              ? { ...photo, status: 'pending', matchedPedido: null }
+              ? { ...photo, matchedPedido: null, status: 'pending' }
               : photo
           )
         );
         
         // Remove from pending matches
-        setPendingMatches(prev => prev.filter((_, i) => i !== matchIndex));
+        setPendingMatches(prev => prev.filter(m => m.photoId !== match.photoId));
+        
+        // Save to database as pending photo
+        const { error: saveError } = await supabase
+          .from('fotos_pendientes')
+          .insert({
+            nombre_archivo: match.photoName,
+            url_foto: match.photoUrl,
+            fecha_subida: new Date().toISOString(),
+            estado: 'pendiente'
+          });
+        
+        if (saveError) {
+          console.error('Error saving pending photo:', saveError);
+          addNotification('Error al guardar foto pendiente', 'error');
+        } else {
+          addNotification('Foto guardada en pendientes', 'success');
+        }
       }
-      
     } catch (err) {
-      console.error('Error confirming match:', err);
-      setError('Error al confirmar la coincidencia');
+      console.error('Error handling match confirmation:', err);
+      addNotification('Error al procesar confirmación', 'error');
     }
   };
 
@@ -756,7 +763,7 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
                     
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button
-                        onClick={() => handleConfirmMatch(index, true)}
+                        onClick={() => handleConfirmMatch(match, true)}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -783,7 +790,7 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
                       </button>
                       
                       <button
-                        onClick={() => handleConfirmMatch(index, false)}
+                        onClick={() => handleConfirmMatch(match, false)}
                         style={{
                           display: 'flex',
                           alignItems: 'center',

@@ -26,15 +26,18 @@ function VerificacionPage() {
     loadPendingPhotosCount();
   }, []);
 
-  const loadPendingPhotosCount = () => {
+  const loadPendingPhotosCount = async () => {
     try {
-      const stored = localStorage.getItem('pendingVerificationPhotos');
-      if (stored) {
-        const photos = JSON.parse(stored);
-        setPendingPhotosCount(photos.length);
-      }
+      const { data, error } = await supabase
+        .from('fotos_pendientes')
+        .select('id', { count: 'exact' })
+        .eq('estado', 'pendiente');
+      
+      if (error) throw error;
+      setPendingPhotosCount(data?.length || 0);
     } catch (err) {
       console.error('Error loading pending photos count:', err);
+      setPendingPhotosCount(0);
     }
   };
 
@@ -113,17 +116,17 @@ function VerificacionPage() {
     }
   };
 
-  const handleMassiveUploadComplete = () => {
+  const handleMassiveUploadComplete = async () => {
     // Refresh pedidos and pending photos count
     getPedidosVerificar();
-    loadPendingPhotosCount();
+    await loadPendingPhotosCount();
     addNotification('Carga masiva completada', 'success');
   };
 
-  const handlePendingPhotoMatched = (pedidoId, photoFileName) => {
+  const handlePendingPhotoMatched = async (pedidoId, photoFileName) => {
     // Refresh pedidos and pending photos count
     getPedidosVerificar();
-    loadPendingPhotosCount();
+    await loadPendingPhotosCount();
     addNotification('Foto asignada correctamente', 'success');
   };
 
@@ -131,9 +134,9 @@ function VerificacionPage() {
     setIsPendingPhotosOpen(true);
   };
 
-  const handleClosePendingPhotos = () => {
+  const handleClosePendingPhotos = async () => {
     setIsPendingPhotosOpen(false);
-    loadPendingPhotosCount(); // Refresh count when closing
+    await loadPendingPhotosCount(); // Refresh count when closing
   };
 
   const handleMarcarCompleto = async (pedidoId) => {
