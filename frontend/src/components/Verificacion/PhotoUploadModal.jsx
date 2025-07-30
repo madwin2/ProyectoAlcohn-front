@@ -186,7 +186,9 @@ function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublic
       }
       
       const results = await response.json();
-      console.log('API Response:', results);
+      console.log('🚀 PHOTO UPLOAD - API Response completa:', results);
+      console.log('📊 PHOTO UPLOAD - results.success:', results.success);
+      console.log('📋 PHOTO UPLOAD - results.results:', results.results);
       
       // Format the results for display
       if (results.success && results.results) {

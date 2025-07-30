@@ -137,6 +137,7 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
             files.push(baseFile);
             allDesignFiles.push(baseFile);
             pedidoFileMap[`base_${pedido.id_pedido}.svg`] = pedido;
+            console.log('Added base file:', `base_${pedido.id_pedido}.svg`, 'for pedido:', pedido.id_pedido);
           } catch (err) {
             console.warn('Error loading base file for pedido', pedido.id_pedido, err);
           }
@@ -152,6 +153,7 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
             files.push(vectorFile);
             allDesignFiles.push(vectorFile);
             pedidoFileMap[`vector_${pedido.id_pedido}.svg`] = pedido;
+            console.log('Added vector file:', `vector_${pedido.id_pedido}.svg`, 'for pedido:', pedido.id_pedido);
           } catch (err) {
             console.warn('Error loading vector file for pedido', pedido.id_pedido, err);
           }
@@ -194,8 +196,8 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
         formData.append('fotos', file);
       });
       
-      console.log('📤 Enviando request a /predict...');
-      console.log('FormData contents:', {
+      console.log('📤 MASSIVE UPLOAD - Enviando request a /predict...');
+      console.log('📁 MASSIVE UPLOAD - FormData contents:', {
         svgCount: formData.getAll('svgs').length,
         fotoCount: formData.getAll('fotos').length,
         svgNames: formData.getAll('svgs').map(f => f.name),
@@ -213,22 +215,34 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
       }
       
       const data = await response.json();
-      console.log('API Response:', data);
+      console.log('🚀 MASSIVE UPLOAD - API Response completa:', data);
+      console.log('📊 MASSIVE UPLOAD - data.success:', data.success);
+      console.log('📋 MASSIVE UPLOAD - data.results:', data.results);
       const results = data.results || [];
-      console.log('Results:', results);
+      console.log('🎯 MASSIVE UPLOAD - Results finales:', results);
       setMatchingResults(results);
       
       // Process results and update photo states
       const updatedPhotos = [...photos];
       const pendingMatchesData = [];
       
+      console.log('🔄 MASSIVE UPLOAD - Processing results:', results);
+      console.log('🗂️ MASSIVE UPLOAD - Pedido file map:', pedidoFileMap);
+      
       for (const result of results) {
         if (result.error) continue;
         
+        console.log('Processing result:', result);
+        
         const photoIndex = updatedPhotos.findIndex(p => p.name === result.foto);
+        console.log('Photo index:', photoIndex, 'for photo:', result.foto);
+        
         if (photoIndex === -1) continue;
         
+        console.log('Looking for pedido with svg:', result.svg);
         const matchedPedido = pedidoFileMap[result.svg];
+        console.log('Matched pedido:', matchedPedido);
+        
         if (!matchedPedido) continue;
         
         // Update photo with match info

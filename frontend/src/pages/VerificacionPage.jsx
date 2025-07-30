@@ -79,6 +79,11 @@ function VerificacionPage() {
   };
 
   const handlePhotosUploaded = async (pedidoId, photos, matches) => {
+    console.log('🔄 VerificacionPage - handlePhotosUploaded llamado');
+    console.log('📋 Pedido ID:', pedidoId);
+    console.log('📸 Photos:', photos);
+    console.log('🎯 Matches:', matches);
+    
     try {
       // Guardar las fotos en el pedido
       const { error: updateError } = await supabase.rpc('editar_pedido', {
