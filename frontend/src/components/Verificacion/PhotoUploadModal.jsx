@@ -190,14 +190,17 @@ function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublic
       
       // Format the results for display
       if (results.success && results.results) {
+        console.log('Raw results:', results.results);
         const formattedResults = results.results.flatMap(result => 
           result.matches ? result.matches.map(match => ({
             ...match,
             foto: result.foto
           })) : []
         );
+        console.log('Formatted results:', formattedResults);
         setMatchingResults(formattedResults);
       } else {
+        console.log('No success or results in response');
         setMatchingResults([]);
       }
       
@@ -548,7 +551,7 @@ function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublic
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <CheckCircle style={{ width: '16px', height: '16px', color: '#22c55e' }} />
                           <span style={{ color: '#22c55e', fontSize: '14px' }}>
-                            {result.foto} → {result.svg_match} ({Math.round(result.score * 100)}% similitud)
+                            {result.foto} → {result.svg} ({Math.round(result.score * 100)}% similitud)
                           </span>
                         </div>
                       )}
