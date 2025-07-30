@@ -322,7 +322,7 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
         // Update pedido with the photo in database
         const { error: updateError } = await supabase.rpc('editar_pedido', {
           p_id: match.pedido.id_pedido,
-          p_foto_sello: match.photoName
+          p_foto_sello: match.photoId // Use the full path (fileName) instead of just the name
         });
 
         if (updateError) throw updateError;
@@ -361,7 +361,7 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
           .from('fotos_pendientes')
           .insert({
             nombre_archivo: match.photoName,
-            url_foto: match.photoUrl,
+            url_foto: match.photoId, // Use the relative path instead of full URL
             fecha_subida: new Date().toISOString(),
             estado: 'pendiente'
           });

@@ -245,7 +245,7 @@ function PendingPhotosManager({ isOpen, onClose, onPhotoMatched }) {
       // Update pedido with the photo
       const { error: updateError } = await supabase.rpc('editar_pedido', {
         p_id: pedidoId,
-        p_foto_sello: photo.nombre_archivo
+        p_foto_sello: photo.url_foto // This is now the relative path from the bucket
       });
 
       if (updateError) throw updateError;
@@ -507,8 +507,8 @@ function PendingPhotosManager({ isOpen, onClose, onPhotoMatched }) {
                 >
                   <div style={{ position: 'relative' }}>
                     <img
-                      src={photo.url}
-                      alt={photo.name}
+                      src={getPublicUrl(photo.url_foto)}
+                      alt={photo.nombre_archivo}
                       style={{
                         width: '100%',
                         height: '160px',
@@ -568,7 +568,7 @@ function PendingPhotosManager({ isOpen, onClose, onPhotoMatched }) {
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap'
                     }}>
-                      {photo.name}
+                      {photo.nombre_archivo}
                     </h4>
                     
                     {/* Manual Assignment */}
