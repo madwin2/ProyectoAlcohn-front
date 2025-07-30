@@ -240,7 +240,14 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
         if (photoIndex === -1) continue;
         
         console.log('Looking for pedido with svg:', result.svg);
-        const matchedPedido = pedidoFileMap[result.svg];
+        console.log('Result object keys:', Object.keys(result));
+        console.log('Result matches:', result.matches);
+        
+        // Buscar el match con match: true
+        const matchedMatch = result.matches?.find(match => match.match === true);
+        console.log('Matched match:', matchedMatch);
+        
+        const matchedPedido = matchedMatch ? pedidoFileMap[matchedMatch.svg] : null;
         console.log('Matched pedido:', matchedPedido);
         
         if (!matchedPedido) continue;
@@ -249,20 +256,22 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
         updatedPhotos[photoIndex] = {
           ...updatedPhotos[photoIndex],
           matchedPedido: matchedPedido,
-          confidence: result.score,
-          status: result.score >= 0.5 ? 'matched' : 'pending'
+          confidence: matchedMatch ? matchedMatch.score : 0,
+          status: matchedMatch ? 'matched' : 'pending'
         };
         
         // Add to pending matches for user confirmation
-        pendingMatchesData.push({
-          photoId: updatedPhotos[photoIndex].id,
-          photoName: result.foto,
-          photoUrl: updatedPhotos[photoIndex].url,
-          pedido: matchedPedido,
-          confidence: result.score,
-          svgMatch: result.svg_match,
-          needsConfirmation: true
-        });
+        if (matchedMatch) {
+          pendingMatchesData.push({
+            photoId: updatedPhotos[photoIndex].id,
+            photoName: result.foto,
+            photoUrl: updatedPhotos[photoIndex].url,
+            pedido: matchedPedido,
+            confidence: matchedMatch.score,
+            svgMatch: matchedMatch.svg,
+            needsConfirmation: true
+          });
+        }
       }
       
       setUploadedPhotos(updatedPhotos);
