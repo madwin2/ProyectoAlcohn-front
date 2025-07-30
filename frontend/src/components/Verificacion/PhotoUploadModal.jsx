@@ -12,6 +12,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
+import { formatMatchingResults } from '../../services/clipService';
 
 function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublicUrl }) {
   const [uploadedPhotos, setUploadedPhotos] = useState([]);
@@ -85,11 +86,12 @@ function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublic
         });
       }
       
-      setUploadedPhotos(prev => [...prev, ...uploadedFiles]);
+      const newPhotos = [...uploadedPhotos, ...uploadedFiles];
+      setUploadedPhotos(newPhotos);
       
       // Auto-process matching if we have design files
       if (pedido.archivo_base || pedido.archivo_vector) {
-        await processMatching([...uploadedPhotos, ...uploadedFiles]);
+        await processMatching(newPhotos);
       }
       
     } catch (err) {
@@ -140,7 +142,7 @@ function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublic
       
       // Add photos to FormData
       for (const photo of photos) {
-        if (!photo.isExisting) continue; // Skip existing photos for processing
+        if (photo.isExisting) continue; // Skip existing photos for processing
         
         try {
           const response = await fetch(photo.url);
@@ -158,8 +160,8 @@ function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublic
         return;
       }
       
-      // Call the CLIP API (you'll need to implement this endpoint)
-      const response = await fetch('/api/verificacion/process-matching', {
+      // Call the CLIP API directly
+      const response = await fetch('https://detector.alcohncnc.com/predict', {
         method: 'POST',
         body: formData
       });
@@ -169,10 +171,28 @@ function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublic
       }
       
       const results = await response.json();
-      setMatchingResults(results);
+      
+      // Format the results for display
+      if (results.success && results.results) {
+        const formattedResults = results.results.flatMap(result => 
+          result.matches ? result.matches.map(match => ({
+            ...match,
+            foto: result.foto
+          })) : []
+        );
+        setMatchingResults(formattedResults);
+      } else {
+        setMatchingResults([]);
+      }
       
     } catch (err) {
       console.error('Error processing matching:', err);
+      console.log('FormData contents:', {
+        hasSvgs: formData.has('svgs'),
+        hasFotos: formData.has('fotos'),
+        svgCount: formData.getAll('svgs').length,
+        fotoCount: formData.getAll('fotos').length
+      });
       // Don't show error for matching issues, just log them
       setMatchingResults([]);
     } finally {
