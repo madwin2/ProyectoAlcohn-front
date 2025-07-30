@@ -319,6 +319,14 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
   const handleConfirmMatch = async (match, confirmed) => {
     try {
       if (confirmed) {
+        // Update pedido with the photo in database
+        const { error: updateError } = await supabase.rpc('editar_pedido', {
+          p_id: match.pedido.id_pedido,
+          p_foto_sello: match.photoName
+        });
+
+        if (updateError) throw updateError;
+        
         // Mark as confirmed and assign to pedido
         setUploadedPhotos(prev => 
           prev.map(photo => 
@@ -333,6 +341,8 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
         
         // Call the callback to update the parent
         onMatchingComplete();
+        
+        addNotification('Foto asignada correctamente al pedido', 'success');
       } else {
         // Mark as rejected, keep as pending
         setUploadedPhotos(prev => 
