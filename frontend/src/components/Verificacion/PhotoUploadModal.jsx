@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 import { formatMatchingResults } from '../../services/clipService';
+import { CLIP_API_URL } from '../../config/api';
 
 function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublicUrl }) {
   const [uploadedPhotos, setUploadedPhotos] = useState([]);
@@ -156,12 +157,26 @@ function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublic
       
       // If no files to process, return early
       if (!formData.has('svgs') || !formData.has('fotos')) {
+        console.log('No files to process:', {
+          hasSvgs: formData.has('svgs'),
+          hasFotos: formData.has('fotos'),
+          svgCount: formData.getAll('svgs').length,
+          fotoCount: formData.getAll('fotos').length
+        });
         setMatchingResults([]);
         return;
       }
       
+      console.log('Sending request to:', `${CLIP_API_URL}/predict`);
+      console.log('FormData contents:', {
+        svgCount: formData.getAll('svgs').length,
+        fotoCount: formData.getAll('fotos').length,
+        svgNames: formData.getAll('svgs').map(f => f.name),
+        fotoNames: formData.getAll('fotos').map(f => f.name)
+      });
+      
       // Call the CLIP API directly
-      const response = await fetch('https://detector.alcohncnc.com/predict', {
+      const response = await fetch(`${CLIP_API_URL}/predict`, {
         method: 'POST',
         body: formData
       });
@@ -171,6 +186,7 @@ function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublic
       }
       
       const results = await response.json();
+      console.log('API Response:', results);
       
       // Format the results for display
       if (results.success && results.results) {
