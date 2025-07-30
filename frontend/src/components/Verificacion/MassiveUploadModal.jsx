@@ -107,8 +107,19 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
     setError(null);
     
     try {
-      // Skip health check due to CORS issues - API is known to be working
-      console.log('🔍 Saltando verificación de API (CORS bypass)...');
+      // Verificar API antes de procesar
+      console.log('🔍 Verificando API del servidor...');
+      
+      try {
+        const healthCheck = await fetch(`${CLIP_API_URL}/health`);
+        if (!healthCheck.ok) {
+          throw new Error('API no responde correctamente');
+        }
+        console.log('✅ API del servidor funcionando');
+      } catch (error) {
+        console.error('❌ Error verificando API:', error);
+        throw new Error('No se puede conectar al servidor. Verifica que esté funcionando.');
+      }
       // Prepare all design files from pedidos
       const allDesignFiles = [];
       const pedidoFileMap = {};

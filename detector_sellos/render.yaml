@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: detector-sellos
-    env: python
-    runtime: python-3.11.10
-    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
-    startCommand: python -m uvicorn api_render:app --host 0.0.0.0 --port $PORT
-    plan: free
-    healthCheckPath: /health

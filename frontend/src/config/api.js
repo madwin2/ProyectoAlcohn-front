@@ -8,8 +8,8 @@ const config = {
     SUPABASE_ANON_KEY: process.env.REACT_APP_SUPABASE_ANON_KEY
   },
   production: {
-    // URL directa con CORS arreglado
-    CLIP_API_URL: 'https://detector-sellos-r4tj-alcohns-projects.vercel.app/api',
+    // Servidor Hetzner Ubuntu 24.04
+    CLIP_API_URL: 'http://188.245.218.22:8000',
     SUPABASE_URL: process.env.REACT_APP_SUPABASE_URL,
     SUPABASE_ANON_KEY: process.env.REACT_APP_SUPABASE_ANON_KEY
   }

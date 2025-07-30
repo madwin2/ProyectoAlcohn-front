@@ -7,18 +7,9 @@ import { CLIP_API_URL } from '../config/api.js';
  */
 export const checkApiHealth = async () => {
   try {
-    // Simular que la API está funcionando ya que sabemos que funciona
-    return {
-      available: true,
-      status: "ok",
-      url: CLIP_API_URL,
-      message: 'API funcionando (verificación directa deshabilitada por CORS)'
-    };
-    
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
     
-    console.log('Health check URL:', `${CLIP_API_URL}/health`);
     const response = await fetch(`${CLIP_API_URL}/health`, {
       method: 'GET',
       signal: controller.signal
@@ -36,7 +27,7 @@ export const checkApiHealth = async () => {
       available: true,
       status: data.status,
       url: CLIP_API_URL,
-      message: 'API disponible y funcionando'
+      message: 'API disponible y funcionando - Servidor Hetzner'
     };
     
   } catch (error) {
@@ -172,7 +163,7 @@ export const getStatusMessage = (diagnostic) => {
   
   if (diagnostic.overall.ready) {
     return {
-      message: 'API funcionando correctamente',
+      message: 'API funcionando correctamente - Servidor Hetzner',
       color: '#22c55e',
       icon: '✅'
     };
