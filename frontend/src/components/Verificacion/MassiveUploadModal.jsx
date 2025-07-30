@@ -195,6 +195,12 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
       });
       
       console.log('📤 Enviando request a /predict...');
+      console.log('FormData contents:', {
+        svgCount: formData.getAll('svgs').length,
+        fotoCount: formData.getAll('fotos').length,
+        svgNames: formData.getAll('svgs').map(f => f.name),
+        fotoNames: formData.getAll('fotos').map(f => f.name)
+      });
       
       const response = await fetch(`${CLIP_API_URL}/predict`, {
         method: 'POST',
@@ -207,7 +213,9 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
       }
       
       const data = await response.json();
+      console.log('API Response:', data);
       const results = data.results || [];
+      console.log('Results:', results);
       setMatchingResults(results);
       
       // Process results and update photo states
@@ -220,7 +228,7 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
         const photoIndex = updatedPhotos.findIndex(p => p.name === result.foto);
         if (photoIndex === -1) continue;
         
-        const matchedPedido = pedidoFileMap[result.svg_match];
+        const matchedPedido = pedidoFileMap[result.svg];
         if (!matchedPedido) continue;
         
         // Update photo with match info
