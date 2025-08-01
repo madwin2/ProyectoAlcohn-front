@@ -136,7 +136,7 @@ export const useVectorizacion = () => {
       formData.append('image', imageBlob, 'image.jpg');
       
       // Llamar al proxy local
-      const response = await fetch('http://localhost:3001/api/vectorize', {
+      const response = await fetch('https://proyectoalcohn-front.onrender.com/api/vectorize', {
         method: 'POST',
         body: formData
       });

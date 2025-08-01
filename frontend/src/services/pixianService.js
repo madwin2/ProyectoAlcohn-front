@@ -8,10 +8,10 @@ export const removeBackground = async (imageBlob) => {
     formData.append('image', imageBlob, 'image.jpg');
     
     // Usar el proxy local para evitar CORS
-    const response = await fetch('http://localhost:3001/api/remove-background', {
-      method: 'POST',
-      body: formData
-    });
+      const response = await fetch('https://proyectoalcohn-front.onrender.com/api/remove-background', {
+    method: 'POST',
+    body: formData
+  });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
