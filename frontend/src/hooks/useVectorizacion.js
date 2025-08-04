@@ -373,66 +373,49 @@ export const useVectorizacion = () => {
     }
   };
 
-  // Enviar a Verificar Medidas (borra medida_real primero, luego re-establece archivo_vector)
+  // Enviar a Verificar Medidas (solo borra medida_real, el trigger se encarga del resto)
   const handleEnviarAVerificar = async (pedido) => {
     if (procesando[pedido.id_pedido]) return;
     
     setProcesando(prev => ({ ...prev, [pedido.id_pedido]: true }));
     
     try {
-      console.log('Enviando a verificar medidas:', pedido.id_pedido);
+      console.log('🔄 Enviando a verificar medidas:', pedido.id_pedido);
       
-      // Primero borrar medida_real y campos relacionados
-      const { error: error1 } = await supabase
+      // Solo borrar medida_real - el trigger modificado se encargará de limpiar los otros campos
+      const { error } = await supabase
         .from('pedidos')
         .update({
-          medida_real: null,
-          tiempo_estimado: null,
-          tipo_planchuela: null,
-          largo_planchuela: null
+          medida_real: null
         })
         .eq('id_pedido', pedido.id_pedido);
       
-      if (error1) {
-        console.error('Error borrando medida_real:', error1);
-        throw error1;
+      if (error) {
+        console.error('❌ Error enviando a verificar:', error);
+        throw error;
       }
 
-      // Luego re-establecer archivo_vector para que el trigger actualice vectorizacion
-      const { error: error2 } = await supabase
-        .from('pedidos')
-        .update({
-          archivo_vector: pedido.archivo_vector
-        })
-        .eq('id_pedido', pedido.id_pedido);
-      
-      if (error2) {
-        console.error('Error re-estableciendo archivo_vector:', error2);
-        throw error2;
-      }
-
-      console.log('Pedido enviado a verificar exitosamente');
+      console.log('✅ Pedido enviado a verificar exitosamente');
       await fetchPedidos();
       
     } catch (error) {
-      console.error('Error enviando a verificar:', error);
+      console.error('❌ Error enviando a verificar:', error);
       alert(`Error al enviar a verificar: ${error.message}`);
     } finally {
       setProcesando(prev => ({ ...prev, [pedido.id_pedido]: false }));
     }
   };
 
-  // Enviar a Vectorizar (establece archivo_vector como null para que el trigger limpie todo)
+  // Enviar a Vectorizar (solo establece archivo_vector como null, el trigger se encarga del resto)
   const handleEnviarAVectorizar = async (pedido) => {
     if (procesando[pedido.id_pedido]) return;
     
     setProcesando(prev => ({ ...prev, [pedido.id_pedido]: true }));
     
     try {
-      console.log('Enviando a vectorizar:', pedido.id_pedido);
+      console.log('🔄 Enviando a vectorizar:', pedido.id_pedido);
       
-      // Establecer archivo_vector como null para que el trigger detecte que no hay vector
-      // El trigger automáticamente limpiará archivo_vector, medida_real, tiempo_estimado, etc.
+      // Solo establecer archivo_vector como null - el trigger modificado se encargará de limpiar todo
       const { error } = await supabase
         .from('pedidos')
         .update({
@@ -441,15 +424,15 @@ export const useVectorizacion = () => {
         .eq('id_pedido', pedido.id_pedido);
       
       if (error) {
-        console.error('Error enviando a vectorizar:', error);
+        console.error('❌ Error enviando a vectorizar:', error);
         throw error;
       }
 
-      console.log('Pedido enviado a vectorizar exitosamente');
+      console.log('✅ Pedido enviado a vectorizar exitosamente');
       await fetchPedidos();
       
     } catch (error) {
-      console.error('Error enviando a vectorizar:', error);
+      console.error('❌ Error enviando a vectorizar:', error);
       alert(`Error al enviar a vectorizar: ${error.message}`);
     } finally {
       setProcesando(prev => ({ ...prev, [pedido.id_pedido]: false }));
