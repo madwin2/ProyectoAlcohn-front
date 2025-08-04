@@ -373,7 +373,7 @@ export const useVectorizacion = () => {
     }
   };
 
-  // Enviar a Verificar Medidas (borra medida_real y campos relacionados)
+  // Enviar a Verificar Medidas (re-establece archivo_vector para que el trigger limpie medida_real)
   const handleEnviarAVerificar = async (pedido) => {
     if (procesando[pedido.id_pedido]) return;
     
@@ -382,13 +382,12 @@ export const useVectorizacion = () => {
     try {
       console.log('Enviando a verificar medidas:', pedido.id_pedido);
       
+      // Re-establecer archivo_vector para que el trigger detecte que hay vector pero no medida_real
+      // El trigger automáticamente limpiará medida_real, tiempo_estimado, tipo_planchuela, largo_planchuela
       const { error } = await supabase
         .from('pedidos')
         .update({
-          medida_real: null,
-          tiempo_estimado: null,
-          tipo_planchuela: null,
-          largo_planchuela: null
+          archivo_vector: pedido.archivo_vector // Re-establecer el mismo valor
         })
         .eq('id_pedido', pedido.id_pedido);
       
@@ -408,7 +407,7 @@ export const useVectorizacion = () => {
     }
   };
 
-  // Enviar a Vectorizar (borra archivo_vector, medida_real y campos relacionados)
+  // Enviar a Vectorizar (establece archivo_vector como null para que el trigger limpie todo)
   const handleEnviarAVectorizar = async (pedido) => {
     if (procesando[pedido.id_pedido]) return;
     
@@ -417,14 +416,12 @@ export const useVectorizacion = () => {
     try {
       console.log('Enviando a vectorizar:', pedido.id_pedido);
       
+      // Establecer archivo_vector como null para que el trigger detecte que no hay vector
+      // El trigger automáticamente limpiará archivo_vector, medida_real, tiempo_estimado, etc.
       const { error } = await supabase
         .from('pedidos')
         .update({
-          archivo_vector: null,
-          medida_real: null,
-          tiempo_estimado: null,
-          tipo_planchuela: null,
-          largo_planchuela: null
+          archivo_vector: null
         })
         .eq('id_pedido', pedido.id_pedido);
       
