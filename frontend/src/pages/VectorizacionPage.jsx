@@ -34,6 +34,8 @@ function VectorizacionPage() {
     handleRechazarSVG,
     handleDescargar,
     handleCargarVector,
+    handleEnviarAVerificar,
+    handleEnviarAVectorizar,
     
     // Utils
     publicUrl
@@ -89,6 +91,8 @@ function VectorizacionPage() {
           onDimensionar={handleDimensionar}
           onDescargar={handleDescargar}
           onCargarVector={handleCargarVector}
+          onEnviarAVerificar={handleEnviarAVerificar}
+          onEnviarAVectorizar={handleEnviarAVectorizar}
         />
       </div>
     </div>

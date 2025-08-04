@@ -373,6 +373,77 @@ export const useVectorizacion = () => {
     }
   };
 
+  // Enviar a Verificar Medidas (borra medida_real y campos relacionados)
+  const handleEnviarAVerificar = async (pedido) => {
+    if (procesando[pedido.id_pedido]) return;
+    
+    setProcesando(prev => ({ ...prev, [pedido.id_pedido]: true }));
+    
+    try {
+      console.log('Enviando a verificar medidas:', pedido.id_pedido);
+      
+      const { error } = await supabase
+        .from('pedidos')
+        .update({
+          medida_real: null,
+          tiempo_estimado: null,
+          tipo_planchuela: null,
+          largo_planchuela: null
+        })
+        .eq('id_pedido', pedido.id_pedido);
+      
+      if (error) {
+        console.error('Error enviando a verificar:', error);
+        throw error;
+      }
+
+      console.log('Pedido enviado a verificar exitosamente');
+      await fetchPedidos();
+      
+    } catch (error) {
+      console.error('Error enviando a verificar:', error);
+      alert(`Error al enviar a verificar: ${error.message}`);
+    } finally {
+      setProcesando(prev => ({ ...prev, [pedido.id_pedido]: false }));
+    }
+  };
+
+  // Enviar a Vectorizar (borra archivo_vector, medida_real y campos relacionados)
+  const handleEnviarAVectorizar = async (pedido) => {
+    if (procesando[pedido.id_pedido]) return;
+    
+    setProcesando(prev => ({ ...prev, [pedido.id_pedido]: true }));
+    
+    try {
+      console.log('Enviando a vectorizar:', pedido.id_pedido);
+      
+      const { error } = await supabase
+        .from('pedidos')
+        .update({
+          archivo_vector: null,
+          medida_real: null,
+          tiempo_estimado: null,
+          tipo_planchuela: null,
+          largo_planchuela: null
+        })
+        .eq('id_pedido', pedido.id_pedido);
+      
+      if (error) {
+        console.error('Error enviando a vectorizar:', error);
+        throw error;
+      }
+
+      console.log('Pedido enviado a vectorizar exitosamente');
+      await fetchPedidos();
+      
+    } catch (error) {
+      console.error('Error enviando a vectorizar:', error);
+      alert(`Error al enviar a vectorizar: ${error.message}`);
+    } finally {
+      setProcesando(prev => ({ ...prev, [pedido.id_pedido]: false }));
+    }
+  };
+
   // Effects
   useEffect(() => {
     fetchPedidos();
@@ -414,6 +485,8 @@ export const useVectorizacion = () => {
     handleRechazarSVG,
     handleDescargar,
     handleCargarVector,
+    handleEnviarAVerificar,
+    handleEnviarAVectorizar,
     
     // Utils
     publicUrl,

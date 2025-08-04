@@ -18,7 +18,9 @@ const VectorizacionContent = ({
   onPrevisualizar,
   onDimensionar,
   onDescargar,
-  onCargarVector
+  onCargarVector,
+  onEnviarAVerificar,
+  onEnviarAVectorizar
 }) => {
   if (loading) {
     return (
@@ -67,6 +69,8 @@ const VectorizacionContent = ({
           handleDimensionar={onDimensionar}
           handleDescargar={onDescargar}
           handleCargarVector={onCargarVector}
+          onEnviarAVerificar={onEnviarAVerificar}
+          onEnviarAVectorizar={onEnviarAVectorizar}
         />
       ))}
     </div>

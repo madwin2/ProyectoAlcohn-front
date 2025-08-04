@@ -30,7 +30,9 @@ const VectorizacionCard = ({
   handlePrevisualizar, 
   handleDimensionar, 
   handleDescargar,
-  handleCargarVector
+  handleCargarVector,
+  onEnviarAVerificar,
+  onEnviarAVectorizar
 }) => {
   const fileInputRef = useRef(null);
   const isProcessing = procesando[pedido.id_pedido];
@@ -554,6 +556,96 @@ const VectorizacionCard = ({
               >
                 <Download style={{ width: '12px', height: '12px' }} />
                 Descargar
+              </button>
+
+              <button
+                onClick={() => onEnviarAVerificar(pedido)}
+                disabled={isProcessing}
+                style={{
+                  width: '100%',
+                  background: isProcessing ? 'rgba(245, 158, 11, 0.1)' : 'rgba(245, 158, 11, 0.2)',
+                  border: '1px solid rgba(245, 158, 11, 0.5)',
+                  color: isProcessing ? '#fbbf24' : '#f59e0b',
+                  height: '32px',
+                  fontWeight: '500',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  cursor: isProcessing ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.3s ease',
+                  opacity: isProcessing ? 0.6 : 1
+                }}
+                onMouseEnter={(e) => {
+                  if (!isProcessing) {
+                    e.target.style.background = 'rgba(245, 158, 11, 0.3)';
+                    e.target.style.color = 'white';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isProcessing) {
+                    e.target.style.background = 'rgba(245, 158, 11, 0.2)';
+                    e.target.style.color = '#f59e0b';
+                  }
+                }}
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
+                    Procesando...
+                  </>
+                ) : (
+                  <>
+                    <Ruler style={{ width: '16px', height: '16px' }} />
+                    Enviar a Verificar Medidas
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={() => onEnviarAVectorizar(pedido)}
+                disabled={isProcessing}
+                style={{
+                  width: '100%',
+                  background: isProcessing ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.2)',
+                  border: '1px solid rgba(59, 130, 246, 0.5)',
+                  color: isProcessing ? '#93c5fd' : '#60a5fa',
+                  height: '32px',
+                  fontWeight: '500',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  cursor: isProcessing ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.3s ease',
+                  opacity: isProcessing ? 0.6 : 1
+                }}
+                onMouseEnter={(e) => {
+                  if (!isProcessing) {
+                    e.target.style.background = 'rgba(59, 130, 246, 0.3)';
+                    e.target.style.color = 'white';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isProcessing) {
+                    e.target.style.background = 'rgba(59, 130, 246, 0.2)';
+                    e.target.style.color = '#60a5fa';
+                  }
+                }}
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
+                    Procesando...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles style={{ width: '16px', height: '16px' }} />
+                    Enviar a Vectorizar
+                  </>
+                )}
               </button>
             </div>
           )}
