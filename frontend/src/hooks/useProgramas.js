@@ -114,7 +114,7 @@ export const useProgramas = () => {
   const eliminarProgramaConPedidos = async (programaId) => {
     try {
       const { data, error } = await supabase.rpc('eliminar_programa_y_desasociar_pedidos', {
-        p_programa_id: programaId
+        programa_id: programaId
       });
 
       if (error) {

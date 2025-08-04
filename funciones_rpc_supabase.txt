@@ -451,9 +451,9 @@ DECLARE
   pedidos_count bigint;
 BEGIN
   -- Verificar que el programa existe
-  IF NOT EXISTS(SELECT 1 FROM programas WHERE id_programa = programa_id) THEN
+  IF NOT EXISTS(SELECT 1 FROM programas WHERE programas.id_programa = eliminar_programa_y_desasociar_pedidos.programa_id) THEN
     RETURN QUERY SELECT 
-      programa_id::text,
+      eliminar_programa_y_desasociar_pedidos.programa_id::text,
       0::bigint,
       false::boolean,
       'El programa especificado no existe'::text;
@@ -465,17 +465,17 @@ BEGIN
   SET 
     id_programa = NULL,
     updated_at = NOW()
-  WHERE id_programa = programa_id;
+  WHERE pedidos.id_programa = eliminar_programa_y_desasociar_pedidos.programa_id;
 
   -- Contar cuántos pedidos fueron desasociados
   GET DIAGNOSTICS pedidos_count = ROW_COUNT;
 
   -- Eliminar el programa
-  DELETE FROM programas WHERE id_programa = programa_id;
+  DELETE FROM programas WHERE programas.id_programa = eliminar_programa_y_desasociar_pedidos.programa_id;
 
   -- Retornar resultado
   RETURN QUERY SELECT 
-    programa_id::text,
+    eliminar_programa_y_desasociar_pedidos.programa_id::text,
     pedidos_count::bigint,
     true::boolean,
     'Programa eliminado y pedidos desasociados exitosamente'::text;
@@ -495,7 +495,7 @@ BEGIN
     SET 
       estado_fabricacion = NEW.estado_programa::text,
       updated_at = NOW()
-    WHERE id_programa = NEW.id_programa;
+    WHERE pedidos.id_programa = NEW.id_programa;
   END IF;
   
   RETURN NEW;
@@ -520,7 +520,7 @@ BEGIN
   SET 
     id_programa = NULL,
     updated_at = NOW()
-  WHERE id_programa = OLD.id_programa;
+  WHERE pedidos.id_programa = OLD.id_programa;
   
   RETURN OLD;
 END;
