@@ -84,10 +84,15 @@ const VectorizacionModal = ({
                 Aprobar
               </button>
               <button
-                onClick={() => {
-                  const blob = new Blob([svgPreview], { type: 'image/svg+xml' });
-                  const url = URL.createObjectURL(blob);
-                  onDescargar(url, `vectorAI-${svgPedido.id_pedido}.svg`);
+                onClick={async () => {
+                  try {
+                    const blob = new Blob([svgPreview], { type: 'image/svg+xml' });
+                    const url = URL.createObjectURL(blob);
+                    await onDescargar(url, `vectorAI-${svgPedido.id_pedido}.svg`);
+                    URL.revokeObjectURL(url);
+                  } catch (error) {
+                    console.error('Error al descargar:', error);
+                  }
                 }}
                 style={{
                   background: 'rgba(24, 24, 27, 0.5)',

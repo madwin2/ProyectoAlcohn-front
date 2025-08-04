@@ -525,7 +525,13 @@ const VectorizacionCard = ({
           {tipo === 'verificado' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <button
-                onClick={() => handleDescargar(publicUrl(pedido.archivo_vector), `vector-${pedido.id_pedido}.svg`)}
+                onClick={async () => {
+                  try {
+                    await handleDescargar(publicUrl(pedido.archivo_vector), `vector-${pedido.id_pedido}.svg`);
+                  } catch (error) {
+                    console.error('Error al descargar:', error);
+                  }
+                }}
                 style={{
                   width: '100%',
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%)',

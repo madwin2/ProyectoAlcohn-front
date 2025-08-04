@@ -316,11 +316,35 @@ export const useVectorizacion = () => {
   };
 
   // Descargar archivo
-  const handleDescargar = (url, filename) => {
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.click();
+  const handleDescargar = async (url, filename) => {
+    try {
+      // Hacer fetch del archivo para obtener el blob
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Error al descargar: ${response.status}`);
+      }
+      
+      const blob = await response.blob();
+      
+      // Crear URL del blob
+      const blobUrl = URL.createObjectURL(blob);
+      
+      // Crear enlace de descarga
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      
+      // Agregar al DOM, hacer clic y limpiar
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Liberar la URL del blob
+      URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('Error descargando archivo:', error);
+      alert(`Error al descargar el archivo: ${error.message}`);
+    }
   };
 
   // Cargar vector manualmente
