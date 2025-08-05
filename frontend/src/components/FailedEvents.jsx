@@ -63,14 +63,14 @@ const FailedEvents = ({ failedEvents, loading, updating, onRetryEvent }) => {
         <AlertTriangle className="w-5 h-5 text-red-600" />
         Eventos Fallidos
         {updating && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>}
-        {failedEvents.length > 0 && (
+        {failedEvents && failedEvents.length > 0 && (
           <span className="bg-red-100 text-red-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
             {failedEvents.length}
           </span>
         )}
       </h2>
       
-      {failedEvents.length === 0 ? (
+      {!failedEvents || failedEvents.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
           <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-300" />
           <p className="text-lg font-medium">No hay eventos fallidos</p>
@@ -78,7 +78,7 @@ const FailedEvents = ({ failedEvents, loading, updating, onRetryEvent }) => {
         </div>
       ) : (
         <div className="space-y-3">
-          {failedEvents.map(event => (
+          {failedEvents && failedEvents.map(event => (
             <div key={event.event_id} className="border rounded-lg p-4 bg-red-50 hover:bg-red-100 transition-colors">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
@@ -143,7 +143,7 @@ const FailedEvents = ({ failedEvents, loading, updating, onRetryEvent }) => {
         </div>
       )}
       
-      {failedEvents.length > 0 && (
+      {failedEvents && failedEvents.length > 0 && (
         <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
           <p className="text-sm text-yellow-800">
             <strong>Nota:</strong> Los eventos fallidos pueden reintentarse. 

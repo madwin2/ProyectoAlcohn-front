@@ -131,7 +131,7 @@ const WhatsAppBotPage = () => {
               >
                 {tab.icon}
                 {tab.label}
-                {tab.id === 'errors' && failedEvents.length > 0 && (
+                {tab.id === 'errors' && failedEvents && failedEvents.length > 0 && (
                   <span className="bg-red-100 text-red-800 text-xs font-medium px-2 py-0.5 rounded-full">
                     {failedEvents.length}
                   </span>
@@ -213,7 +213,7 @@ const WhatsAppBotPage = () => {
             <div>
               <p className="text-sm font-medium text-gray-600">Eventos Fallidos</p>
               <p className="text-lg font-semibold text-red-600">
-                {failedEvents.length}
+                {failedEvents ? failedEvents.length : 0}
               </p>
             </div>
             <div className="w-3 h-3 rounded-full bg-red-500"></div>

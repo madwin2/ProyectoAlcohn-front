@@ -159,7 +159,7 @@ const SystemLogs = ({ logs, loading, onLoadLogs }) => {
       )}
 
       {/* Logs */}
-      {logs.length === 0 ? (
+      {!logs || logs.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
           <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
           <p className="text-lg font-medium">No hay logs disponibles</p>
@@ -169,7 +169,7 @@ const SystemLogs = ({ logs, loading, onLoadLogs }) => {
         </div>
       ) : (
         <div className="space-y-2 max-h-96 overflow-y-auto">
-          {logs.map(log => (
+          {logs && logs.map(log => (
             <div key={log.id} className={`p-3 rounded-lg border ${getLevelColor(log.level)}`}>
               <div className="flex justify-between items-start">
                 <div className="flex-1">
