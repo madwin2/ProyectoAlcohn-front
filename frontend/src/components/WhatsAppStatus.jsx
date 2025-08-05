@@ -47,7 +47,7 @@ const WhatsAppStatus = ({
   };
 
   const getStatusIcon = (connected, type) => {
-    if (!status) {
+    if (!status || typeof status !== 'object') {
       return <AlertTriangle className="w-6 h-6 text-gray-400" />;
     }
     
@@ -67,7 +67,7 @@ const WhatsAppStatus = ({
   };
 
   const getStatusText = (connected, type) => {
-    if (!status) {
+    if (!status || typeof status !== 'object') {
       return 'Cargando...';
     }
     
@@ -79,7 +79,7 @@ const WhatsAppStatus = ({
   };
 
   const getStatusColor = (connected, type) => {
-    if (!status) {
+    if (!status || typeof status !== 'object') {
       return 'text-gray-400';
     }
     
@@ -185,15 +185,15 @@ const WhatsAppStatus = ({
         </div>
       </div>
       
-      {/* Información adicional */}
-      {status?.whatsappStatus && Object.keys(status.whatsappStatus).length > 0 && (
-        <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-          <h3 className="text-sm font-medium text-blue-800 mb-2">Estado Detallado de WhatsApp:</h3>
-          <pre className="text-xs text-blue-700 overflow-x-auto">
-            {JSON.stringify(status.whatsappStatus, null, 2)}
-          </pre>
-        </div>
-      )}
+             {/* Información adicional */}
+       {status?.whatsappStatus && typeof status.whatsappStatus === 'object' && Object.keys(status.whatsappStatus).length > 0 && (
+         <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+           <h3 className="text-sm font-medium text-blue-800 mb-2">Estado Detallado de WhatsApp:</h3>
+           <pre className="text-xs text-blue-700 overflow-x-auto">
+             {JSON.stringify(status.whatsappStatus, null, 2)}
+           </pre>
+         </div>
+       )}
     </div>
   );
 };

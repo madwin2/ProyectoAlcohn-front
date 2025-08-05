@@ -178,7 +178,7 @@ const SystemLogs = ({ logs, loading, onLoadLogs }) => {
                     <span className="font-medium">{log.message}</span>
                   </div>
                   
-                  {log.details && Object.keys(log.details).length > 0 && (
+                  {log.details && typeof log.details === 'object' && Object.keys(log.details).length > 0 && (
                     <details className="mt-2">
                       <summary className="text-sm cursor-pointer hover:underline">
                         Ver detalles

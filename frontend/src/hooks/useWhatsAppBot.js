@@ -43,7 +43,7 @@ export const useWhatsAppBot = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      setStatus(data);
+      setStatus(data && typeof data === 'object' ? data : null);
       return data;
     } catch (error) {
       handleApiError(error, botConfig.notifications.error.loadFailed);
