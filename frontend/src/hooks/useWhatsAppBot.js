@@ -276,6 +276,6 @@ export const useWhatsAppBot = () => {
     isConnected: status?.whatsappConnected || false,
     isBotEnabled: status?.botEnabled || false,
     uptime: status?.uptime || 0,
-    failedEventsCount: failedEvents.length
+         failedEventsCount: failedEvents ? failedEvents.length : 0
   };
 }; 

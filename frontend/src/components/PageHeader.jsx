@@ -64,7 +64,7 @@ const PageHeader = ({
                 color: '#71717a',
                 margin: '2px 0 0 0'
               }}>
-                {pedidos.length} activos
+                {pedidos ? pedidos.length : 0} activos
               </p>
             </div>
           </div>
@@ -107,8 +107,8 @@ const PageHeader = ({
             <button
               onClick={() => setShowSortPopover(!showSortPopover)}
               style={{
-                color: sortCriteria.length > 0 ? 'white' : '#a1a1aa',
-                background: sortCriteria.length > 0 ? 'rgba(39, 39, 42, 0.5)' : 'transparent',
+                color: sortCriteria && sortCriteria.length > 0 ? 'white' : '#a1a1aa',
+                background: sortCriteria && sortCriteria.length > 0 ? 'rgba(39, 39, 42, 0.5)' : 'transparent',
                 border: 'none',
                 padding: '8px',
                 borderRadius: '8px',
@@ -124,13 +124,13 @@ const PageHeader = ({
                 e.target.style.background = 'rgba(39, 39, 42, 0.5)';
               }}
               onMouseLeave={(e) => {
-                e.target.style.color = sortCriteria.length > 0 ? 'white' : '#a1a1aa';
-                e.target.style.background = sortCriteria.length > 0 ? 'rgba(39, 39, 42, 0.5)' : 'transparent';
+                e.target.style.color = sortCriteria && sortCriteria.length > 0 ? 'white' : '#a1a1aa';
+                e.target.style.background = sortCriteria && sortCriteria.length > 0 ? 'rgba(39, 39, 42, 0.5)' : 'transparent';
               }}
             >
               <ArrowUpDown style={{ width: '16px', height: '16px' }} />
               Ordenar
-              {sortCriteria.length > 0 && (
+              {sortCriteria && sortCriteria.length > 0 && (
                 <span style={{
                   background: '#3b82f6',
                   color: 'white',
@@ -143,7 +143,7 @@ const PageHeader = ({
                   fontSize: '10px',
                   fontWeight: '600'
                 }}>
-                  {sortCriteria.length}
+                  {sortCriteria ? sortCriteria.length : 0}
                 </span>
               )}
             </button>
