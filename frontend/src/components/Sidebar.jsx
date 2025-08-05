@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FiChevronRight, FiHome, FiBox } from "react-icons/fi";
-import { Shapes, Computer, CheckCircle } from "lucide-react";
+import { Shapes, Computer, CheckCircle, MessageSquare } from "lucide-react";
 import { useAuth } from '../hooks/useAuth.jsx';
 import { useTareasPendientes } from '../hooks/useTareasPendientes';
 import './Sidebar.css';
@@ -23,7 +23,8 @@ export default function Sidebar() {
     { to: "/vectorizacion", label: "Vectorización", icon: <Shapes /> },
     { to: "/produccion", label: "Producción", icon: <FiBox /> },
     { to: "/programas", label: "Programas", icon: <Computer /> },
-    { to: "/verificacion", label: "Verificación", icon: <CheckCircle /> }
+    { to: "/verificacion", label: "Verificación", icon: <CheckCircle /> },
+    { to: "/whatsapp-bot", label: "WhatsApp Bot", icon: <MessageSquare /> }
   ];
 
   return (

@@ -1,0 +1,206 @@
+/* Estilos específicos para la página de WhatsApp Bot */
+
+.whatsapp-bot-page {
+  min-height: 100vh;
+  background-color: #f8fafc;
+}
+
+/* Animaciones para los indicadores de estado */
+.status-indicator {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+
+/* Estilos para las pestañas */
+.tab-button {
+  position: relative;
+  transition: all 0.2s ease-in-out;
+}
+
+.tab-button:hover {
+  transform: translateY(-1px);
+}
+
+.tab-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #3b82f6;
+  border-radius: 1px;
+}
+
+/* Estilos para los cards de estado */
+.status-card {
+  transition: all 0.2s ease-in-out;
+  border: 1px solid #e5e7eb;
+}
+
+.status-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Estilos para los botones de acción */
+.action-button {
+  transition: all 0.2s ease-in-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.action-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.action-button:hover::before {
+  left: 100%;
+}
+
+/* Estilos para los logs */
+.log-entry {
+  transition: all 0.2s ease-in-out;
+}
+
+.log-entry:hover {
+  transform: translateX(4px);
+}
+
+/* Estilos para los eventos fallidos */
+.failed-event {
+  transition: all 0.2s ease-in-out;
+  border-left: 4px solid transparent;
+}
+
+.failed-event:hover {
+  border-left-color: #ef4444;
+  background-color: #fef2f2;
+}
+
+/* Estilos para los campos de configuración */
+.config-field {
+  transition: all 0.2s ease-in-out;
+}
+
+.config-field:focus-within {
+  transform: scale(1.01);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Estilos para las notificaciones de error */
+.error-banner {
+  animation: slideInDown 0.3s ease-out;
+}
+
+@keyframes slideInDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Estilos para los indicadores de carga */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Estilos para los badges de notificación */
+.notification-badge {
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-4px);
+  }
+  60% {
+    transform: translateY(-2px);
+  }
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+  .tab-navigation {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .tab-navigation::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .status-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .quick-actions {
+    flex-direction: column;
+  }
+  
+  .quick-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .status-summary {
+    grid-template-columns: 1fr;
+  }
+  
+  .help-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Estilos para el modo oscuro (si se implementa en el futuro) */
+@media (prefers-color-scheme: dark) {
+  .whatsapp-bot-page {
+    background-color: #1f2937;
+  }
+  
+  .status-card {
+    background-color: #374151;
+    border-color: #4b5563;
+  }
+  
+  .tab-button {
+    color: #d1d5db;
+  }
+  
+  .tab-button.active {
+    color: #60a5fa;
+  }
+} 

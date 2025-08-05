@@ -5,6 +5,7 @@ import VectorizacionPage from "./pages/VectorizacionPage";
 import ProduccionPage from "./pages/ProduccionPage";
 import ProgramasPage from "./pages/ProgramasPage";
 import VerificacionPage from "./pages/VerificacionPage";
+import WhatsAppBotPage from "./pages/WhatsAppBotPage";
 import ProfilePage from "./pages/ProfilePage";
 import LoginPage from "./pages/LoginPage";
 import Sidebar from './components/Sidebar';
@@ -41,6 +42,7 @@ function App() {
             <Route path="produccion" element={<ProduccionPage />} />
             <Route path="programas" element={<ProgramasPage />} />
             <Route path="verificacion" element={<VerificacionPage />} />
+            <Route path="whatsapp-bot" element={<WhatsAppBotPage />} />
             <Route path="profile" element={<ProfilePage />} />
           </Route>
         </Routes>
