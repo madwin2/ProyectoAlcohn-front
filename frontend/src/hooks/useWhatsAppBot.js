@@ -10,6 +10,7 @@ export const useWhatsAppBot = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [updating, setUpdating] = useState(false);
+  const [apiAvailable, setApiAvailable] = useState(true);
   
   const statusIntervalRef = useRef(null);
   const { showNotification } = useNotification();
@@ -75,6 +76,7 @@ export const useWhatsAppBot = () => {
       const data = await response.json();
       setStatus(data && typeof data === 'object' ? data : null);
       setError(null); // Limpiar error si la carga fue exitosa
+      setApiAvailable(true); // Marcar API como disponible
       return data;
     } catch (error) {
       console.error('Error cargando estado del bot:', error);
@@ -83,6 +85,7 @@ export const useWhatsAppBot = () => {
         await new Promise(resolve => setTimeout(resolve, 1000)); // Esperar 1 segundo
         return loadStatus(retryCount + 1);
       }
+      setApiAvailable(false); // Marcar API como no disponible
       handleApiError(error, 'API del bot no disponible. Verifica que el servidor esté funcionando.');
       return null;
     }
@@ -309,10 +312,11 @@ export const useWhatsAppBot = () => {
     retryEvent,
     refreshAll,
     
-    // Utilidades
-    isConnected: status?.whatsappConnected || false,
-    isBotEnabled: status?.botEnabled || false,
-    uptime: status?.uptime || 0,
-         failedEventsCount: failedEvents ? failedEvents.length : 0
+         // Utilidades
+     isConnected: status?.whatsappConnected || false,
+     isBotEnabled: status?.botEnabled || false,
+     uptime: status?.uptime || 0,
+     failedEventsCount: failedEvents ? failedEvents.length : 0,
+     apiAvailable
   };
 }; 

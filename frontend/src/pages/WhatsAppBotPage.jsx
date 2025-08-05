@@ -10,21 +10,22 @@ import './WhatsAppBotPage.css';
 
 const WhatsAppBotPage = () => {
   const [activeTab, setActiveTab] = useState('status');
-  const {
-    status,
-    config,
-    failedEvents,
-    logs,
-    loading,
-    error,
-    updating,
-    updateMessage,
-    toggleBot,
-    reconnectWhatsApp,
-    retryEvent,
-    loadLogs,
-    refreshAll
-  } = useWhatsAppBot();
+     const {
+     status,
+     config,
+     failedEvents,
+     logs,
+     loading,
+     error,
+     updating,
+     apiAvailable,
+     updateMessage,
+     toggleBot,
+     reconnectWhatsApp,
+     retryEvent,
+     loadLogs,
+     refreshAll
+   } = useWhatsAppBot();
 
   const tabs = [
     {
@@ -109,13 +110,30 @@ const WhatsAppBotPage = () => {
          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
            <div className="flex items-center gap-2">
              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-             <span className="text-red-800 font-medium">Error de conexión</span>
+             <span className="text-red-800 font-medium">
+               {apiAvailable ? 'Error de conexión' : 'API no disponible'}
+             </span>
            </div>
            <p className="text-red-700 text-sm mt-1">{error}</p>
-           <p className="text-red-600 text-xs mt-2">
-             💡 <strong>Consejo:</strong> La API puede estar temporalmente no disponible. 
-             El sistema reintentará automáticamente en 30 segundos.
-           </p>
+           <div className="text-red-600 text-xs mt-2 space-y-1">
+             <p>
+               💡 <strong>Consejo:</strong> La API puede estar temporalmente no disponible. 
+               El sistema reintentará automáticamente en 30 segundos.
+             </p>
+             {!apiAvailable && (
+               <p>
+               🔧 <strong>Acciones:</strong> 
+               <a 
+                 href="https://4fc54c5b7810.ngrok-free.app/status" 
+                 target="_blank" 
+                 rel="noopener noreferrer"
+                 className="text-blue-600 hover:underline ml-1"
+               >
+                 Verificar estado del servidor
+               </a>
+               </p>
+             )}
+           </div>
          </div>
        )}
 
@@ -155,34 +173,44 @@ const WhatsAppBotPage = () => {
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold mb-4">Acciones Rápidas</h3>
         <div className="flex flex-wrap gap-3">
-          <button
-            onClick={() => refreshAll()}
-            disabled={updating}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-md text-sm font-medium transition-colors"
-          >
-            <RefreshCw className={`w-4 h-4 ${updating ? 'animate-spin' : ''}`} />
-            Actualizar Todo
-          </button>
+                     <button
+             onClick={() => refreshAll()}
+             disabled={updating || !apiAvailable}
+             className={`flex items-center gap-2 px-4 py-2 text-white rounded-md text-sm font-medium transition-colors ${
+               !apiAvailable 
+                 ? 'bg-gray-400 cursor-not-allowed' 
+                 : 'bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400'
+             }`}
+           >
+             <RefreshCw className={`w-4 h-4 ${updating ? 'animate-spin' : ''}`} />
+             Actualizar Todo
+           </button>
           
-          <button
-            onClick={() => toggleBot(!status?.botEnabled)}
-            disabled={updating}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              status?.botEnabled
-                ? 'bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white'
-                : 'bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white'
-            }`}
-          >
-            {status?.botEnabled ? 'Pausar Bot' : 'Activar Bot'}
-          </button>
+                     <button
+             onClick={() => toggleBot(!status?.botEnabled)}
+             disabled={updating || !apiAvailable}
+             className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+               !apiAvailable
+                 ? 'bg-gray-400 cursor-not-allowed text-white'
+                 : status?.botEnabled
+                   ? 'bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white'
+                   : 'bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white'
+             }`}
+           >
+             {!apiAvailable ? 'API no disponible' : status?.botEnabled ? 'Pausar Bot' : 'Activar Bot'}
+           </button>
           
-          <button
-            onClick={reconnectWhatsApp}
-            disabled={updating}
-            className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 text-white rounded-md text-sm font-medium transition-colors"
-          >
-            Reconectar WhatsApp
-          </button>
+                     <button
+             onClick={reconnectWhatsApp}
+             disabled={updating || !apiAvailable}
+             className={`flex items-center gap-2 px-4 py-2 text-white rounded-md text-sm font-medium transition-colors ${
+               !apiAvailable 
+                 ? 'bg-gray-400 cursor-not-allowed' 
+                 : 'bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400'
+             }`}
+           >
+             {!apiAvailable ? 'API no disponible' : 'Reconectar WhatsApp'}
+           </button>
         </div>
       </div>
 
