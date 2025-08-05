@@ -225,6 +225,8 @@ export const mostrarDesgloseTiempos = (res) => {
   console.group('Desglose CNC');
   console.log('Área:', res.detalles.area);
   console.log('Perímetro:', res.detalles.perimetro);
-  Object.values(res.detalles.operaciones).forEach(o => console.log(`${o.nombre}: ${o.tiempo.toFixed(2)} min`));
+  if (res.detalles.operaciones && typeof res.detalles.operaciones === 'object') {
+    Object.values(res.detalles.operaciones).forEach(o => console.log(`${o.nombre}: ${o.tiempo.toFixed(2)} min`));
+  }
   console.groupEnd();
 };
