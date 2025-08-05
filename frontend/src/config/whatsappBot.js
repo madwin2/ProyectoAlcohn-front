@@ -5,7 +5,7 @@ const config = {
   API_BASE: process.env.REACT_APP_BOT_API || 'https://4fc54c5b7810.ngrok-free.app',
   
   // Intervalo de actualización automática (en milisegundos)
-  POLLING_INTERVAL: 10000, // 10 segundos
+  POLLING_INTERVAL: 30000, // 30 segundos
   
   // Timeout para las peticiones HTTP (en milisegundos)
   REQUEST_TIMEOUT: 30000, // 30 segundos

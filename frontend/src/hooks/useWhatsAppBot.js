@@ -18,31 +18,53 @@ export const useWhatsAppBot = () => {
   const handleApiError = useCallback((error, message = 'Error en la operación') => {
     console.error('API Error:', error);
     setError(error.message || message);
-    showNotification({
-      type: 'error',
-      title: 'Error',
-      message: error.message || message
-    });
+    
+    // Solo mostrar notificación si showNotification está disponible
+    try {
+      if (showNotification && typeof showNotification === 'function') {
+        showNotification({
+          type: 'error',
+          title: 'Error',
+          message: error.message || message
+        });
+      }
+    } catch (notificationError) {
+      console.error('Error showing notification:', notificationError);
+    }
   }, [showNotification]);
 
   // Función para manejar respuestas exitosas
   const handleApiSuccess = useCallback((message = 'Operación exitosa') => {
     setError(null);
-    showNotification({
-      type: 'success',
-      title: 'Éxito',
-      message
-    });
+    
+    // Solo mostrar notificación si showNotification está disponible
+    try {
+      if (showNotification && typeof showNotification === 'function') {
+        showNotification({
+          type: 'success',
+          title: 'Éxito',
+          message
+        });
+      }
+    } catch (notificationError) {
+      console.error('Error showing notification:', notificationError);
+    }
   }, [showNotification]);
 
-  // Cargar estado del bot
-  const loadStatus = useCallback(async () => {
+  // Cargar estado del bot con reintentos
+  const loadStatus = useCallback(async (retryCount = 0) => {
     try {
       const response = await fetch(`${botConfig.API_BASE}${botConfig.endpoints.status}`);
       
       // Verificar si la respuesta es JSON
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
+        // Si no es JSON y tenemos reintentos disponibles, reintentar
+        if (retryCount < 2) {
+          console.log(`Reintentando carga de estado (${retryCount + 1}/3)...`);
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Esperar 1 segundo
+          return loadStatus(retryCount + 1);
+        }
         throw new Error(`API no disponible. Servidor devolvió: ${contentType || 'text/html'}`);
       }
       
@@ -52,9 +74,15 @@ export const useWhatsAppBot = () => {
       
       const data = await response.json();
       setStatus(data && typeof data === 'object' ? data : null);
+      setError(null); // Limpiar error si la carga fue exitosa
       return data;
     } catch (error) {
       console.error('Error cargando estado del bot:', error);
+      if (retryCount < 2) {
+        console.log(`Reintentando carga de estado (${retryCount + 1}/3)...`);
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Esperar 1 segundo
+        return loadStatus(retryCount + 1);
+      }
       handleApiError(error, 'API del bot no disponible. Verifica que el servidor esté funcionando.');
       return null;
     }

@@ -104,16 +104,20 @@ const WhatsAppBotPage = () => {
         icon={<MessageSquare className="w-6 h-6" />}
       />
 
-      {/* Error Banner */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-            <span className="text-red-800 font-medium">Error de conexión</span>
-          </div>
-          <p className="text-red-700 text-sm mt-1">{error}</p>
-        </div>
-      )}
+             {/* Error Banner */}
+       {error && (
+         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+           <div className="flex items-center gap-2">
+             <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+             <span className="text-red-800 font-medium">Error de conexión</span>
+           </div>
+           <p className="text-red-700 text-sm mt-1">{error}</p>
+           <p className="text-red-600 text-xs mt-2">
+             💡 <strong>Consejo:</strong> La API puede estar temporalmente no disponible. 
+             El sistema reintentará automáticamente en 30 segundos.
+           </p>
+         </div>
+       )}
 
       {/* Tabs Navigation */}
       <div className="bg-white rounded-lg shadow">
