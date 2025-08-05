@@ -4,6 +4,9 @@ const config = {
   // URL base de la API del bot
   API_BASE: process.env.REACT_APP_BOT_API || 'https://4fc54c5b7810.ngrok-free.app',
   
+  // Modo de demostración (cuando la API no está disponible)
+  DEMO_MODE: process.env.REACT_APP_DEMO_MODE === 'true' || false,
+  
   // Intervalo de actualización automática (en milisegundos)
   POLLING_INTERVAL: 30000, // 30 segundos
   

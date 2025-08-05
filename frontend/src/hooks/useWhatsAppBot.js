@@ -55,6 +55,21 @@ export const useWhatsAppBot = () => {
   // Cargar estado del bot con reintentos
   const loadStatus = useCallback(async (retryCount = 0) => {
     try {
+      // Si estamos en modo demo, usar datos de ejemplo
+      if (botConfig.DEMO_MODE) {
+        const demoData = {
+          botEnabled: true,
+          whatsappConnected: true,
+          uptime: 3600, // 1 hora
+          lastActivity: new Date().toISOString(),
+          version: '1.0.0'
+        };
+        setStatus(demoData);
+        setError(null);
+        setApiAvailable(true);
+        return demoData;
+      }
+
       const response = await fetch(`${botConfig.API_BASE}${botConfig.endpoints.status}`);
       
       // Verificar si la respuesta es JSON
