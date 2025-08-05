@@ -47,15 +47,19 @@ const WhatsAppStatus = ({
   };
 
   const getStatusIcon = (connected, type) => {
+    if (!status) {
+      return <AlertTriangle className="w-6 h-6 text-gray-400" />;
+    }
+    
     if (type === 'bot') {
-      return status?.botEnabled ? (
+      return status.botEnabled ? (
         <CheckCircle className="w-6 h-6 text-green-600" />
       ) : (
         <XCircle className="w-6 h-6 text-red-600" />
       );
     }
     
-    return status?.whatsappConnected ? (
+    return status.whatsappConnected ? (
       <Wifi className="w-6 h-6 text-green-600" />
     ) : (
       <WifiOff className="w-6 h-6 text-red-600" />
@@ -63,19 +67,27 @@ const WhatsAppStatus = ({
   };
 
   const getStatusText = (connected, type) => {
-    if (type === 'bot') {
-      return status?.botEnabled ? 'Activo' : 'Pausado';
+    if (!status) {
+      return 'Cargando...';
     }
     
-    return status?.whatsappConnected ? 'Conectado' : 'Desconectado';
+    if (type === 'bot') {
+      return status.botEnabled ? 'Activo' : 'Pausado';
+    }
+    
+    return status.whatsappConnected ? 'Conectado' : 'Desconectado';
   };
 
   const getStatusColor = (connected, type) => {
-    if (type === 'bot') {
-      return status?.botEnabled ? 'text-green-600' : 'text-red-600';
+    if (!status) {
+      return 'text-gray-400';
     }
     
-    return status?.whatsappConnected ? 'text-green-600' : 'text-red-600';
+    if (type === 'bot') {
+      return status.botEnabled ? 'text-green-600' : 'text-red-600';
+    }
+    
+    return status.whatsappConnected ? 'text-green-600' : 'text-red-600';
   };
 
   return (
@@ -97,16 +109,19 @@ const WhatsAppStatus = ({
           <div className="text-sm text-gray-600 mb-3">Bot</div>
           <button 
             onClick={() => onToggleBot(!status?.botEnabled)}
-            disabled={updating}
+            disabled={updating || !status}
             className={`px-4 py-2 rounded text-white text-sm font-medium transition-colors ${
-              status?.botEnabled 
+              !status ? 'bg-gray-400 cursor-not-allowed' :
+              status.botEnabled 
                 ? 'bg-red-600 hover:bg-red-700 disabled:bg-red-400' 
                 : 'bg-green-600 hover:bg-green-700 disabled:bg-green-400'
             }`}
           >
             {updating ? (
               <RefreshCw className="w-4 h-4 animate-spin mx-auto" />
-            ) : status?.botEnabled ? (
+            ) : !status ? (
+              'Cargando...'
+            ) : status.botEnabled ? (
               <>
                 <Pause className="w-4 h-4 inline mr-1" />
                 Pausar
@@ -131,8 +146,10 @@ const WhatsAppStatus = ({
           <div className="text-sm text-gray-600 mb-3">WhatsApp</div>
           <button 
             onClick={onReconnectWhatsApp}
-            disabled={updating}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded text-sm font-medium transition-colors"
+            disabled={updating || !status}
+            className={`px-4 py-2 text-white rounded text-sm font-medium transition-colors ${
+              !status ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400'
+            }`}
           >
             {updating ? (
               <RefreshCw className="w-4 h-4 animate-spin mx-auto" />

@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNotification } from './useNotification';
-import config from '../config/whatsappBot';
+import botConfig from '../config/whatsappBot';
 
 export const useWhatsAppBot = () => {
   const [status, setStatus] = useState(null);
-  const [config, setConfig] = useState(null);
+  const [messageConfig, setMessageConfig] = useState(null);
   const [failedEvents, setFailedEvents] = useState([]);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +38,7 @@ export const useWhatsAppBot = () => {
   // Cargar estado del bot
   const loadStatus = useCallback(async () => {
     try {
-      const response = await fetch(`${config.API_BASE}${config.endpoints.status}`);
+      const response = await fetch(`${botConfig.API_BASE}${botConfig.endpoints.status}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -46,7 +46,7 @@ export const useWhatsAppBot = () => {
       setStatus(data);
       return data;
     } catch (error) {
-      handleApiError(error, config.notifications.error.loadFailed);
+      handleApiError(error, botConfig.notifications.error.loadFailed);
       return null;
     }
   }, [handleApiError]);
@@ -54,23 +54,23 @@ export const useWhatsAppBot = () => {
   // Cargar configuración de mensajes
   const loadConfig = useCallback(async () => {
     try {
-      const response = await fetch(`${config.API_BASE}${config.endpoints.configMessages}`);
+      const response = await fetch(`${botConfig.API_BASE}${botConfig.endpoints.configMessages}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      setConfig(Array.isArray(data) ? data : []);
+      setMessageConfig(Array.isArray(data) ? data : []);
       return data;
     } catch (error) {
-      handleApiError(error, config.notifications.error.loadFailed);
+      handleApiError(error, botConfig.notifications.error.loadFailed);
       return [];
     }
   }, [handleApiError]);
 
   // Cargar eventos fallidos
-  const loadFailedEvents = useCallback(async (limit = config.DEFAULT_FAILED_EVENTS_LIMIT) => {
+  const loadFailedEvents = useCallback(async (limit = botConfig.DEFAULT_FAILED_EVENTS_LIMIT) => {
     try {
-      const response = await fetch(`${config.API_BASE}${config.endpoints.failedEvents}?limit=${limit}`);
+      const response = await fetch(`${botConfig.API_BASE}${botConfig.endpoints.failedEvents}?limit=${limit}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -78,15 +78,15 @@ export const useWhatsAppBot = () => {
       setFailedEvents(Array.isArray(data) ? data : []);
       return data;
     } catch (error) {
-      handleApiError(error, config.notifications.error.loadFailed);
+      handleApiError(error, botConfig.notifications.error.loadFailed);
       return [];
     }
   }, [handleApiError]);
 
   // Cargar logs del sistema
-  const loadLogs = useCallback(async (limit = config.DEFAULT_LOG_LIMIT, level = null) => {
+  const loadLogs = useCallback(async (limit = botConfig.DEFAULT_LOG_LIMIT, level = null) => {
     try {
-      let url = `${config.API_BASE}${config.endpoints.logs}?limit=${limit}`;
+      let url = `${botConfig.API_BASE}${botConfig.endpoints.logs}?limit=${limit}`;
       if (level) {
         url += `&level=${level}`;
       }
@@ -99,7 +99,7 @@ export const useWhatsAppBot = () => {
       setLogs(Array.isArray(data) ? data : []);
       return data;
     } catch (error) {
-      handleApiError(error, config.notifications.error.loadFailed);
+      handleApiError(error, botConfig.notifications.error.loadFailed);
       return [];
     }
   }, [handleApiError]);
@@ -108,7 +108,7 @@ export const useWhatsAppBot = () => {
   const updateMessage = useCallback(async (key, newValue, updatedBy = 'admin') => {
     try {
       setUpdating(true);
-      const response = await fetch(`${config.API_BASE}${config.endpoints.updateMessage(key)}`, {
+      const response = await fetch(`${botConfig.API_BASE}${botConfig.endpoints.updateMessage(key)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -122,10 +122,10 @@ export const useWhatsAppBot = () => {
       }
       
       await loadConfig(); // Recargar configuración
-      handleApiSuccess(config.notifications.success.messageUpdated);
+      handleApiSuccess(botConfig.notifications.success.messageUpdated);
       return true;
     } catch (error) {
-      handleApiError(error, config.notifications.error.messageUpdateFailed);
+      handleApiError(error, botConfig.notifications.error.messageUpdateFailed);
       return false;
     } finally {
       setUpdating(false);
@@ -136,7 +136,7 @@ export const useWhatsAppBot = () => {
   const toggleBot = useCallback(async (enabled, updatedBy = 'admin') => {
     try {
       setUpdating(true);
-      const response = await fetch(`${config.API_BASE}${config.endpoints.toggleBot}`, {
+      const response = await fetch(`${botConfig.API_BASE}${botConfig.endpoints.toggleBot}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -150,10 +150,10 @@ export const useWhatsAppBot = () => {
       }
       
       await loadStatus();
-      handleApiSuccess(config.notifications.success.botToggled(enabled));
+      handleApiSuccess(botConfig.notifications.success.botToggled(enabled));
       return true;
     } catch (error) {
-      handleApiError(error, config.notifications.error.botToggleFailed);
+      handleApiError(error, botConfig.notifications.error.botToggleFailed);
       return false;
     } finally {
       setUpdating(false);
@@ -164,7 +164,7 @@ export const useWhatsAppBot = () => {
   const reconnectWhatsApp = useCallback(async () => {
     try {
       setUpdating(true);
-      const response = await fetch(`${config.API_BASE}${config.endpoints.reconnect}`, {
+      const response = await fetch(`${botConfig.API_BASE}${botConfig.endpoints.reconnect}`, {
         method: 'POST'
       });
       
@@ -172,7 +172,7 @@ export const useWhatsAppBot = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      handleApiSuccess(config.notifications.success.reconnected);
+      handleApiSuccess(botConfig.notifications.success.reconnected);
       
       // Esperar un poco y recargar estado
       setTimeout(() => {
@@ -181,7 +181,7 @@ export const useWhatsAppBot = () => {
       
       return true;
     } catch (error) {
-      handleApiError(error, config.notifications.error.reconnectFailed);
+      handleApiError(error, botConfig.notifications.error.reconnectFailed);
       return false;
     } finally {
       setUpdating(false);
@@ -192,7 +192,7 @@ export const useWhatsAppBot = () => {
   const retryEvent = useCallback(async (eventId) => {
     try {
       setUpdating(true);
-      const response = await fetch(`${config.API_BASE}${config.endpoints.retryEvent(eventId)}`, {
+      const response = await fetch(`${botConfig.API_BASE}${botConfig.endpoints.retryEvent(eventId)}`, {
         method: 'POST'
       });
       
@@ -201,10 +201,10 @@ export const useWhatsAppBot = () => {
       }
       
       await loadFailedEvents();
-      handleApiSuccess(config.notifications.success.eventRetried);
+      handleApiSuccess(botConfig.notifications.success.eventRetried);
       return true;
     } catch (error) {
-      handleApiError(error, config.notifications.error.eventRetryFailed);
+      handleApiError(error, botConfig.notifications.error.eventRetryFailed);
       return false;
     } finally {
       setUpdating(false);
@@ -236,7 +236,7 @@ export const useWhatsAppBot = () => {
     // Configurar intervalo para actualizar estado automáticamente
     statusIntervalRef.current = setInterval(() => {
       loadStatus();
-    }, config.POLLING_INTERVAL);
+    }, botConfig.POLLING_INTERVAL);
 
     // Cleanup al desmontar
     return () => {
@@ -254,7 +254,7 @@ export const useWhatsAppBot = () => {
   return {
     // Estado
     status,
-    config,
+    config: messageConfig,
     failedEvents,
     logs,
     loading,
