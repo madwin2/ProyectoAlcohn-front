@@ -36,7 +36,7 @@ const MessageConfig = ({ config, loading, updating, onUpdateMessage }) => {
     }
 
     const timer = setTimeout(() => {
-      if (currentValue !== config.find(c => c.config_key === key)?.config_value) {
+      if (config && currentValue !== config.find(c => c.config_key === key)?.config_value) {
         onUpdateMessage(key, currentValue);
       }
     }, 1000);
@@ -73,7 +73,7 @@ const MessageConfig = ({ config, loading, updating, onUpdateMessage }) => {
     );
   }
 
-  const messageConfigs = config.filter(c => c.config_key.startsWith('mensaje_'));
+  const messageConfigs = config ? config.filter(c => c.config_key.startsWith('mensaje_')) : [];
 
   return (
     <div className="bg-white rounded-lg shadow p-6">

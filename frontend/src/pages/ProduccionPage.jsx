@@ -361,7 +361,7 @@ function ProduccionPage() {
     });
   };
 
-  const hayFiltrosActivos = Object.values(filters).some((filtro) => filtro !== "" && filtro !== null && (!Array.isArray(filtro) || filtro.length > 0));
+  const hayFiltrosActivos = filters && Object.values(filters).some((filtro) => filtro !== "" && filtro !== null && (!Array.isArray(filtro) || filtro.length > 0));
 
   // Campos disponibles para ordenamiento en producción
   const sortFields = [

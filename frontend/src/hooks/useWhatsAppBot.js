@@ -4,7 +4,7 @@ import config from '../config/whatsappBot';
 
 export const useWhatsAppBot = () => {
   const [status, setStatus] = useState(null);
-  const [config, setConfig] = useState([]);
+  const [config, setConfig] = useState(null);
   const [failedEvents, setFailedEvents] = useState([]);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -59,7 +59,7 @@ export const useWhatsAppBot = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      setConfig(data);
+      setConfig(Array.isArray(data) ? data : []);
       return data;
     } catch (error) {
       handleApiError(error, config.notifications.error.loadFailed);
@@ -75,7 +75,7 @@ export const useWhatsAppBot = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      setFailedEvents(data);
+      setFailedEvents(Array.isArray(data) ? data : []);
       return data;
     } catch (error) {
       handleApiError(error, config.notifications.error.loadFailed);
@@ -96,7 +96,7 @@ export const useWhatsAppBot = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      setLogs(data);
+      setLogs(Array.isArray(data) ? data : []);
       return data;
     } catch (error) {
       handleApiError(error, config.notifications.error.loadFailed);
