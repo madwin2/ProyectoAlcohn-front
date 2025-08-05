@@ -4,7 +4,7 @@ import botConfig from '../config/whatsappBot';
 
 export const useWhatsAppBot = () => {
   const [status, setStatus] = useState(null);
-  const [messageConfig, setMessageConfig] = useState(null);
+  const [messageConfig, setMessageConfig] = useState([]);
   const [failedEvents, setFailedEvents] = useState([]);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
