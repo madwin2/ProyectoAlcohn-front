@@ -41,9 +41,7 @@ export const getEstadoStyle = (estado, tipo) => {
 
 // Función para verificar si hay filtros activos
 export const hayFiltrosActivos = (filters) => {
-  if (!filters || typeof filters !== 'object') {
-    return false;
-  }
+  if (!filters || typeof filters !== 'object') return false;
   return Object.values(filters).some((filtro) => 
     filtro !== "" && filtro !== null && (!Array.isArray(filtro) || filtro.length > 0)
   );

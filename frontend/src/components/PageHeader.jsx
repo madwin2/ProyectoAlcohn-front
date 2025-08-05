@@ -20,7 +20,7 @@ const PageHeader = ({
   ordenPopover, // NUEVO: componente popover de ordenar
   ordenEstadosFabricacion // <-- Agregado aquí
 }) => {
-  const hayFiltros = hayFiltrosActivos(filters);
+  const hayFiltros = filters ? hayFiltrosActivos(filters) : false;
 
   return (
     <div style={{
