@@ -39,14 +39,23 @@ export const useWhatsAppBot = () => {
   const loadStatus = useCallback(async () => {
     try {
       const response = await fetch(`${botConfig.API_BASE}${botConfig.endpoints.status}`);
+      
+      // Verificar si la respuesta es JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error(`API no disponible. Servidor devolvió: ${contentType || 'text/html'}`);
+      }
+      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
       const data = await response.json();
       setStatus(data && typeof data === 'object' ? data : null);
       return data;
     } catch (error) {
-      handleApiError(error, botConfig.notifications.error.loadFailed);
+      console.error('Error cargando estado del bot:', error);
+      handleApiError(error, 'API del bot no disponible. Verifica que el servidor esté funcionando.');
       return null;
     }
   }, [handleApiError]);

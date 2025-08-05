@@ -5,7 +5,7 @@ import MessageConfig from '../components/MessageConfig';
 import FailedEvents from '../components/FailedEvents';
 import SystemLogs from '../components/SystemLogs';
 import { useWhatsAppBot } from '../hooks/useWhatsAppBot';
-import PageHeader from '../components/PageHeader';
+import WhatsAppBotHeader from '../components/WhatsAppBotHeader';
 import './WhatsAppBotPage.css';
 
 const WhatsAppBotPage = () => {
@@ -98,7 +98,7 @@ const WhatsAppBotPage = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <PageHeader
+      <WhatsAppBotHeader
         title="Administración WhatsApp Bot"
         subtitle="Gestiona la automatización de mensajes de WhatsApp"
         icon={<MessageSquare className="w-6 h-6" />}
