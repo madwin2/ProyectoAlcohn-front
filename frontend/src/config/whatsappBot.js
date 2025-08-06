@@ -5,7 +5,7 @@ const config = {
   API_BASE: process.env.REACT_APP_BOT_API || (process.env.NODE_ENV === 'development' ? '/api/bot' : 'https://webhook.alcohncnc.com'),
   
   // Modo de demostración (cuando la API no está disponible)
-  DEMO_MODE: process.env.REACT_APP_DEMO_MODE === 'true' || false,
+  DEMO_MODE: process.env.REACT_APP_DEMO_MODE === 'true' || true, // Temporalmente activado
   
   // Intervalo de actualización automática (en milisegundos)
   POLLING_INTERVAL: 30000, // 30 segundos
