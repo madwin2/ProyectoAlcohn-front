@@ -23,18 +23,14 @@ const WhatsAppStatus = ({
 }) => {
   if (loading) {
     return (
-      <div className="bg-gray-900 rounded-lg border border-gray-700 p-6">
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-700 rounded w-1/3 mb-6"></div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="text-center">
-                <div className="h-8 bg-gray-700 rounded mb-2"></div>
-                <div className="h-4 bg-gray-700 rounded w-3/4 mx-auto"></div>
-              </div>
-            ))}
+      <div className="status-grid">
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="status-card animate-pulse">
+            <div className="h-6 bg-gray-700 rounded w-3/4 mb-4"></div>
+            <div className="h-8 bg-gray-700 rounded mb-2"></div>
+            <div className="h-4 bg-gray-700 rounded w-1/2"></div>
           </div>
-        </div>
+        ))}
       </div>
     );
   }
@@ -81,35 +77,23 @@ const WhatsAppStatus = ({
     return status.whatsappConnected ? 'Conectado' : 'Desconectado';
   };
 
-  const getStatusColor = (connected, type) => {
+  const getStatusClass = (connected, type) => {
     if (!status || typeof status !== 'object') {
-      return 'text-gray-400';
+      return 'inactive';
     }
     
     if (type === 'bot') {
-      return status.botEnabled ? 'text-green-400' : 'text-red-400';
+      return status.botEnabled ? 'active' : 'inactive';
     }
     
-    return status.whatsappConnected ? 'text-green-400' : 'text-red-400';
-  };
-
-  const getStatusBg = (connected, type) => {
-    if (!status || typeof status !== 'object') {
-      return 'bg-gray-800';
-    }
-    
-    if (type === 'bot') {
-      return status.botEnabled ? 'bg-green-900/20 border-green-500/20' : 'bg-red-900/20 border-red-500/20';
-    }
-    
-    return status.whatsappConnected ? 'bg-green-900/20 border-green-500/20' : 'bg-red-900/20 border-red-500/20';
+    return status.whatsappConnected ? 'active' : 'inactive';
   };
 
   return (
     <div className="space-y-6">
       {/* Header Section */}
-      <div className="bg-gray-900 rounded-lg border border-gray-700 p-6">
-        <div className="flex items-center justify-between mb-6">
+      <div className="status-card">
+        <div className="status-card-header">
           <div className="flex items-center gap-3">
             <Activity className="w-6 h-6 text-blue-400" />
             <h2 className="text-xl font-semibold text-white">Estado del Sistema</h2>
@@ -123,38 +107,38 @@ const WhatsAppStatus = ({
         </div>
         
         {/* Status Cards Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="status-grid">
           {/* Estado del Bot */}
-          <div className={`text-center p-4 rounded-lg border ${getStatusBg(status?.whatsappConnected, 'bot')} transition-all duration-200 hover:scale-105`}>
-            <div className="flex justify-center mb-3">
-              {getStatusIcon(status?.whatsappConnected, 'bot')}
+          <div className={`status-card ${getStatusClass(status?.whatsappConnected, 'bot')}`}>
+            <div className="status-card-header">
+              <div className="flex items-center gap-2">
+                {getStatusIcon(status?.whatsappConnected, 'bot')}
+                <div>
+                  <div className={`status-card-value ${getStatusClass(status?.whatsappConnected, 'bot')}`}>
+                    {getStatusText(status?.whatsappConnected, 'bot')}
+                  </div>
+                  <div className="status-card-title">Bot de Mensajes</div>
+                </div>
+              </div>
+              <div className={`status-indicator ${getStatusClass(status?.whatsappConnected, 'bot')}`}></div>
             </div>
-            <div className={`text-lg font-bold ${getStatusColor(status?.whatsappConnected, 'bot')} mb-1`}>
-              {getStatusText(status?.whatsappConnected, 'bot')}
-            </div>
-            <div className="text-sm text-gray-400 mb-4">Bot de Mensajes</div>
             <button 
               onClick={() => onToggleBot(!status?.botEnabled)}
               disabled={updating || !status}
-              className={`w-full px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                !status ? 'bg-gray-700 text-gray-500 cursor-not-allowed' :
-                status.botEnabled 
-                  ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-red-500/25' 
-                  : 'bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-green-500/25'
-              }`}
+              className={`action-button ${status?.botEnabled ? 'danger' : 'success'}`}
             >
               {updating ? (
-                <RefreshCw className="w-4 h-4 animate-spin mx-auto" />
+                <RefreshCw className="w-4 h-4 animate-spin" />
               ) : !status ? (
                 'Cargando...'
               ) : status.botEnabled ? (
                 <>
-                  <Pause className="w-4 h-4 inline mr-2" />
+                  <Pause className="w-4 h-4" />
                   Pausar
                 </>
               ) : (
                 <>
-                  <Play className="w-4 h-4 inline mr-2" />
+                  <Play className="w-4 h-4" />
                   Activar
                 </>
               )}
@@ -162,27 +146,29 @@ const WhatsAppStatus = ({
           </div>
           
           {/* Estado de WhatsApp */}
-          <div className={`text-center p-4 rounded-lg border ${getStatusBg(status?.whatsappConnected, 'whatsapp')} transition-all duration-200 hover:scale-105`}>
-            <div className="flex justify-center mb-3">
-              {getStatusIcon(status?.whatsappConnected, 'whatsapp')}
+          <div className={`status-card ${getStatusClass(status?.whatsappConnected, 'whatsapp')}`}>
+            <div className="status-card-header">
+              <div className="flex items-center gap-2">
+                {getStatusIcon(status?.whatsappConnected, 'whatsapp')}
+                <div>
+                  <div className={`status-card-value ${getStatusClass(status?.whatsappConnected, 'whatsapp')}`}>
+                    {getStatusText(status?.whatsappConnected, 'whatsapp')}
+                  </div>
+                  <div className="status-card-title">Conexión WhatsApp</div>
+                </div>
+              </div>
+              <div className={`status-indicator ${getStatusClass(status?.whatsappConnected, 'whatsapp')}`}></div>
             </div>
-            <div className={`text-lg font-bold ${getStatusColor(status?.whatsappConnected, 'whatsapp')} mb-1`}>
-              {getStatusText(status?.whatsappConnected, 'whatsapp')}
-            </div>
-            <div className="text-sm text-gray-400 mb-4">Conexión WhatsApp</div>
             <button 
               onClick={onReconnectWhatsApp}
               disabled={updating || !status}
-              className={`w-full px-3 py-2 text-white rounded-md text-sm font-medium transition-all duration-200 ${
-                !status ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 
-                'bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-blue-500/25'
-              }`}
+              className="action-button primary"
             >
               {updating ? (
-                <RefreshCw className="w-4 h-4 animate-spin mx-auto" />
+                <RefreshCw className="w-4 h-4 animate-spin" />
               ) : (
                 <>
-                  <RefreshCw className="w-4 h-4 inline mr-2" />
+                  <RefreshCw className="w-4 h-4" />
                   Reconectar
                 </>
               )}
@@ -190,32 +176,42 @@ const WhatsAppStatus = ({
           </div>
           
           {/* Tiempo Activo */}
-          <div className="text-center p-4 rounded-lg border border-gray-700 bg-gray-800/50 transition-all duration-200 hover:scale-105">
-            <div className="flex justify-center mb-3">
-              <Clock className="w-6 h-6 text-blue-400" />
+          <div className="status-card">
+            <div className="status-card-header">
+              <div className="flex items-center gap-2">
+                <Clock className="w-6 h-6 text-blue-400" />
+                <div>
+                  <div className="status-card-value info">
+                    {formatUptime(status?.uptime || 0)}
+                  </div>
+                  <div className="status-card-title">Tiempo Activo</div>
+                </div>
+              </div>
+              <div className="status-indicator info"></div>
             </div>
-            <div className="text-lg font-bold text-blue-400 mb-1">
-              {formatUptime(status?.uptime || 0)}
-            </div>
-            <div className="text-sm text-gray-400">Tiempo Activo</div>
           </div>
           
           {/* Última Actualización */}
-          <div className="text-center p-4 rounded-lg border border-gray-700 bg-gray-800/50 transition-all duration-200 hover:scale-105">
-            <div className="flex justify-center mb-3">
-              <AlertTriangle className="w-6 h-6 text-purple-400" />
+          <div className="status-card">
+            <div className="status-card-header">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-6 h-6 text-purple-400" />
+                <div>
+                  <div className="status-card-value warning">
+                    {status?.timestamp ? new Date(status.timestamp).toLocaleTimeString() : 'N/A'}
+                  </div>
+                  <div className="status-card-title">Última Actualización</div>
+                </div>
+              </div>
+              <div className="status-indicator warning"></div>
             </div>
-            <div className="text-lg font-bold text-purple-400 mb-1">
-              {status?.timestamp ? new Date(status.timestamp).toLocaleTimeString() : 'N/A'}
-            </div>
-            <div className="text-sm text-gray-400">Última Actualización</div>
           </div>
         </div>
       </div>
 
       {/* QR Code Section */}
       {status?.whatsappStatus?.currentQR && (
-        <div className="bg-gray-900 rounded-lg border border-gray-700 p-6">
+        <div className="status-card">
           <QRDisplay 
             qrData={status.whatsappStatus.currentQR}
             onRefresh={onReconnectWhatsApp}
@@ -225,10 +221,12 @@ const WhatsAppStatus = ({
       
       {/* Detailed Status Section */}
       {status?.whatsappStatus && typeof status.whatsappStatus === 'object' && Object.keys(status.whatsappStatus).length > 0 && (
-        <div className="bg-gray-900 rounded-lg border border-gray-700 p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Smartphone className="w-5 h-5 text-blue-400" />
-            <h3 className="text-lg font-semibold text-white">Estado Detallado de WhatsApp</h3>
+        <div className="status-card">
+          <div className="status-card-header">
+            <div className="flex items-center gap-3">
+              <Smartphone className="w-5 h-5 text-blue-400" />
+              <h3 className="text-lg font-semibold text-white">Estado Detallado de WhatsApp</h3>
+            </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

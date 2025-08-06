@@ -112,98 +112,84 @@ const WhatsAppBotPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      <div className="p-6 space-y-6">
-        <WhatsAppBotHeader
-          title="Administración WhatsApp Bot"
-          subtitle="Gestiona la automatización de mensajes de WhatsApp"
-          icon={<MessageSquare className="w-6 h-6" />}
-        />
+    <div className="whatsapp-bot-page">
+      <div className="page-container">
+        <div className="page-header">
+          <WhatsAppBotHeader
+            title="Administración WhatsApp Bot"
+            subtitle="Gestiona la automatización de mensajes de WhatsApp"
+            icon={<MessageSquare className="w-6 h-6" />}
+          />
+        </div>
 
         {/* Error Banner */}
         {error && (
-          <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
-                  <span className="text-red-300 font-medium">
-                    {apiAvailable ? 'Error de conexión' : 'API no disponible'}
-                  </span>
-                </div>
-                <p className="text-red-200 text-sm mb-3">{error}</p>
-                <div className="text-red-300 text-xs space-y-1">
-                  <p>
-                    💡 <strong>Consejo:</strong> La API puede estar temporalmente no disponible. 
-                    El sistema reintentará automáticamente en 30 segundos.
-                  </p>
-                  {!apiAvailable && (
-                    <p>
-                    🔧 <strong>Acciones:</strong> 
-                    <a 
-                      href="https://webhook.alcohncnc.com/status" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-blue-400 hover:underline ml-1"
-                    >
-                      Verificar estado del servidor
-                    </a>
-                    </p>
-                  )}
-                </div>
-              </div>
+          <div className="error-banner">
+            <div className="error-banner-header">
+              <AlertCircle className="w-5 h-5 text-red-400" />
+              <span className="error-banner-title">
+                {apiAvailable ? 'Error de conexión' : 'API no disponible'}
+              </span>
+            </div>
+            <div className="error-banner-message">{error}</div>
+            <div className="error-banner-tips">
+              <p>
+                💡 <strong>Consejo:</strong> La API puede estar temporalmente no disponible. 
+                El sistema reintentará automáticamente en 30 segundos.
+              </p>
+              {!apiAvailable && (
+                <p>
+                🔧 <strong>Acciones:</strong> 
+                <a 
+                  href="https://webhook.alcohncnc.com/status" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                >
+                  Verificar estado del servidor
+                </a>
+                </p>
+              )}
             </div>
           </div>
         )}
 
         {/* Tabs Navigation */}
-        <div className="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden">
-          <div className="border-b border-gray-700">
-            <nav className="flex space-x-1 p-1" aria-label="Tabs">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-3 rounded-md font-medium text-sm transition-all duration-200 ${
-                    activeTab === tab.id
-                      ? 'bg-blue-600 text-white shadow-lg'
-                      : 'text-gray-400 hover:text-gray-300 hover:bg-gray-800'
-                  }`}
-                >
-                  {tab.icon}
-                  {tab.label}
-                  {tab.id === 'errors' && failedEvents && failedEvents.length > 0 && (
-                    <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] flex items-center justify-center">
-                      {failedEvents.length}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          {/* Tab Content */}
-          <div className="p-6">
-            {renderTabContent()}
+        <div className="tab-navigation">
+          <div className="tab-list">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
+              >
+                {tab.icon}
+                {tab.label}
+                {tab.id === 'errors' && failedEvents && failedEvents.length > 0 && (
+                  <span className="badge">
+                    {failedEvents.length}
+                  </span>
+                )}
+              </button>
+            ))}
           </div>
         </div>
 
+        {/* Tab Content */}
+        <div className="tab-content">
+          {renderTabContent()}
+        </div>
+
         {/* Quick Actions */}
-        <div className="bg-gray-900 rounded-lg border border-gray-700 p-6">
-          <div className="flex items-center gap-3 mb-6">
+        <div className="quick-actions">
+          <div className="quick-actions-header">
             <Zap className="w-5 h-5 text-yellow-400" />
-            <h3 className="text-lg font-semibold text-white">Acciones Rápidas</h3>
+            <h3 className="quick-actions-title">Acciones Rápidas</h3>
           </div>
-          <div className="flex flex-wrap gap-4">
+          <div className="quick-actions-grid">
             <button
               onClick={() => refreshAll()}
               disabled={updating || !apiAvailable}
-              className={`flex items-center gap-2 px-6 py-3 text-white rounded-lg text-sm font-medium transition-all duration-200 ${
-                !apiAvailable 
-                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
-                  : 'bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-blue-500/25 hover:scale-105'
-              }`}
+              className={`action-button primary ${!apiAvailable ? 'disabled' : ''}`}
             >
               <RefreshCw className={`w-4 h-4 ${updating ? 'animate-spin' : ''}`} />
               Actualizar Todo
@@ -211,7 +197,7 @@ const WhatsAppBotPage = () => {
             
             <button
               onClick={() => setActiveTab('console')}
-              className="flex items-center gap-2 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
+              className="action-button secondary"
             >
               <Terminal className="w-4 h-4" />
               Ver Consola (QR)
@@ -220,13 +206,7 @@ const WhatsAppBotPage = () => {
             <button
               onClick={() => toggleBot(!status?.botEnabled)}
               disabled={updating || !apiAvailable}
-              className={`flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                !apiAvailable
-                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                  : status?.botEnabled
-                    ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-red-500/25 hover:scale-105'
-                    : 'bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-green-500/25 hover:scale-105'
-              }`}
+              className={`action-button ${!apiAvailable ? 'secondary disabled' : status?.botEnabled ? 'danger' : 'success'}`}
             >
               {!apiAvailable ? 'API no disponible' : status?.botEnabled ? 'Pausar Bot' : 'Activar Bot'}
             </button>
@@ -234,11 +214,7 @@ const WhatsAppBotPage = () => {
             <button
               onClick={reconnectWhatsApp}
               disabled={updating || !apiAvailable}
-              className={`flex items-center gap-2 px-6 py-3 text-white rounded-lg text-sm font-medium transition-all duration-200 ${
-                !apiAvailable 
-                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
-                  : 'bg-orange-600 hover:bg-orange-700 shadow-lg hover:shadow-orange-500/25 hover:scale-105'
-              }`}
+              className={`action-button warning ${!apiAvailable ? 'disabled' : ''}`}
             >
               {!apiAvailable ? 'API no disponible' : 'Reconectar WhatsApp'}
             </button>
@@ -246,106 +222,94 @@ const WhatsAppBotPage = () => {
         </div>
 
         {/* Status Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-gray-900 rounded-lg border border-gray-700 p-4 hover:border-gray-600 transition-colors">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-400 mb-1">Estado del Bot</p>
-                <p className={`text-lg font-bold ${status?.botEnabled ? 'text-green-400' : 'text-red-400'}`}>
-                  {status?.botEnabled ? 'Activo' : 'Pausado'}
-                </p>
+        <div className="status-summary">
+          <div className="summary-card">
+            <div>
+              <div className="summary-card-label">Estado del Bot</div>
+              <div className={`summary-card-value ${status?.botEnabled ? 'active' : 'inactive'}`}>
+                {status?.botEnabled ? 'Activo' : 'Pausado'}
               </div>
-              <div className={`w-3 h-3 rounded-full ${status?.botEnabled ? 'bg-green-500' : 'bg-red-500'}`}></div>
             </div>
+            <div className={`status-indicator ${status?.botEnabled ? 'active' : 'inactive'}`}></div>
           </div>
 
-          <div className="bg-gray-900 rounded-lg border border-gray-700 p-4 hover:border-gray-600 transition-colors">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-400 mb-1">WhatsApp</p>
-                <p className={`text-lg font-bold ${status?.whatsappConnected ? 'text-green-400' : 'text-red-400'}`}>
-                  {status?.whatsappConnected ? 'Conectado' : 'Desconectado'}
-                </p>
+          <div className="summary-card">
+            <div>
+              <div className="summary-card-label">WhatsApp</div>
+              <div className={`summary-card-value ${status?.whatsappConnected ? 'active' : 'inactive'}`}>
+                {status?.whatsappConnected ? 'Conectado' : 'Desconectado'}
               </div>
-              <div className={`w-3 h-3 rounded-full ${status?.whatsappConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
             </div>
+            <div className={`status-indicator ${status?.whatsappConnected ? 'active' : 'inactive'}`}></div>
           </div>
 
-          <div className="bg-gray-900 rounded-lg border border-gray-700 p-4 hover:border-gray-600 transition-colors">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-400 mb-1">Eventos Fallidos</p>
-                <p className="text-lg font-bold text-red-400">
-                  {failedEvents ? failedEvents.length : 0}
-                </p>
+          <div className="summary-card">
+            <div>
+              <div className="summary-card-label">Eventos Fallidos</div>
+              <div className="summary-card-value inactive">
+                {failedEvents ? failedEvents.length : 0}
               </div>
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
             </div>
+            <div className="status-indicator inactive"></div>
           </div>
 
-          <div className="bg-gray-900 rounded-lg border border-gray-700 p-4 hover:border-gray-600 transition-colors">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-400 mb-1">Tiempo Activo</p>
-                <p className="text-lg font-bold text-blue-400">
-                  {status?.uptime ? Math.round(status.uptime / 60) : 0}m
-                </p>
+          <div className="summary-card">
+            <div>
+              <div className="summary-card-label">Tiempo Activo</div>
+              <div className="summary-card-value info">
+                {status?.uptime ? Math.round(status.uptime / 60) : 0}m
               </div>
-              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
             </div>
+            <div className="status-indicator info"></div>
           </div>
         </div>
 
         {/* Help Section */}
-        <div className="bg-gray-900 rounded-lg border border-gray-700 p-6">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+        <div className="help-section">
+          <div className="help-section-header">
             <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
-            ¿Necesitas ayuda?
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-            <div className="space-y-3">
-              <h4 className="font-medium text-blue-400 mb-3">Estado del Bot</h4>
-              <div className="space-y-2 text-gray-300">
-                <div className="flex items-start gap-2">
-                  <span className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></span>
-                  <div>
-                    <strong className="text-white">Activo:</strong> El bot está enviando mensajes automáticamente
-                  </div>
+            <h3 className="help-section-title">¿Necesitas ayuda?</h3>
+          </div>
+          <div className="help-content">
+            <div className="help-category">
+              <h4 className="help-category-title bot-status">Estado del Bot</h4>
+              <div className="help-item">
+                <span className="help-item-dot success"></span>
+                <div>
+                  <strong>Activo:</strong> El bot está enviando mensajes automáticamente
                 </div>
-                <div className="flex items-start gap-2">
-                  <span className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></span>
-                  <div>
-                    <strong className="text-white">Pausado:</strong> El bot está detenido, no envía mensajes
-                  </div>
+              </div>
+              <div className="help-item">
+                <span className="help-item-dot error"></span>
+                <div>
+                  <strong>Pausado:</strong> El bot está detenido, no envía mensajes
                 </div>
-                <div className="flex items-start gap-2">
-                  <span className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></span>
-                  <div>
-                    <strong className="text-white">WhatsApp Desconectado:</strong> Necesitas reconectar la sesión
-                  </div>
+              </div>
+              <div className="help-item">
+                <span className="help-item-dot warning"></span>
+                <div>
+                  <strong>WhatsApp Desconectado:</strong> Necesitas reconectar la sesión
                 </div>
               </div>
             </div>
-            <div className="space-y-3">
-              <h4 className="font-medium text-red-400 mb-3">Eventos Fallidos</h4>
-              <div className="space-y-2 text-gray-300">
-                <div className="flex items-start gap-2">
-                  <span className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></span>
-                  <div>
-                    <strong className="text-white">Error 500:</strong> Problema interno del servidor
-                  </div>
+            <div className="help-category">
+              <h4 className="help-category-title errors">Eventos Fallidos</h4>
+              <div className="help-item">
+                <span className="help-item-dot error"></span>
+                <div>
+                  <strong>Error 500:</strong> Problema interno del servidor
                 </div>
-                <div className="flex items-start gap-2">
-                  <span className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></span>
-                  <div>
-                    <strong className="text-white">Error 400:</strong> Datos incorrectos en la petición
-                  </div>
+              </div>
+              <div className="help-item">
+                <span className="help-item-dot warning"></span>
+                <div>
+                  <strong>Error 400:</strong> Datos incorrectos en la petición
                 </div>
-                <div className="flex items-start gap-2">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></span>
-                  <div>
-                    <strong className="text-white">Reintentar:</strong> Vuelve a intentar enviar el mensaje
-                  </div>
+              </div>
+              <div className="help-item">
+                <span className="help-item-dot info"></span>
+                <div>
+                  <strong>Reintentar:</strong> Vuelve a intentar enviar el mensaje
                 </div>
               </div>
             </div>
