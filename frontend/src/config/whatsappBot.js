@@ -38,7 +38,8 @@ const config = {
     updateMessage: (key) => `/config/messages/${key}`,
     logs: '/logs',
     failedEvents: '/events/failed',
-    retryEvent: (eventId) => `/events/${eventId}/retry`
+    retryEvent: (eventId) => `/events/${eventId}/retry`,
+    consoleStream: '/console/stream'
   },
   
   // Configuración de notificaciones

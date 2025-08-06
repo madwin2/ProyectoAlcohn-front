@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { MessageSquare, RefreshCw, Settings, Activity } from 'lucide-react';
+import { MessageSquare, RefreshCw, Settings, Activity, Terminal } from 'lucide-react';
 import WhatsAppStatus from '../components/WhatsAppStatus';
 import MessageConfig from '../components/MessageConfig';
 import FailedEvents from '../components/FailedEvents';
 import SystemLogs from '../components/SystemLogs';
+import ConsoleViewer from '../components/ConsoleViewer';
 import { useWhatsAppBot } from '../hooks/useWhatsAppBot';
 import WhatsAppBotHeader from '../components/WhatsAppBotHeader';
 import './WhatsAppBotPage.css';
@@ -51,6 +52,12 @@ const WhatsAppBotPage = () => {
       label: 'Logs',
       icon: <RefreshCw className="w-4 h-4" />,
       description: 'Logs del sistema'
+    },
+    {
+      id: 'console',
+      label: 'Consola',
+      icon: <Terminal className="w-4 h-4" />,
+      description: 'Consola en tiempo real'
     }
   ];
 
@@ -90,6 +97,13 @@ const WhatsAppBotPage = () => {
             logs={logs}
             loading={loading}
             onLoadLogs={loadLogs}
+          />
+        );
+      case 'console':
+        return (
+          <ConsoleViewer
+            isConnected={apiAvailable}
+            onReconnect={reconnectWhatsApp}
           />
         );
       default:
