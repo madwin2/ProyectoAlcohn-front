@@ -2,7 +2,7 @@
 
 const config = {
   // URL base de la API del bot
-  API_BASE: process.env.REACT_APP_BOT_API || 'http://webhook.alcohncnc.com',
+  API_BASE: process.env.REACT_APP_BOT_API || (process.env.NODE_ENV === 'development' ? '/api/bot' : 'https://webhook.alcohncnc.com'),
   
   // Modo de demostración (cuando la API no está disponible)
   DEMO_MODE: process.env.REACT_APP_DEMO_MODE === 'true' || false,
