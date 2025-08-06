@@ -10,6 +10,7 @@ import {
   CheckCircle,
   XCircle
 } from 'lucide-react';
+import QRDisplay from './QRDisplay';
 
 const WhatsAppStatus = ({ 
   status, 
@@ -185,15 +186,25 @@ const WhatsAppStatus = ({
         </div>
       </div>
       
-             {/* Información adicional */}
-       {status?.whatsappStatus && typeof status.whatsappStatus === 'object' && Object.keys(status.whatsappStatus).length > 0 && (
-         <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-           <h3 className="text-sm font-medium text-blue-800 mb-2">Estado Detallado de WhatsApp:</h3>
-           <pre className="text-xs text-blue-700 overflow-x-auto">
-             {JSON.stringify(status.whatsappStatus, null, 2)}
-           </pre>
-         </div>
-       )}
+      {/* QR Code Display */}
+      {status?.whatsappStatus?.currentQR && (
+        <div className="mt-6">
+          <QRDisplay 
+            qrData={status.whatsappStatus.currentQR}
+            onRefresh={onReconnectWhatsApp}
+          />
+        </div>
+      )}
+      
+      {/* Información adicional */}
+      {status?.whatsappStatus && typeof status.whatsappStatus === 'object' && Object.keys(status.whatsappStatus).length > 0 && (
+        <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+          <h3 className="text-sm font-medium text-blue-800 mb-2">Estado Detallado de WhatsApp:</h3>
+          <pre className="text-xs text-blue-700 overflow-x-auto">
+            {JSON.stringify(status.whatsappStatus, null, 2)}
+          </pre>
+        </div>
+      )}
     </div>
   );
 };
