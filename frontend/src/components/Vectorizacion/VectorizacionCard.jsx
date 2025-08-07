@@ -212,6 +212,17 @@ const VectorizacionCard = ({
               }}>
                 {pedido.disenio}
               </h3>
+              {pedido.notas && (
+                <div style={{
+                  fontSize: '12px',
+                  color: '#a1a1aa',
+                  marginTop: '4px',
+                  lineHeight: '1.3',
+                  fontStyle: 'italic'
+                }}>
+                  {pedido.notas}
+                </div>
+              )}
               
               <div style={{ display: 'flex', gap: '8px' }}>
                 {tipo === 'vector' && pedido.medida_pedida && (
