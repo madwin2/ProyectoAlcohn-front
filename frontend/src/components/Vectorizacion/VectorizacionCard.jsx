@@ -540,7 +540,12 @@ const VectorizacionCard = ({
               <button
                 onClick={async () => {
                   try {
-                    await handleDescargar(publicUrl(pedido.archivo_vector), `vector-${pedido.id_pedido}.svg`);
+                    // Generar nombre de descarga basado en el diseño
+                    const disenioLimpio = pedido.disenio 
+                      ? pedido.disenio.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_').trim()
+                      : `vector-${pedido.id_pedido}`;
+                    const nombreDescarga = `${disenioLimpio}.svg`;
+                    await handleDescargar(publicUrl(pedido.archivo_vector), nombreDescarga);
                   } catch (error) {
                     console.error('Error al descargar:', error);
                   }

@@ -91,10 +91,19 @@ export class FileUploadService {
   /**
    * Genera un nombre único para el archivo con la estructura de carpetas
    */
-  generateFileName(field, pedidoId, originalFileName) {
+  generateFileName(field, pedidoId, originalFileName, disenio = null) {
     const timestamp = Date.now();
     const fileExtension = originalFileName.split('.').pop().toLowerCase();
-    const fileName = `${field}_${pedidoId}_${timestamp}.${fileExtension}`;
+    
+    let fileName;
+    if (field === 'archivo_vector' && disenio) {
+      // Para vectores SVG, usar el nombre del diseño + pedidoId
+      const disenioLimpio = disenio.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
+      fileName = `${disenioLimpio}_${pedidoId}.${fileExtension}`;
+    } else {
+      // Para otros archivos, mantener el formato original
+      fileName = `${field}_${pedidoId}_${timestamp}.${fileExtension}`;
+    }
     
     // Estructura de carpetas según el tipo de archivo
     const folderMap = {
@@ -136,7 +145,7 @@ export class FileUploadService {
   /**
    * Sube un archivo a Supabase Storage
    */
-  async uploadFile(file, field, pedidoId) {
+  async uploadFile(file, field, pedidoId, disenio = null) {
     try {
       // Asegurar configuración inicial
       await this.ensureSetup();
@@ -145,7 +154,7 @@ export class FileUploadService {
       this.validateFileType(file, field);
 
       // Generar nombre de archivo único
-      const fileName = this.generateFileName(field, pedidoId, file.name);
+      const fileName = this.generateFileName(field, pedidoId, file.name, disenio);
 
       // Subir archivo
       const { data: uploadData, error: uploadError } = await supabase.storage

@@ -197,8 +197,9 @@ export const useVectorizacion = () => {
       console.log('📐 SVG dimensionado obtenido:', svgDimensionado ? 'SÍ' : 'NO');
       
       if (svgDimensionado) {
-        // 1. Subir el SVG redimensionado a Supabase Storage
-        const fileName = `vector/archivo_vector_${pedido.id_pedido}_${Date.now()}.svg`;
+        // 1. Subir el SVG redimensionado a Supabase Storage con nombre basado en el diseño
+        const disenioLimpio = limpiarNombreDisenio(pedido.disenio, pedido.id_pedido);
+        const fileName = `vector/${disenioLimpio}_${pedido.id_pedido}.svg`;
         const svgBlob = new Blob([svgDimensionado], { type: 'image/svg+xml' });
         
         console.log('Subiendo SVG redimensionado:', fileName);
@@ -282,7 +283,10 @@ export const useVectorizacion = () => {
     
     try {
       const blob = new Blob([svgPreview], { type: 'image/svg+xml' });
-      const fileName = `vector/${svgPedido.id_pedido}-${Date.now()}.svg`;
+      
+      // Generar nombre basado en el diseño
+      const disenioLimpio = limpiarNombreDisenio(svgPedido.disenio, svgPedido.id_pedido);
+      const fileName = `vector/${disenioLimpio}_${svgPedido.id_pedido}.svg`;
       
       const { error } = await supabase.storage
         .from('archivos-ventas')
@@ -347,6 +351,25 @@ export const useVectorizacion = () => {
     }
   };
 
+  // Función para limpiar nombres de diseño para uso en archivos
+  const limpiarNombreDisenio = (disenio, pedidoId) => {
+    if (!disenio) return `vector-${pedidoId}`;
+    
+    // Limpiar el nombre del diseño para usar como nombre de archivo
+    const disenioLimpio = disenio
+      .replace(/[^a-zA-Z0-9\s]/g, '') // Solo letras, números y espacios
+      .replace(/\s+/g, '_') // Reemplazar espacios con guiones bajos
+      .trim();
+    
+    return disenioLimpio;
+  };
+
+  // Función para generar nombre de descarga basado en el diseño
+  const generarNombreDescarga = (pedido) => {
+    const disenioLimpio = limpiarNombreDisenio(pedido.disenio, pedido.id_pedido);
+    return `${disenioLimpio}.svg`;
+  };
+
   // Cargar vector manualmente
   const handleCargarVector = async (pedido, file) => {
     if (!file || procesando[pedido.id_pedido]) return;
@@ -359,8 +382,9 @@ export const useVectorizacion = () => {
       // Leer el contenido del archivo SVG
       const svgContent = await file.text();
       
-      // Subir el SVG a Supabase Storage
-      const fileName = `vector/${pedido.id_pedido}-manual-${Date.now()}.svg`;
+      // Subir el SVG a Supabase Storage con nombre basado en el diseño
+      const disenioLimpio = limpiarNombreDisenio(pedido.disenio, pedido.id_pedido);
+      const fileName = `vector/${disenioLimpio}_${pedido.id_pedido}.svg`;
       const svgBlob = new Blob([svgContent], { type: 'image/svg+xml' });
       
       const { error: uploadError } = await supabase.storage
