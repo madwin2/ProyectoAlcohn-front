@@ -7,6 +7,8 @@ export const useVerificacionMedidas = () => {
   const [error, setError] = useState(null);
   const [dimensionesSVG, setDimensionesSVG] = useState(null);
   const [opcionesEscalado, setOpcionesEscalado] = useState([]);
+  const [medidaPersonalizada, setMedidaPersonalizada] = useState({ ancho: '', alto: '' });
+  const [ratioOriginal, setRatioOriginal] = useState(1);
 
   const medirVector = async (vectorUrl, medidaPedida) => {
     setLoading(true);
@@ -25,6 +27,13 @@ export const useVerificacionMedidas = () => {
           ];
           setOpcionesEscalado(opcionesArray);
         }
+      }
+      
+      // Calcular y guardar el ratio original para medidas personalizadas
+      if (dimensiones.width > 0 && dimensiones.height > 0) {
+        const ratio = dimensiones.width / dimensiones.height;
+        setRatioOriginal(ratio);
+        console.log('Ratio original del SVG:', ratio);
       }
       
       return dimensiones;
@@ -52,8 +61,17 @@ export const useVerificacionMedidas = () => {
       
       console.log('SVG redimensionado (primeros 200 chars):', svgDimensionado.substring(0, 200));
       
-      // 2. Subir el SVG redimensionado a Supabase Storage
-      const fileName = `vector/archivo_vector_${pedidoId}_${Date.now()}.svg`;
+      // 2. Subir el SVG redimensionado a Supabase Storage con nombre basado en el diseño
+      // Necesitamos obtener el diseño del pedido para generar el nombre correcto
+      const { data: pedidoData } = await supabase
+        .from('pedidos')
+        .select('disenio')
+        .eq('id_pedido', pedidoId)
+        .single();
+      
+      const disenio = pedidoData?.disenio || `vector-${pedidoId}`;
+      const disenioLimpio = disenio.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_').trim();
+      const fileName = `vector/${disenioLimpio}_${pedidoId}.svg`;
       const svgBlob = new Blob([svgDimensionado], { type: 'image/svg+xml' });
       
       console.log('Subiendo archivo:', fileName);
@@ -128,6 +146,8 @@ export const useVerificacionMedidas = () => {
     setDimensionesSVG(null);
     setOpcionesEscalado([]);
     setError(null);
+    setMedidaPersonalizada({ ancho: '', alto: '' });
+    setRatioOriginal(1);
   };
 
   return {
@@ -136,6 +156,8 @@ export const useVerificacionMedidas = () => {
     error,
     dimensionesSVG,
     opcionesEscalado,
+    medidaPersonalizada,
+    ratioOriginal,
     
     // Acciones
     medirVector,
@@ -143,6 +165,7 @@ export const useVerificacionMedidas = () => {
     limpiarEstado,
     
     // Setters para casos especiales
-    setError
+    setError,
+    setMedidaPersonalizada
   };
 };

@@ -457,6 +457,9 @@ function PedidosPage() {
         aplicarMedida={verificacionMedidas.aplicarMedida}
         limpiarEstado={verificacionMedidas.limpiarEstado}
         setError={verificacionMedidas.setError}
+        medidaPersonalizada={verificacionMedidas.medidaPersonalizada}
+        ratioOriginal={verificacionMedidas.ratioOriginal}
+        setMedidaPersonalizada={verificacionMedidas.setMedidaPersonalizada}
       />
 
       <PedidoContextMenu

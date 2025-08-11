@@ -14,7 +14,10 @@ const VerificarMedidaModal = ({
   medirVector,
   aplicarMedida,
   limpiarEstado,
-  setError
+  setError,
+  medidaPersonalizada,
+  ratioOriginal,
+  setMedidaPersonalizada
 }) => {
 
   useEffect(() => {
@@ -52,9 +55,34 @@ const VerificarMedidaModal = ({
     }
   };
 
+  const handleAnchoChange = (ancho) => {
+    if (ancho && !isNaN(ancho) && ratioOriginal > 0) {
+      const altoCalculado = (parseFloat(ancho) / ratioOriginal).toFixed(1);
+      setMedidaPersonalizada({ ancho, alto: altoCalculado });
+    } else {
+      setMedidaPersonalizada({ ancho, alto: '' });
+    }
+  };
+
+  const handleAplicarMedidaPersonalizada = async () => {
+    if (medidaPersonalizada.ancho && medidaPersonalizada.alto) {
+      const medidaCompleta = `${medidaPersonalizada.ancho}x${medidaPersonalizada.alto}`;
+      await handleSeleccionarMedida(medidaCompleta);
+    }
+  };
+
   if (!isOpen || !pedido) return null;
 
   return (
+    <>
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
     <div style={{ 
       position: 'fixed', 
       inset: 0, 
@@ -250,6 +278,155 @@ const VerificarMedidaModal = ({
                 </div>
               )}
 
+              {/* Medida Personalizada */}
+              {dimensionesSVG && ratioOriginal > 0 && (
+                <div style={{
+                  background: 'rgba(24, 24, 27, 0.5)',
+                  border: '1px solid rgba(39, 39, 42, 0.5)',
+                  borderRadius: '8px',
+                  padding: '20px'
+                }}>
+                  <h3 style={{ color: 'white', fontSize: '18px', margin: '0 0 16px 0' }}>
+                    📏 Medida Personalizada
+                  </h3>
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: '1fr 1fr', 
+                    gap: '16px',
+                    marginBottom: '16px'
+                  }}>
+                    <div>
+                      <label style={{ 
+                        display: 'block', 
+                        color: '#a1a1aa', 
+                        fontSize: '14px', 
+                        marginBottom: '8px' 
+                      }}>
+                        Ancho (cm)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0.1"
+                        value={medidaPersonalizada.ancho}
+                        onChange={(e) => handleAnchoChange(e.target.value)}
+                        placeholder="Ej: 10.5"
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          background: 'rgba(39, 39, 42, 0.5)',
+                          border: '1px solid rgba(63, 63, 70, 0.5)',
+                          borderRadius: '8px',
+                          color: 'white',
+                          fontSize: '16px',
+                          outline: 'none',
+                          transition: 'all 0.3s ease'
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = '#60a5fa';
+                          e.target.style.background = 'rgba(39, 39, 42, 0.8)';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = 'rgba(63, 63, 70, 0.5)';
+                          e.target.style.background = 'rgba(39, 39, 42, 0.5)';
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ 
+                        display: 'block', 
+                        color: '#a1a1aa', 
+                        fontSize: '14px', 
+                        marginBottom: '8px' 
+                      }}>
+                        Alto (cm) - Calculado automáticamente
+                      </label>
+                      <input
+                        type="text"
+                        value={medidaPersonalizada.alto}
+                        readOnly
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          background: 'rgba(39, 39, 42, 0.3)',
+                          border: '1px solid rgba(63, 63, 70, 0.3)',
+                          borderRadius: '8px',
+                          color: '#a1a1aa',
+                          fontSize: '16px',
+                          cursor: 'not-allowed'
+                        }}
+                      />
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={handleAplicarMedidaPersonalizada}
+                    disabled={loading || !medidaPersonalizada.ancho || !medidaPersonalizada.alto}
+                    style={{
+                      width: '100%',
+                      background: loading || !medidaPersonalizada.ancho || !medidaPersonalizada.alto 
+                        ? 'rgba(59, 130, 246, 0.1)' 
+                        : 'rgba(59, 130, 246, 0.2)',
+                      border: '1px solid rgba(59, 130, 246, 0.5)',
+                      color: loading || !medidaPersonalizada.ancho || !medidaPersonalizada.alto 
+                        ? '#93c5fd' 
+                        : '#60a5fa',
+                      height: '48px',
+                      fontWeight: '500',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      cursor: loading || !medidaPersonalizada.ancho || !medidaPersonalizada.alto 
+                        ? 'not-allowed' 
+                        : 'pointer',
+                      transition: 'all 0.3s ease',
+                      opacity: loading || !medidaPersonalizada.ancho || !medidaPersonalizada.alto ? 0.6 : 1
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!loading && medidaPersonalizada.ancho && medidaPersonalizada.alto) {
+                        e.target.style.background = 'rgba(59, 130, 246, 0.3)';
+                        e.target.style.color = 'white';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!loading && medidaPersonalizada.ancho && medidaPersonalizada.alto) {
+                        e.target.style.background = 'rgba(59, 130, 246, 0.2)';
+                        e.target.style.color = '#60a5fa';
+                      }
+                    }}
+                  >
+                    {loading ? (
+                      <>
+                        <div style={{ 
+                          width: '16px', 
+                          height: '16px', 
+                          border: '2px solid #93c5fd', 
+                          borderTop: '2px solid transparent', 
+                          borderRadius: '50%', 
+                          animation: 'spin 1s linear infinite' 
+                        }} />
+                        Aplicando...
+                      </>
+                    ) : (
+                      <>
+                        ✨ Aplicar Medida Personalizada
+                      </>
+                    )}
+                  </button>
+                  
+                  <div style={{ 
+                    textAlign: 'center', 
+                    marginTop: '12px', 
+                    fontSize: '12px', 
+                    color: '#71717a' 
+                  }}>
+                    El alto se calcula automáticamente manteniendo las proporciones del diseño original
+                  </div>
+                </div>
+              )}
+
               {!pedido.medida_pedida && (
                 <div style={{
                   background: 'rgba(245, 158, 11, 0.1)',
@@ -270,6 +447,7 @@ const VerificarMedidaModal = ({
         </div>
       </div>
     </div>
+    </>
   );
 };
 
