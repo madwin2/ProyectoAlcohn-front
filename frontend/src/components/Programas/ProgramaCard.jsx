@@ -72,6 +72,7 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
   };
 
   const descargarProgramaCompleto = async () => {
+    console.log('🚀 Iniciando descarga del programa completo:', programa.nombre_archivo);
     try {
       setLoading(true);
       
