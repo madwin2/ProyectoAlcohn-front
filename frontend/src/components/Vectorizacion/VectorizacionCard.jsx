@@ -200,29 +200,31 @@ const VectorizacionCard = ({
             <div style={{ 
               display: 'flex', 
               justifyContent: 'space-between', 
-              alignItems: 'center',
+              alignItems: 'flex-start',
               marginBottom: '8px'
             }}>
-              <h3 style={{
-                fontSize: '16px',
-                fontWeight: '500',
-                color: 'white',
-                margin: 0,
-                lineHeight: '1.2'
-              }}>
-                {pedido.disenio}
-              </h3>
-              {pedido.notas && (
-                <div style={{
-                  fontSize: '12px',
-                  color: '#a1a1aa',
-                  marginTop: '4px',
-                  lineHeight: '1.3',
-                  fontStyle: 'italic'
+              <div style={{ flex: 1 }}>
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  color: 'white',
+                  margin: 0,
+                  lineHeight: '1.2',
+                  marginBottom: '4px'
                 }}>
-                  {pedido.notas}
-                </div>
-              )}
+                  {pedido.disenio}
+                </h3>
+                {pedido.notas && (
+                  <div style={{
+                    fontSize: '12px',
+                    color: '#a1a1aa',
+                    lineHeight: '1.3',
+                    fontStyle: 'italic'
+                  }}>
+                    {pedido.notas}
+                  </div>
+                )}
+              </div>
               
               <div style={{ display: 'flex', gap: '8px' }}>
                 {tipo === 'vector' && pedido.medida_pedida && (
