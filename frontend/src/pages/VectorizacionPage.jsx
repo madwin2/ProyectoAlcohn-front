@@ -6,6 +6,16 @@ import VectorizacionContent from '../components/Vectorizacion/VectorizacionConte
 import VectorizacionModal from '../components/Vectorizacion/VectorizacionModal';
 
 function VectorizacionPage() {
+  const vectorizacionHook = useVectorizacion();
+  
+  // Debug: verificar que las funciones estén disponibles
+  console.log('🔍 Debug VectorizacionPage:', {
+    handleAnchoChange: typeof vectorizacionHook.handleAnchoChange,
+    handleAplicarMedidaPersonalizada: typeof vectorizacionHook.handleAplicarMedidaPersonalizada,
+    medidaPersonalizada: vectorizacionHook.medidaPersonalizada,
+    ratioOriginal: vectorizacionHook.ratioOriginal
+  });
+  
   const {
     // State
     loading,
@@ -39,9 +49,13 @@ function VectorizacionPage() {
     handleEnviarAVerificar,
     handleEnviarAVectorizar,
     
+    // Medidas personalizadas
+    handleAnchoChange,
+    handleAplicarMedidaPersonalizada,
+    
     // Utils
     publicUrl
-  } = useVectorizacion();
+  } = vectorizacionHook;
 
   return (
     <div style={{ minHeight: '100vh', background: 'black', color: 'white' }}>

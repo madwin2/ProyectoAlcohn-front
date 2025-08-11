@@ -38,6 +38,15 @@ const VectorizacionCard = ({
   handleAnchoChange,
   handleAplicarMedidaPersonalizada
 }) => {
+  // Debug: verificar que las props estén disponibles
+  console.log('🔍 Debug VectorizacionCard:', {
+    pedidoId: pedido.id_pedido,
+    handleAnchoChange: typeof handleAnchoChange,
+    handleAplicarMedidaPersonalizada: typeof handleAplicarMedidaPersonalizada,
+    medidaPersonalizada: medidaPersonalizada,
+    ratioOriginal: ratioOriginal
+  });
+  
   const fileInputRef = useRef(null);
   const isProcessing = procesando[pedido.id_pedido];
   const prioridadColor = {
