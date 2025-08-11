@@ -15,6 +15,8 @@ export const useVectorizacion = () => {
   const [activeTab, setActiveTab] = useState('pendientes');
   const [busqueda, setBusqueda] = useState('');
   const [removerFondo, setRemoverFondo] = useState(false);
+  const [medidaPersonalizada, setMedidaPersonalizada] = useState({ ancho: '', alto: '' });
+  const [ratioOriginal, setRatioOriginal] = useState(1);
 
   // Función para obtener URL pública
   const publicUrl = (path) => {
@@ -94,6 +96,12 @@ export const useVectorizacion = () => {
         const opciones = calcularOpcionesEscalado(dimensiones, pedido.medida_pedida);
         if (opciones) {
           nuevasOpc[pedido.id_pedido] = opciones;
+        }
+        
+        // Calcular y guardar el ratio original para medidas personalizadas
+        if (dimensiones.width > 0 && dimensiones.height > 0) {
+          const ratio = dimensiones.width / dimensiones.height;
+          setRatioOriginal(prev => ({ ...prev, [pedido.id_pedido]: ratio }));
         }
       }
     }
@@ -487,6 +495,39 @@ export const useVectorizacion = () => {
     }
   };
 
+  // Funciones para medidas personalizadas
+  const handleAnchoChange = (pedidoId, ancho) => {
+    const ratio = ratioOriginal[pedidoId];
+    if (ancho && !isNaN(ancho) && ratio > 0) {
+      const altoCalculado = (parseFloat(ancho) / ratio).toFixed(1);
+      setMedidaPersonalizada(prev => ({ 
+        ...prev, 
+        [pedidoId]: { ancho, alto: altoCalculado } 
+      }));
+    } else {
+      setMedidaPersonalizada(prev => ({ 
+        ...prev, 
+        [pedidoId]: { ancho, alto: '' } 
+      }));
+    }
+  };
+
+  const handleAplicarMedidaPersonalizada = async (pedido) => {
+    const medida = medidaPersonalizada[pedido.id_pedido];
+    if (!medida || !medida.ancho || !medida.alto) return;
+    
+    const medidaCompleta = `${medida.ancho}x${medida.alto}`;
+    await handleDimensionar(pedido, medidaCompleta);
+  };
+
+  const limpiarMedidaPersonalizada = (pedidoId) => {
+    setMedidaPersonalizada(prev => {
+      const nuevo = { ...prev };
+      delete nuevo[pedidoId];
+      return nuevo;
+    });
+  };
+
   // Effects
   useEffect(() => {
     fetchPedidos();
@@ -511,6 +552,8 @@ export const useVectorizacion = () => {
     activeTab,
     busqueda,
     removerFondo,
+    medidaPersonalizada,
+    ratioOriginal,
     
     // Groups
     grupoBase,
@@ -530,6 +573,11 @@ export const useVectorizacion = () => {
     handleCargarVector,
     handleEnviarAVerificar,
     handleEnviarAVectorizar,
+    
+    // Medidas personalizadas
+    handleAnchoChange,
+    handleAplicarMedidaPersonalizada,
+    limpiarMedidaPersonalizada,
     
     // Utils
     publicUrl,

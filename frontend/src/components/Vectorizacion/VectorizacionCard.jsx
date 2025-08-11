@@ -32,7 +32,11 @@ const VectorizacionCard = ({
   handleDescargar,
   handleCargarVector,
   onEnviarAVerificar,
-  onEnviarAVectorizar
+  onEnviarAVectorizar,
+  medidaPersonalizada,
+  ratioOriginal,
+  handleAnchoChange,
+  handleAplicarMedidaPersonalizada
 }) => {
   const fileInputRef = useRef(null);
   const isProcessing = procesando[pedido.id_pedido];
@@ -86,7 +90,16 @@ const VectorizacionCard = ({
   const imageUrl = getImageUrl();
 
   return (
-    <div style={{
+    <>
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
+      <div style={{
       background: 'rgba(9, 9, 11, 0.8)',
       backdropFilter: 'blur(16px)',
       border: '1px solid rgba(39, 39, 42, 0.5)',
@@ -532,6 +545,139 @@ const VectorizacionCard = ({
                   </div>
                 </div>
               )}
+
+              {/* Medida Personalizada */}
+              {opcionesEscalado && opcionesEscalado[pedido.id_pedido] && ratioOriginal && ratioOriginal[pedido.id_pedido] && (
+                <div style={{
+                  background: 'rgba(24, 24, 27, 0.5)',
+                  border: '1px solid rgba(39, 39, 42, 0.5)',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  marginTop: '8px'
+                }}>
+                  <div style={{ 
+                    fontSize: '12px', 
+                    color: '#a1a1aa', 
+                    marginBottom: '12px',
+                    textAlign: 'center',
+                    fontWeight: '500'
+                  }}>
+                    📏 Medida Personalizada
+                  </div>
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: '1fr 1fr', 
+                    gap: '8px',
+                    marginBottom: '12px'
+                  }}>
+                    <div>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0.1"
+                        value={medidaPersonalizada[pedido.id_pedido]?.ancho || ''}
+                        onChange={(e) => handleAnchoChange(pedido.id_pedido, e.target.value)}
+                        placeholder="Ancho (cm)"
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          background: 'rgba(39, 39, 42, 0.5)',
+                          border: '1px solid rgba(63, 63, 70, 0.5)',
+                          borderRadius: '6px',
+                          color: 'white',
+                          fontSize: '12px',
+                          outline: 'none',
+                          transition: 'all 0.3s ease'
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = '#60a5fa';
+                          e.target.style.background = 'rgba(39, 39, 42, 0.8)';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = 'rgba(63, 63, 70, 0.5)';
+                          e.target.style.background = 'rgba(39, 39, 42, 0.5)';
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <input
+                        type="text"
+                        value={medidaPersonalizada[pedido.id_pedido]?.alto || ''}
+                        readOnly
+                        placeholder="Alto (cm)"
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          background: 'rgba(39, 39, 42, 0.3)',
+                          border: '1px solid rgba(63, 63, 70, 0.3)',
+                          borderRadius: '6px',
+                          color: '#a1a1aa',
+                          fontSize: '12px',
+                          cursor: 'not-allowed'
+                        }}
+                      />
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={() => handleAplicarMedidaPersonalizada(pedido)}
+                    disabled={isProcessing || !medidaPersonalizada[pedido.id_pedido]?.ancho || !medidaPersonalizada[pedido.id_pedido]?.alto}
+                    style={{
+                      width: '100%',
+                      background: isProcessing || !medidaPersonalizada[pedido.id_pedido]?.ancho || !medidaPersonalizada[pedido.id_pedido]?.alto
+                        ? 'rgba(59, 130, 246, 0.1)' 
+                        : 'rgba(59, 130, 246, 0.2)',
+                      border: '1px solid rgba(59, 130, 246, 0.5)',
+                      color: isProcessing || !medidaPersonalizada[pedido.id_pedido]?.ancho || !medidaPersonalizada[pedido.id_pedido]?.alto
+                        ? '#93c5fd' 
+                        : '#60a5fa',
+                      height: '32px',
+                      fontWeight: '500',
+                      borderRadius: '6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      cursor: isProcessing || !medidaPersonalizada[pedido.id_pedido]?.ancho || !medidaPersonalizada[pedido.id_pedido]?.alto
+                        ? 'not-allowed' 
+                        : 'pointer',
+                      transition: 'all 0.3s ease',
+                      fontSize: '12px',
+                      opacity: isProcessing || !medidaPersonalizada[pedido.id_pedido]?.ancho || !medidaPersonalizada[pedido.id_pedido]?.alto ? 0.6 : 1
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isProcessing && medidaPersonalizada[pedido.id_pedido]?.ancho && medidaPersonalizada[pedido.id_pedido]?.alto) {
+                        e.target.style.background = 'rgba(59, 130, 246, 0.3)';
+                        e.target.style.color = 'white';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isProcessing && medidaPersonalizada[pedido.id_pedido]?.ancho && medidaPersonalizada[pedido.id_pedido]?.alto) {
+                        e.target.style.background = 'rgba(59, 130, 246, 0.2)';
+                        e.target.style.color = '#60a5fa';
+                      }
+                    }}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <div style={{ 
+                          width: '10px', 
+                          height: '10px', 
+                          border: '2px solid #93c5fd', 
+                          borderTop: '2px solid transparent', 
+                          borderRadius: '50%', 
+                          animation: 'spin 1s linear infinite' 
+                        }} />
+                        Aplicando...
+                      </>
+                    ) : (
+                      <>
+                        ✨ Aplicar
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -676,6 +822,7 @@ const VectorizacionCard = ({
         </div>
       </div>
     </div>
+    </>
   );
 };
 

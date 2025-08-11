@@ -20,7 +20,11 @@ const VectorizacionContent = ({
   onDescargar,
   onCargarVector,
   onEnviarAVerificar,
-  onEnviarAVectorizar
+  onEnviarAVectorizar,
+  medidaPersonalizada,
+  ratioOriginal,
+  handleAnchoChange,
+  handleAplicarMedidaPersonalizada
 }) => {
   if (loading) {
     return (
@@ -71,6 +75,10 @@ const VectorizacionContent = ({
           handleCargarVector={onCargarVector}
           onEnviarAVerificar={onEnviarAVerificar}
           onEnviarAVectorizar={onEnviarAVectorizar}
+          medidaPersonalizada={medidaPersonalizada}
+          ratioOriginal={ratioOriginal}
+          handleAnchoChange={handleAnchoChange}
+          handleAplicarMedidaPersonalizada={handleAplicarMedidaPersonalizada}
         />
       ))}
     </div>

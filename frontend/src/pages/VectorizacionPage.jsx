@@ -17,6 +17,8 @@ function VectorizacionPage() {
     opcionesEscalado,
     procesando,
     removerFondo,
+    medidaPersonalizada,
+    ratioOriginal,
     
     // Groups
     grupoBase,
@@ -93,6 +95,10 @@ function VectorizacionPage() {
           onCargarVector={handleCargarVector}
           onEnviarAVerificar={handleEnviarAVerificar}
           onEnviarAVectorizar={handleEnviarAVectorizar}
+          medidaPersonalizada={medidaPersonalizada}
+          ratioOriginal={ratioOriginal}
+          handleAnchoChange={handleAnchoChange}
+          handleAplicarMedidaPersonalizada={handleAplicarMedidaPersonalizada}
         />
       </div>
     </div>
