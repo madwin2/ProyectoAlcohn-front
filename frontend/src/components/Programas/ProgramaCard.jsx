@@ -71,7 +71,7 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
     }
   };
 
-  const descargarVectoresComoZip = async () => {
+  const descargarProgramaCompleto = async () => {
     try {
       setLoading(true);
       
@@ -88,7 +88,7 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
 
       const zip = new JSZip();
       
-      // Descargar cada vector y agregarlo al ZIP
+      // 1. Descargar cada vector y agregarlo al ZIP
       for (const pedido of pedidosConVector) {
         try {
           const vectorUrl = publicUrl(pedido.archivo_vector);
@@ -110,24 +110,80 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
         }
       }
       
-      // Generar y descargar el ZIP
+      // 2. Agregar archivo .aspire según la máquina del programa
+      try {
+        let archivoAspire;
+        switch (programa.maquina) {
+          case 'C':
+            archivoAspire = 'Archivo Base C.crv3d';
+            break;
+          case 'G':
+            archivoAspire = 'Archivo Base G.crv3d';
+            break;
+          case 'XL':
+            archivoAspire = 'Archivo Base XL.crv3d';
+            break;
+          default:
+            archivoAspire = 'Archivo Base C.crv3d';
+        }
+        
+        // Descargar el archivo .aspire desde la carpeta plantillas
+        const aspireResponse = await fetch(`/plantillas/${archivoAspire}`);
+        if (aspireResponse.ok) {
+          const aspireBlob = await aspireResponse.blob();
+          // Renombrar el archivo .aspire con el nombre del programa
+          const nombreProgramaLimpio = programa.nombre_archivo?.replace(/[^a-zA-Z0-9]/g, '_') || programa.id_programa;
+          zip.file(`${nombreProgramaLimpio}.crv3d`, aspireBlob);
+        }
+      } catch (error) {
+        console.error('Error agregando archivo .aspire:', error);
+      }
+      
+      // 3. Agregar archivo .lua de automatización
+      try {
+        const luaResponse = await fetch('/plantillas/AUTOMATIZACION_CON_CAPAS.lua');
+        if (luaResponse.ok) {
+          const luaContent = await luaResponse.text();
+          zip.file('AUTOMATIZACION_CON_CAPAS.lua', luaContent);
+        }
+      } catch (error) {
+        console.error('Error agregando archivo .lua:', error);
+      }
+      
+      // 4. Agregar archivo .bat ejecutable
+      try {
+        const batResponse = await fetch('/plantillas/PROCESAR_PEDIDO_UNIVERSAL.bat');
+        if (batResponse.ok) {
+          const batContent = await batResponse.text();
+          zip.file('PROCESAR_PEDIDO_UNIVERSAL.bat', batContent);
+        }
+      } catch (error) {
+        console.error('Error agregando archivo .bat:', error);
+      }
+      
+      // Generar y descargar el ZIP con nombre del programa
       const zipBlob = await zip.generateAsync({ type: 'blob' });
       const url = URL.createObjectURL(zipBlob);
       
       const link = document.createElement('a');
       link.href = url;
-      link.download = `vectores_programa_${programa.id_programa}_${new Date().toISOString().split('T')[0]}.zip`;
+      
+      // Usar el nombre del programa para el ZIP
+      const nombreProgramaLimpio = programa.nombre_archivo?.replace(/[^a-zA-Z0-9]/g, '_') || programa.id_programa;
+      const fecha = new Date().toISOString().split('T')[0];
+      link.download = `programa_${nombreProgramaLimpio}_${fecha}.zip`;
+      
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       
       URL.revokeObjectURL(url);
       
-      addNotification(`Descargados ${pedidosConVector.length} vectores exitosamente`, 'success');
+      addNotification(`Programa completo descargado: ${pedidosConVector.length} vectores + archivos de trabajo`, 'success');
       
     } catch (error) {
-      console.error('Error descargando vectores:', error);
-      addNotification('Error al descargar los vectores', 'error');
+      console.error('Error descargando programa completo:', error);
+      addNotification('Error al descargar el programa completo', 'error');
     } finally {
       setLoading(false);
     }
@@ -415,7 +471,7 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
                 Actualizar Resumen
               </button>
               <button
-                onClick={descargarVectoresComoZip}
+                onClick={descargarProgramaCompleto}
                 style={{
                   width: '100%',
                   background: 'transparent',
@@ -432,7 +488,7 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
                 }}
               >
                 <Download style={{ width: '14px', height: '14px' }} />
-                Descargar Vectores
+                Descargar Programa Completo
               </button>
               <button
                 onClick={handleToggleBloqueo}
