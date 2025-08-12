@@ -77,42 +77,114 @@ export const useVectorizacion = () => {
     base: grupoBase.length
   });
 
-  // Medir SVGs y calcular opciones de escalado
+  // Medir SVGs y calcular opciones de escalado - OPTIMIZADO
   const medirTodos = async () => {
+    // Solo medir vectores que están en "Verificar Medidas" (grupoVector)
+    const pedidosAMedir = grupoVector.filter(p => 
+      p.medida_pedida && p.medida_pedida.includes("x")
+    );
+    
+    if (pedidosAMedir.length === 0) {
+      console.log('📊 No hay vectores para medir en este momento');
+      return;
+    }
+    
+    console.log(`📐 Mediendo ${pedidosAMedir.length} vectores en paralelo...`);
+    
     let nuevasDim = {};
     let nuevasOpc = {};
     
-    for (const pedido of pedidos) {
-      if (pedido.archivo_vector && pedido.medida_pedida && pedido.medida_pedida.includes("x")) {
+    // Medición en paralelo para mejor rendimiento
+    const mediciones = pedidosAMedir.map(async (pedido) => {
+      try {
         const url = publicUrl(pedido.archivo_vector);
         
-        // Agregar delay para archivos recién subidos - aumentar el delay y mejorar la detección
-        if (pedido.archivo_vector.includes('_manual-') || 
-            pedido.archivo_vector.includes('archivo_vector_') ||
-            pedido.archivo_vector.includes('.svg')) {
-          console.log('⏳ Esperando que archivo esté disponible para medición:', pedido.archivo_vector);
-          await new Promise(resolve => setTimeout(resolve, 3000)); // Aumentar a 3 segundos
+        // Delay reducido para archivos recién subidos
+        if (pedido.archivo_vector.includes('_manual_') || 
+            pedido.archivo_vector.includes('_ia_') ||
+            pedido.archivo_vector.includes('_dim_')) {
+          console.log('⏳ Esperando que archivo esté disponible:', pedido.archivo_vector);
+          await new Promise(resolve => setTimeout(resolve, 1500)); // Reducido a 1.5 segundos
           console.log('✅ Archivo listo para medición');
         }
         
         const dimensiones = await medirSVG(url);
-        nuevasDim[pedido.id_pedido] = dimensiones;
         
-        const opciones = calcularOpcionesEscalado(dimensiones, pedido.medida_pedida);
-        if (opciones) {
-          nuevasOpc[pedido.id_pedido] = opciones;
-        }
-        
-        // Calcular y guardar el ratio original para medidas personalizadas
-        if (dimensiones.width > 0 && dimensiones.height > 0) {
+        if (dimensiones && dimensiones.width > 0 && dimensiones.height > 0) {
+          nuevasDim[pedido.id_pedido] = dimensiones;
+          
+          const opciones = calcularOpcionesEscalado(dimensiones, pedido.medida_pedida);
+          if (opciones) {
+            nuevasOpc[pedido.id_pedido] = opciones;
+          }
+          
+          // Calcular ratio para medidas personalizadas
           const ratio = dimensiones.width / dimensiones.height;
           setRatioOriginal(prev => ({ ...prev, [pedido.id_pedido]: ratio }));
+          
+          console.log(`✅ Vector ${pedido.id_pedido} medido: ${dimensiones.width}x${dimensiones.height}mm`);
+        } else {
+          console.warn(`⚠️ No se pudieron obtener dimensiones para pedido ${pedido.id_pedido}`);
         }
+      } catch (error) {
+        console.error(`❌ Error midiendo vector ${pedido.id_pedido}:`, error);
       }
+    });
+    
+    // Esperar a que todas las mediciones terminen
+    await Promise.all(mediciones);
+    
+    // Actualizar estado una sola vez
+    setDimensionesSVG(prev => ({ ...prev, ...nuevasDim }));
+    setOpcionesEscalado(prev => ({ ...prev, ...nuevasOpc }));
+    
+    console.log(`🎯 Mediciones completadas: ${Object.keys(nuevasDim).length} vectores medidos`);
+  };
+
+  // Medir un vector específico (para uso individual)
+  const medirVectorEspecifico = async (pedido) => {
+    if (!pedido.archivo_vector || !pedido.medida_pedida || !pedido.medida_pedida.includes("x")) {
+      console.log('⚠️ Pedido no cumple requisitos para medición');
+      return;
     }
     
-    setDimensionesSVG(nuevasDim);
-    setOpcionesEscalado(nuevasOpc);
+    try {
+      console.log(`📐 Midendo vector específico: ${pedido.id_pedido}`);
+      
+      const url = publicUrl(pedido.archivo_vector);
+      
+      // Delay reducido para archivo recién subido
+      if (pedido.archivo_vector.includes('_manual_') || 
+          pedido.archivo_vector.includes('_ia_') ||
+          pedido.archivo_vector.includes('_dim_')) {
+        console.log('⏳ Esperando que archivo esté disponible...');
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Solo 1 segundo
+        console.log('✅ Archivo listo para medición');
+      }
+      
+      const dimensiones = await medirSVG(url);
+      
+      if (dimensiones && dimensiones.width > 0 && dimensiones.height > 0) {
+        // Actualizar dimensiones
+        setDimensionesSVG(prev => ({ ...prev, [pedido.id_pedido]: dimensiones }));
+        
+        // Calcular opciones de escalado
+        const opciones = calcularOpcionesEscalado(dimensiones, pedido.medida_pedida);
+        if (opciones) {
+          setOpcionesEscalado(prev => ({ ...prev, [pedido.id_pedido]: opciones }));
+        }
+        
+        // Calcular ratio
+        const ratio = dimensiones.width / dimensiones.height;
+        setRatioOriginal(prev => ({ ...prev, [pedido.id_pedido]: ratio }));
+        
+        console.log(`✅ Vector ${pedido.id_pedido} medido exitosamente: ${dimensiones.width}x${dimensiones.height}mm`);
+      } else {
+        console.warn(`⚠️ No se pudieron obtener dimensiones para pedido ${pedido.id_pedido}`);
+      }
+    } catch (error) {
+      console.error(`❌ Error midiendo vector ${pedido.id_pedido}:`, error);
+    }
   };
 
   // Vectorizar con IA real usando vectorizer.ai
@@ -493,6 +565,9 @@ export const useVectorizacion = () => {
       // Limpiar archivos antiguos (opcional)
       await limpiarArchivosAntiguos(pedido, fileName);
       
+      // Medir el vector inmediatamente para mostrar opciones de escalado
+      await medirVectorEspecifico(pedido);
+      
       await fetchPedidos();
       
     } catch (error) {
@@ -720,6 +795,9 @@ export const useVectorizacion = () => {
       // Limpiar archivos antiguos
       await limpiarArchivosAntiguos(pedido, fileName);
       
+      // Medir el vector inmediatamente para mostrar opciones de escalado
+      await medirVectorEspecifico(pedido);
+      
       await fetchPedidos();
       
     } catch (error) {
@@ -764,10 +842,12 @@ export const useVectorizacion = () => {
   }, [authReady]);
 
   useEffect(() => {
-    if (pedidos.length > 0) {
+    if (pedidos.length > 0 && grupoVector.length > 0) {
+      // Solo medir si hay vectores en "Verificar Medidas"
+      console.log('🔄 Ejecutando medición automática...');
       medirTodos();
     }
-  }, [pedidos]);
+  }, [pedidos, grupoVector.length]);
 
   return {
     // State
@@ -813,6 +893,7 @@ export const useVectorizacion = () => {
     
     // Utils
     publicUrl,
-    fetchPedidos
+    fetchPedidos,
+    medirVectorEspecifico
   };
 };
