@@ -17,6 +17,7 @@ export const useVectorizacion = () => {
   const [removerFondo, setRemoverFondo] = useState(false);
   const [medidaPersonalizada, setMedidaPersonalizada] = useState({ ancho: '', alto: '' });
   const [ratioOriginal, setRatioOriginal] = useState(1);
+  const [authReady, setAuthReady] = useState(false);
 
   // Función para obtener URL pública
   const publicUrl = (path) => {
@@ -530,8 +531,36 @@ export const useVectorizacion = () => {
 
   // Effects
   useEffect(() => {
-    fetchPedidos();
+    // Verificar autenticación antes de hacer operaciones de base de datos
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setAuthReady(true);
+      }
+    };
+
+    // Suscribirse a cambios de estado de autenticación
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        setAuthReady(true);
+      } else if (event === 'SIGNED_OUT') {
+        setAuthReady(false);
+      }
+    });
+
+    // Verificar auth inicial
+    checkAuth();
+
+    // Cleanup de la suscripción
+    return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    // Solo ejecutar fetchPedidos cuando la autenticación esté lista
+    if (authReady) {
+      fetchPedidos();
+    }
+  }, [authReady]);
 
   useEffect(() => {
     if (pedidos.length > 0) {
