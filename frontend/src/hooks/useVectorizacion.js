@@ -210,12 +210,11 @@ export const useVectorizacion = () => {
       console.log('📐 SVG dimensionado obtenido:', svgDimensionado ? 'SÍ' : 'NO');
       
       if (svgDimensionado) {
-        // 1. Subir el SVG redimensionado a Supabase Storage con nombre basado en el diseño
-        const disenioLimpio = limpiarNombreDisenio(pedido.disenio, pedido.id_pedido);
-        const fileName = `vector/${disenioLimpio}_${pedido.id_pedido}.svg`;
+        // 1. Subir el SVG redimensionado a Supabase Storage con nombre único
+        const fileName = generarNombreArchivo(pedido, 'dimensionado');
         const svgBlob = new Blob([svgDimensionado], { type: 'image/svg+xml' });
         
-        console.log('Subiendo SVG redimensionado:', fileName);
+        console.log('📁 Subiendo SVG redimensionado con nombre único:', fileName);
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('archivos-ventas')
           .upload(fileName, svgBlob);
@@ -276,6 +275,10 @@ export const useVectorizacion = () => {
             tipo_planchuela: tipoPlanchuela,
             largo_planchuela: largoPlanchuela
           });
+          
+          // Limpiar archivos antiguos (opcional)
+          await limpiarArchivosAntiguos(pedido, fileName);
+          
           // Forzar recarga de datos desde Supabase para asegurar sincronización
           console.log('🔄 Recargando datos desde Supabase...');
           await fetchPedidos();
@@ -297,14 +300,10 @@ export const useVectorizacion = () => {
     try {
       const blob = new Blob([svgPreview], { type: 'image/svg+xml' });
       
-      // Generar nombre basado en el diseño
-      const disenioLimpio = limpiarNombreDisenio(svgPedido.disenio, svgPedido.id_pedido);
-      const fileName = `vector/${disenioLimpio}_${svgPedido.id_pedido}.svg`;
+      // Generar nombre único para el archivo de IA
+      const fileName = generarNombreArchivo(svgPedido, 'ia');
       
-      // Primero eliminar el archivo si existe para evitar conflictos
-      console.log('🗑️ Verificando si existe archivo anterior:', fileName);
-      await supabase.storage.from('archivos-ventas').remove([fileName]);
-      console.log('✅ Archivo anterior eliminado (si existía)');
+      console.log('📁 Guardando SVG de IA con nombre único:', fileName);
       
       // Ahora subir el nuevo archivo
       const { error } = await supabase.storage
@@ -320,6 +319,9 @@ export const useVectorizacion = () => {
           .eq('id_pedido', svgPedido.id_pedido);
         
         if (!updateError) {
+          // Limpiar archivos antiguos (opcional)
+          await limpiarArchivosAntiguos(svgPedido, fileName);
+          
           setSvgPreview(null);
           setSvgPedido(null);
           await fetchPedidos();
@@ -388,6 +390,58 @@ export const useVectorizacion = () => {
     return `${disenioLimpio}.svg`;
   };
 
+  // Función para generar nombres únicos de archivos según el tipo de proceso
+  const generarNombreArchivo = (pedido, tipo) => {
+    const disenioLimpio = limpiarNombreDisenio(pedido.disenio, pedido.id_pedido);
+    const timestamp = Date.now();
+    
+    switch (tipo) {
+      case 'manual':
+        return `vector/${disenioLimpio}_${pedido.id_pedido}_manual_${timestamp}.svg`;
+      case 'ia':
+        return `vector/${disenioLimpio}_${pedido.id_pedido}_ia_${timestamp}.svg`;
+      case 'dimensionado':
+        return `vector/${disenioLimpio}_${pedido.id_pedido}_dim_${timestamp}.svg`;
+      default:
+        return `vector/${disenioLimpio}_${pedido.id_pedido}_${timestamp}.svg`;
+    }
+  };
+
+  // Función para limpiar archivos antiguos del mismo pedido (opcional)
+  const limpiarArchivosAntiguos = async (pedido, nuevoArchivo) => {
+    try {
+      const disenioLimpio = limpiarNombreDisenio(pedido.disenio, pedido.id_pedido);
+      const patron = `${disenioLimpio}_${pedido.id_pedido}`;
+      
+      // Listar archivos en el bucket que coincidan con el patrón
+      const { data: archivos, error } = await supabase.storage
+        .from('archivos-ventas')
+        .list('vector', {
+          search: patron
+        });
+      
+      if (error) {
+        console.warn('No se pudieron listar archivos antiguos:', error);
+        return;
+      }
+      
+      // Eliminar archivos antiguos (mantener solo los últimos 3)
+      if (archivos && archivos.length > 3) {
+        const archivosAEliminar = archivos
+          .filter(archivo => archivo.name !== nuevoArchivo.split('/').pop())
+          .slice(0, archivos.length - 3)
+          .map(archivo => `vector/${archivo.name}`);
+        
+        if (archivosAEliminar.length > 0) {
+          console.log('🧹 Limpiando archivos antiguos:', archivosAEliminar);
+          await supabase.storage.from('archivos-ventas').remove(archivosAEliminar);
+        }
+      }
+    } catch (error) {
+      console.warn('Error limpiando archivos antiguos:', error);
+    }
+  };
+
   // Cargar vector manualmente
   const handleCargarVector = async (pedido, file) => {
     if (!file || procesando[pedido.id_pedido]) return;
@@ -400,15 +454,11 @@ export const useVectorizacion = () => {
       // Leer el contenido del archivo SVG
       const svgContent = await file.text();
       
-      // Subir el SVG a Supabase Storage con nombre basado en el diseño
-      const disenioLimpio = limpiarNombreDisenio(pedido.disenio, pedido.id_pedido);
-      const fileName = `vector/${disenioLimpio}_${pedido.id_pedido}.svg`;
+      // Subir el SVG a Supabase Storage con nombre único
+      const fileName = generarNombreArchivo(pedido, 'manual');
       const svgBlob = new Blob([svgContent], { type: 'image/svg+xml' });
       
-      // Primero eliminar el archivo si existe para evitar conflictos
-      console.log('🗑️ Verificando si existe archivo anterior:', fileName);
-      await supabase.storage.from('archivos-ventas').remove([fileName]);
-      console.log('✅ Archivo anterior eliminado (si existía)');
+      console.log('📁 Subiendo archivo con nombre único:', fileName);
       
       // Ahora subir el nuevo archivo
       const { error: uploadError } = await supabase.storage
@@ -439,6 +489,10 @@ export const useVectorizacion = () => {
       }
 
       console.log('Vector cargado exitosamente:', fileName);
+      
+      // Limpiar archivos antiguos (opcional)
+      await limpiarArchivosAntiguos(pedido, fileName);
+      
       await fetchPedidos();
       
     } catch (error) {
