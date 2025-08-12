@@ -141,6 +141,35 @@ export const useVectorizacion = () => {
     console.log(`🎯 Mediciones completadas: ${Object.keys(nuevasDim).length} vectores medidos`);
   };
 
+  // Verificar qué vector está usando realmente el pedido
+  const verificarVectorActual = async (pedidoId) => {
+    try {
+      const { data: pedido, error } = await supabase
+        .from('pedidos')
+        .select('archivo_vector, disenio')
+        .eq('id_pedido', pedidoId)
+        .single();
+      
+      if (error) {
+        console.error('Error verificando vector:', error);
+        return null;
+      }
+      
+      console.log(`🔍 Vector actual del pedido ${pedidoId}:`, {
+        disenio: pedido.disenio,
+        archivo_vector: pedido.archivo_vector,
+        tipo: pedido.archivo_vector?.includes('_manual_') ? 'MANUAL' : 
+              pedido.archivo_vector?.includes('_ia_') ? 'IA' : 
+              pedido.archivo_vector?.includes('_dim_') ? 'DIMENSIONADO' : 'DESCONOCIDO'
+      });
+      
+      return pedido.archivo_vector;
+    } catch (error) {
+      console.error('Error en verificarVectorActual:', error);
+      return null;
+    }
+  };
+
   // Medir un vector específico (para uso individual)
   const medirVectorEspecifico = async (pedido) => {
     if (!pedido.archivo_vector || !pedido.medida_pedida || !pedido.medida_pedida.includes("x")) {
@@ -245,14 +274,25 @@ export const useVectorizacion = () => {
   };
 
   // Previsualizar SVG
-  const handlePrevisualizar = (pedido) => {
+  const handlePrevisualizar = async (pedido) => {
     if (pedido.archivo_vector) {
+      // Verificar qué vector se está usando realmente
+      console.log(`🔍 Previsualizando vector del pedido ${pedido.id_pedido}:`, {
+        archivo_vector: pedido.archivo_vector,
+        tipo: pedido.archivo_vector.includes('_manual_') ? 'MANUAL' : 
+              pedido.archivo_vector.includes('_ia_') ? 'IA' : 
+              pedido.archivo_vector.includes('_dim_') ? 'DIMENSIONADO' : 'DESCONOCIDO'
+      });
+      
       const url = publicUrl(pedido.archivo_vector);
+      console.log(`🔗 URL del vector:`, url);
+      
       fetch(url)
         .then(response => response.text())
         .then(svgContent => {
           setSvgPreview(svgContent);
           setSvgPedido(pedido);
+          console.log(`✅ Vector cargado para previsualización: ${pedido.archivo_vector}`);
         })
         .catch(error => {
           console.error('Error cargando SVG:', error);
@@ -274,6 +314,14 @@ export const useVectorizacion = () => {
     setProcesando(prev => ({ ...prev, [pedido.id_pedido]: true }));
     
     try {
+      // Verificar qué vector se está usando realmente para dimensionar
+      console.log(`🔍 Dimensionando vector del pedido ${pedido.id_pedido}:`, {
+        archivo_vector: pedido.archivo_vector,
+        tipo: pedido.archivo_vector.includes('_manual_') ? 'MANUAL' : 
+              pedido.archivo_vector.includes('_ia_') ? 'IA' : 
+              pedido.archivo_vector.includes('_dim_') ? 'DIMENSIONADO' : 'DESCONOCIDO'
+      });
+      
       const url = publicUrl(pedido.archivo_vector);
       console.log('🔗 URL del SVG original:', url);
       
@@ -365,7 +413,7 @@ export const useVectorizacion = () => {
     }
   };
 
-  // Guardar SVG
+  // Guardar SVG de IA (SOLO cuando se aprueba desde el modal)
   const handleGuardarSVG = async () => {
     if (!svgPreview || !svgPedido) return;
     
@@ -385,18 +433,38 @@ export const useVectorizacion = () => {
         });
       
       if (!error) {
-        const { error: updateError } = await supabase
+        // IMPORTANTE: Solo actualizar archivo_vector si NO hay uno manual
+        // Verificar si ya existe un vector manual
+        const { data: pedidoActual } = await supabase
           .from('pedidos')
-          .update({ archivo_vector: fileName })
-          .eq('id_pedido', svgPedido.id_pedido);
+          .select('archivo_vector')
+          .eq('id_pedido', svgPedido.id_pedido)
+          .single();
         
-        if (!updateError) {
-          // Limpiar archivos antiguos (opcional)
-          await limpiarArchivosAntiguos(svgPedido, fileName);
+        // Solo sobrescribir si no hay vector manual o si el usuario confirma
+        if (!pedidoActual?.archivo_vector || 
+            pedidoActual.archivo_vector.includes('_manual_') ||
+            confirm(`¿Estás seguro de que quieres reemplazar el vector actual?\n\nVector actual: ${pedidoActual?.archivo_vector || 'Ninguno'}\n\nNuevo vector: ${fileName}`)) {
           
+          const { error: updateError } = await supabase
+            .from('pedidos')
+            .update({ archivo_vector: fileName })
+            .eq('id_pedido', svgPedido.id_pedido);
+          
+          if (!updateError) {
+            console.log('✅ Vector de IA guardado exitosamente');
+            // Limpiar archivos antiguos (opcional)
+            await limpiarArchivosAntiguos(svgPedido, fileName);
+            
+            setSvgPreview(null);
+            setSvgPedido(null);
+            await fetchPedidos();
+          }
+        } else {
+          console.log('⚠️ Vector manual detectado, no se sobrescribió');
+          alert('No se sobrescribió el vector manual existente. Si quieres reemplazarlo, confirma la acción.');
           setSvgPreview(null);
           setSvgPedido(null);
-          await fetchPedidos();
         }
       }
     } catch (error) {
@@ -894,6 +962,7 @@ export const useVectorizacion = () => {
     // Utils
     publicUrl,
     fetchPedidos,
-    medirVectorEspecifico
+    medirVectorEspecifico,
+    verificarVectorActual
   };
 };
