@@ -54,6 +54,16 @@ export const useVectorizacion = () => {
           console.log(`- Pedido ${p.id_pedido}: ${p.disenio} - Vector: ${p.archivo_vector}`);
         });
         
+        // 🔍 LOG DETALLADO DE TODOS LOS PEDIDOS CON ARCHIVO_VECTOR
+        const todosConVector = data?.filter(p => p.archivo_vector) || [];
+        console.log('🔍 TODOS LOS PEDIDOS CON ARCHIVO_VECTOR:', todosConVector.length);
+        todosConVector.forEach(p => {
+          const tipo = p.archivo_vector.includes('_manual_') ? 'MANUAL' : 
+                      p.archivo_vector.includes('_ia_') ? 'IA' : 
+                      p.archivo_vector.includes('_dim_') ? 'DIMENSIONADO' : 'DESCONOCIDO';
+          console.log(`🔍 Pedido ${p.id_pedido}: ${p.disenio} - Vector: ${p.archivo_vector} - Tipo: ${tipo} - Medida: ${p.medida_real || 'SIN MEDIR'}`);
+        });
+        
         setPedidos(data || []);
       } else {
         console.error('Error en fetchPedidos:', error);
@@ -90,6 +100,14 @@ export const useVectorizacion = () => {
     }
     
     console.log(`📐 Mediendo ${pedidosAMedir.length} vectores en paralelo...`);
+    console.log('🔍 PEDIDOS A MEDIR:', pedidosAMedir.map(p => ({
+      id: p.id_pedido,
+      disenio: p.disenio,
+      archivo_vector: p.archivo_vector,
+      tipo: p.archivo_vector.includes('_manual_') ? 'MANUAL' : 
+            p.archivo_vector.includes('_ia_') ? 'IA' : 
+            p.archivo_vector.includes('_dim_') ? 'DIMENSIONADO' : 'DESCONOCIDO'
+    })));
     
     let nuevasDim = {};
     let nuevasOpc = {};
@@ -172,31 +190,28 @@ export const useVectorizacion = () => {
 
   // Medir un vector específico (para uso individual)
   const medirVectorEspecifico = async (pedido) => {
-    if (!pedido.archivo_vector || !pedido.medida_pedida || !pedido.medida_pedida.includes("x")) {
-      console.log('⚠️ Pedido no cumple requisitos para medición');
-      return;
-    }
+    if (!pedido.archivo_vector) return;
+    
+    console.log(`🔍 MEDICIÓN ESPECÍFICA DEL VECTOR:`, {
+      id: pedido.id_pedido,
+      disenio: pedido.disenio,
+      archivo_vector: pedido.archivo_vector,
+      tipo: pedido.archivo_vector.includes('_manual_') ? 'MANUAL' : 
+            pedido.archivo_vector.includes('_ia_') ? 'IA' : 
+            pedido.archivo_vector.includes('_dim_') ? 'DIMENSIONADO' : 'DESCONOCIDO'
+    });
     
     try {
-      console.log(`📐 Midendo vector específico: ${pedido.id_pedido}`);
+      // Esperar 1 segundo para que Supabase Storage procese el archivo
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       const url = publicUrl(pedido.archivo_vector);
-      
-      // Delay reducido para archivo recién subido
-      if (pedido.archivo_vector.includes('_manual_') || 
-          pedido.archivo_vector.includes('_ia_') ||
-          pedido.archivo_vector.includes('_dim_')) {
-        console.log('⏳ Esperando que archivo esté disponible...');
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Solo 1 segundo
-        console.log('✅ Archivo listo para medición');
-      }
+      console.log(`🔗 URL del vector a medir:`, url);
       
       const dimensiones = await medirSVG(url);
+      console.log(`📏 Dimensiones obtenidas:`, dimensiones);
       
-      if (dimensiones && dimensiones.width > 0 && dimensiones.height > 0) {
-        // Actualizar dimensiones
-        setDimensionesSVG(prev => ({ ...prev, [pedido.id_pedido]: dimensiones }));
-        
+      if (dimensiones.width > 0 && dimensiones.height > 0) {
         // Calcular opciones de escalado
         const opciones = calcularOpcionesEscalado(dimensiones, pedido.medida_pedida);
         if (opciones) {
@@ -368,6 +383,15 @@ export const useVectorizacion = () => {
         
         // 4. Actualizar el pedido con el nuevo archivo vector y todos los datos
         console.log('💾 Actualizando pedido en Supabase...');
+        console.log('🔍 VECTOR QUE SE VA A GUARDAR:', {
+          archivo_vector_actual: pedido.archivo_vector,
+          archivo_vector_nuevo: fileName,
+          tipo_actual: pedido.archivo_vector.includes('_manual_') ? 'MANUAL' : 
+                       pedido.archivo_vector.includes('_ia_') ? 'IA' : 
+                       pedido.archivo_vector.includes('_dim_') ? 'DIMENSIONADO' : 'DESCONOCIDO',
+          tipo_nuevo: 'DIMENSIONADO'
+        });
+        
         const datosActualizacion = {
           archivo_vector: fileName, // ¡IMPORTANTE! Guardar path relativo
           medida_real: medidaReal,
@@ -403,6 +427,24 @@ export const useVectorizacion = () => {
           console.log('🔄 Recargando datos desde Supabase...');
           await fetchPedidos();
           console.log('✅ Datos recargados');
+          
+          // 🔍 VERIFICAR QUÉ SE GUARDÓ REALMENTE
+          console.log('🔍 VERIFICANDO QUÉ SE GUARDÓ REALMENTE EN SUPABASE...');
+          const { data: pedidoVerificado } = await supabase
+            .from('pedidos')
+            .select('archivo_vector, medida_real')
+            .eq('id_pedido', pedido.id_pedido)
+            .single();
+          
+          if (pedidoVerificado) {
+            console.log('🔍 VERIFICACIÓN POST-GUARDADO:', {
+              archivo_vector_guardado: pedidoVerificado.archivo_vector,
+              medida_real_guardada: pedidoVerificado.medida_real,
+              tipo_guardado: pedidoVerificado.archivo_vector?.includes('_manual_') ? 'MANUAL' : 
+                           pedidoVerificado.archivo_vector?.includes('_ia_') ? 'IA' : 
+                           pedidoVerificado.archivo_vector?.includes('_dim_') ? 'DIMENSIONADO' : 'DESCONOCIDO'
+            });
+          }
         }
       }
     } catch (error) {
@@ -634,6 +676,12 @@ export const useVectorizacion = () => {
       await limpiarArchivosAntiguos(pedido, fileName);
       
       // Medir el vector inmediatamente para mostrar opciones de escalado
+      console.log('🔍 ANTES DE MEDIR VECTOR ESPECÍFICO:', {
+        id: pedido.id_pedido,
+        disenio: pedido.disenio,
+        archivo_vector: fileName,
+        tipo: 'MANUAL'
+      });
       await medirVectorEspecifico(pedido);
       
       await fetchPedidos();
@@ -669,6 +717,14 @@ export const useVectorizacion = () => {
       }
 
       console.log('✅ Pedido enviado a verificar exitosamente');
+      console.log('🔍 PEDIDO ENVIADO A VERIFICAR:', {
+        id: pedido.id_pedido,
+        disenio: pedido.disenio,
+        archivo_vector: pedido.archivo_vector,
+        tipo: pedido.archivo_vector.includes('_manual_') ? 'MANUAL' : 
+              pedido.archivo_vector.includes('_ia_') ? 'IA' : 
+              pedido.archivo_vector.includes('_dim_') ? 'DIMENSIONADO' : 'DESCONOCIDO'
+      });
       await fetchPedidos();
       
     } catch (error) {
@@ -702,6 +758,12 @@ export const useVectorizacion = () => {
       }
 
       console.log('✅ Pedido enviado a vectorizar exitosamente');
+      console.log('🔍 PEDIDO ENVIADO A VECTORIZAR:', {
+        id: pedido.id_pedido,
+        disenio: pedido.disenio,
+        archivo_vector: 'ELIMINADO',
+        medida_real: pedido.medida_real || 'SIN MEDIR'
+      });
       await fetchPedidos();
       
     } catch (error) {
@@ -781,11 +843,18 @@ export const useVectorizacion = () => {
         .eq('id_pedido', pedido.id_pedido);
       
       if (error) {
-        console.error('❌ Error eliminando vector:', error);
+        console.error('Error actualizando pedido:', error);
         throw error;
       }
 
-      console.log('✅ Vector eliminado exitosamente');
+      console.log('✅ Vector eliminado exitosamente del pedido');
+      console.log('🔍 PEDIDO ACTUALIZADO:', {
+        id: pedido.id_pedido,
+        disenio: pedido.disenio,
+        archivo_vector: 'ELIMINADO',
+        medida_real: 'ELIMINADA'
+      });
+      
       await fetchPedidos();
       
     } catch (error) {
@@ -860,10 +929,16 @@ export const useVectorizacion = () => {
 
       console.log('✅ Vector reemplazado exitosamente:', fileName);
       
-      // Limpiar archivos antiguos
+      // Limpiar archivos antiguos (opcional)
       await limpiarArchivosAntiguos(pedido, fileName);
       
       // Medir el vector inmediatamente para mostrar opciones de escalado
+      console.log('🔍 ANTES DE MEDIR VECTOR REEMPLAZADO:', {
+        id: pedido.id_pedido,
+        disenio: pedido.disenio,
+        archivo_vector: fileName,
+        tipo: 'MANUAL'
+      });
       await medirVectorEspecifico(pedido);
       
       await fetchPedidos();
@@ -913,6 +988,14 @@ export const useVectorizacion = () => {
     if (pedidos.length > 0 && grupoVector.length > 0) {
       // Solo medir si hay vectores en "Verificar Medidas"
       console.log('🔄 Ejecutando medición automática...');
+      console.log('🔍 PEDIDOS EN GRUPO VECTOR ANTES DE MEDIR:', grupoVector.map(p => ({
+        id: p.id_pedido,
+        disenio: p.disenio,
+        archivo_vector: p.archivo_vector,
+        tipo: p.archivo_vector.includes('_manual_') ? 'MANUAL' : 
+              p.archivo_vector.includes('_ia_') ? 'IA' : 
+              p.archivo_vector.includes('_dim_') ? 'DIMENSIONADO' : 'DESCONOCIDO'
+      })));
       medirTodos();
     }
   }, [pedidos, grupoVector.length]);
