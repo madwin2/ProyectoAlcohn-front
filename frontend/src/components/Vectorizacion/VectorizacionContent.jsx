@@ -21,6 +21,8 @@ const VectorizacionContent = ({
   onCargarVector,
   onEnviarAVerificar,
   onEnviarAVectorizar,
+  onEliminarVector,
+  onReemplazarVector,
   medidaPersonalizada,
   ratioOriginal,
   handleAnchoChange,
@@ -75,6 +77,8 @@ const VectorizacionContent = ({
           handleCargarVector={onCargarVector}
           onEnviarAVerificar={onEnviarAVerificar}
           onEnviarAVectorizar={onEnviarAVectorizar}
+          onEliminarVector={onEliminarVector}
+          onReemplazarVector={onReemplazarVector}
           medidaPersonalizada={medidaPersonalizada}
           ratioOriginal={ratioOriginal}
           handleAnchoChange={handleAnchoChange}

@@ -602,6 +602,134 @@ export const useVectorizacion = () => {
     });
   };
 
+  // Eliminar vector y volver a "A Vectorizar"
+  const handleEliminarVector = async (pedido) => {
+    if (procesando[pedido.id_pedido]) return;
+    
+    if (!confirm(`¿Estás seguro de que quieres eliminar el vector de "${pedido.disenio}"? Esto lo enviará de vuelta a "A Vectorizar".`)) {
+      return;
+    }
+    
+    setProcesando(prev => ({ ...prev, [pedido.id_pedido]: true }));
+    
+    try {
+      console.log('🗑️ Eliminando vector:', pedido.id_pedido);
+      
+      // Eliminar el archivo del storage si existe
+      if (pedido.archivo_vector) {
+        try {
+          await supabase.storage.from('archivos-ventas').remove([pedido.archivo_vector]);
+          console.log('✅ Archivo eliminado del storage');
+        } catch (storageError) {
+          console.warn('⚠️ No se pudo eliminar el archivo del storage:', storageError);
+        }
+      }
+      
+      // Actualizar el pedido: eliminar archivo_vector y medida_real
+      const { error } = await supabase
+        .from('pedidos')
+        .update({
+          archivo_vector: null,
+          medida_real: null,
+          tiempo_estimado: null,
+          tipo_planchuela: null,
+          largo_planchuela: null
+        })
+        .eq('id_pedido', pedido.id_pedido);
+      
+      if (error) {
+        console.error('❌ Error eliminando vector:', error);
+        throw error;
+      }
+
+      console.log('✅ Vector eliminado exitosamente');
+      await fetchPedidos();
+      
+    } catch (error) {
+      console.error('❌ Error eliminando vector:', error);
+      alert(`Error al eliminar el vector: ${error.message}`);
+    } finally {
+      setProcesando(prev => ({ ...prev, [pedido.id_pedido]: false }));
+    }
+  };
+
+  // Reemplazar vector con uno nuevo
+  const handleReemplazarVector = async (pedido, file) => {
+    if (!file || procesando[pedido.id_pedido]) return;
+    
+    setProcesando(prev => ({ ...prev, [pedido.id_pedido]: true }));
+    
+    try {
+      console.log('🔄 Reemplazando vector:', file.name);
+      
+      // Leer el contenido del archivo SVG
+      const svgContent = await file.text();
+      
+      // Generar nombre único para el nuevo archivo
+      const fileName = generarNombreArchivo(pedido, 'manual');
+      const svgBlob = new Blob([svgContent], { type: 'image/svg+xml' });
+      
+      console.log('📁 Subiendo nuevo archivo:', fileName);
+      
+      // Subir el nuevo archivo
+      const { error: uploadError } = await supabase.storage
+        .from('archivos-ventas')
+        .upload(fileName, svgBlob, {
+          cacheControl: '3600'
+        });
+      
+      if (uploadError) {
+        console.error('Error subiendo nuevo SVG:', uploadError);
+        throw uploadError;
+      }
+
+      // Esperar que Supabase Storage procese el archivo
+      console.log('⏳ Esperando que Supabase Storage procese el archivo...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('✅ Archivo procesado, continuando...');
+
+      // Eliminar el archivo anterior si existe
+      if (pedido.archivo_vector) {
+        try {
+          await supabase.storage.from('archivos-ventas').remove([pedido.archivo_vector]);
+          console.log('🗑️ Archivo anterior eliminado');
+        } catch (storageError) {
+          console.warn('⚠️ No se pudo eliminar el archivo anterior:', storageError);
+        }
+      }
+
+      // Actualizar el pedido con el nuevo archivo vector y limpiar medidas
+      const { error: updateError } = await supabase
+        .from('pedidos')
+        .update({
+          archivo_vector: fileName,
+          medida_real: null,
+          tiempo_estimado: null,
+          tipo_planchuela: null,
+          largo_planchuela: null
+        })
+        .eq('id_pedido', pedido.id_pedido);
+      
+      if (updateError) {
+        console.error('Error actualizando pedido:', updateError);
+        throw updateError;
+      }
+
+      console.log('✅ Vector reemplazado exitosamente:', fileName);
+      
+      // Limpiar archivos antiguos
+      await limpiarArchivosAntiguos(pedido, fileName);
+      
+      await fetchPedidos();
+      
+    } catch (error) {
+      console.error('Error reemplazando vector:', error);
+      alert(`Error al reemplazar el vector: ${error.message}`);
+    } finally {
+      setProcesando(prev => ({ ...prev, [pedido.id_pedido]: false }));
+    }
+  };
+
   // Effects
   useEffect(() => {
     // Verificar autenticación antes de hacer operaciones de base de datos
@@ -675,6 +803,8 @@ export const useVectorizacion = () => {
     handleCargarVector,
     handleEnviarAVerificar,
     handleEnviarAVectorizar,
+    handleEliminarVector,
+    handleReemplazarVector,
     
     // Medidas personalizadas
     handleAnchoChange,

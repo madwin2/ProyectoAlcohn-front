@@ -14,7 +14,8 @@ import {
   Loader2, 
   Sparkles, 
   Eye, 
-  Settings 
+  Settings,
+  X
 } from 'lucide-react';
 
 const VectorizacionCard = ({ 
@@ -33,6 +34,8 @@ const VectorizacionCard = ({
   handleCargarVector,
   onEnviarAVerificar,
   onEnviarAVectorizar,
+  onEliminarVector,
+  onReemplazarVector,
   medidaPersonalizada,
   ratioOriginal,
   handleAnchoChange,
@@ -48,6 +51,7 @@ const VectorizacionCard = ({
   });
   
   const fileInputRef = useRef(null);
+  const reemplazarFileInputRef = useRef(null);
   const isProcessing = procesando[pedido.id_pedido];
   const prioridadColor = {
     'Muy Baja': '#71717a',
@@ -480,6 +484,107 @@ const VectorizacionCard = ({
                 <Eye style={{ width: '12px', height: '12px' }} />
                 Previsualizar
               </button>
+
+              {/* Botones de gestión del vector */}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={() => onEliminarVector(pedido)}
+                  disabled={isProcessing}
+                  style={{
+                    flex: 1,
+                    background: isProcessing ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.2)',
+                    border: '1px solid rgba(239, 68, 68, 0.5)',
+                    color: isProcessing ? '#fca5a5' : '#ef4444',
+                    height: '32px',
+                    fontWeight: '500',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    cursor: isProcessing ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.3s ease',
+                    opacity: isProcessing ? 0.6 : 1,
+                    fontSize: '12px'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isProcessing) {
+                      e.target.style.background = 'rgba(239, 68, 68, 0.3)';
+                      e.target.style.color = 'white';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isProcessing) {
+                      e.target.style.background = 'rgba(239, 68, 68, 0.2)';
+                      e.target.style.color = '#ef4444';
+                    }
+                  }}
+                >
+                  {isProcessing ? (
+                    <Loader2 style={{ width: '12px', height: '12px', animation: 'spin 1s linear infinite' }} />
+                  ) : (
+                    <X style={{ width: '12px', height: '12px' }} />
+                  )}
+                  Eliminar
+                </button>
+
+                <button
+                  onClick={() => reemplazarFileInputRef.current?.click()}
+                  disabled={isProcessing}
+                  style={{
+                    flex: 1,
+                    background: isProcessing ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.2)',
+                    border: '1px solid rgba(59, 130, 246, 0.5)',
+                    color: isProcessing ? '#93c5fd' : '#60a5fa',
+                    height: '32px',
+                    fontWeight: '500',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    cursor: isProcessing ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.3s ease',
+                    opacity: isProcessing ? 0.6 : 1,
+                    fontSize: '12px'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isProcessing) {
+                      e.target.style.background = 'rgba(59, 130, 246, 0.3)';
+                      e.target.style.color = 'white';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isProcessing) {
+                      e.target.style.background = 'rgba(59, 130, 246, 0.2)';
+                      e.target.style.color = '#60a5fa';
+                    }
+                  }}
+                >
+                  {isProcessing ? (
+                    <Loader2 style={{ width: '12px', height: '12px', animation: 'spin 1s linear infinite' }} />
+                  ) : (
+                    <Upload style={{ width: '12px', height: '12px' }} />
+                  )}
+                  Reemplazar
+                </button>
+              </div>
+
+              {/* Input file oculto para reemplazar */}
+              <input
+                ref={reemplazarFileInputRef}
+                type="file"
+                accept=".svg"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file && onReemplazarVector) {
+                    onReemplazarVector(pedido, file);
+                  }
+                  // Limpiar el input
+                  e.target.value = '';
+                }}
+              />
               
               {opcionesEscalado && opcionesEscalado[pedido.id_pedido] && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

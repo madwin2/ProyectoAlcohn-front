@@ -48,6 +48,8 @@ function VectorizacionPage() {
     handleCargarVector,
     handleEnviarAVerificar,
     handleEnviarAVectorizar,
+    handleEliminarVector,
+    handleReemplazarVector,
     
     // Medidas personalizadas
     handleAnchoChange,
@@ -109,6 +111,8 @@ function VectorizacionPage() {
           onCargarVector={handleCargarVector}
           onEnviarAVerificar={handleEnviarAVerificar}
           onEnviarAVectorizar={handleEnviarAVectorizar}
+          onEliminarVector={handleEliminarVector}
+          onReemplazarVector={handleReemplazarVector}
           medidaPersonalizada={medidaPersonalizada}
           ratioOriginal={ratioOriginal}
           handleAnchoChange={handleAnchoChange}
