@@ -408,6 +408,11 @@ export const useVectorizacion = () => {
         throw uploadError;
       }
 
+      // Esperar 2 segundos para que Supabase Storage procese el archivo
+      console.log('⏳ Esperando que Supabase Storage procese el archivo...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('✅ Archivo procesado, continuando...');
+
       // Actualizar el pedido con el nuevo archivo vector
       const { error: updateError } = await supabase
         .from('pedidos')
