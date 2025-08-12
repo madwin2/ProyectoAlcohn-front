@@ -301,11 +301,16 @@ export const useVectorizacion = () => {
       const disenioLimpio = limpiarNombreDisenio(svgPedido.disenio, svgPedido.id_pedido);
       const fileName = `vector/${disenioLimpio}_${svgPedido.id_pedido}.svg`;
       
+      // Primero eliminar el archivo si existe para evitar conflictos
+      console.log('🗑️ Verificando si existe archivo anterior:', fileName);
+      await supabase.storage.from('archivos-ventas').remove([fileName]);
+      console.log('✅ Archivo anterior eliminado (si existía)');
+      
+      // Ahora subir el nuevo archivo
       const { error } = await supabase.storage
         .from('archivos-ventas')
         .upload(fileName, blob, {
-          cacheControl: '3600',
-          upsert: true
+          cacheControl: '3600'
         });
       
       if (!error) {
@@ -400,11 +405,16 @@ export const useVectorizacion = () => {
       const fileName = `vector/${disenioLimpio}_${pedido.id_pedido}.svg`;
       const svgBlob = new Blob([svgContent], { type: 'image/svg+xml' });
       
+      // Primero eliminar el archivo si existe para evitar conflictos
+      console.log('🗑️ Verificando si existe archivo anterior:', fileName);
+      await supabase.storage.from('archivos-ventas').remove([fileName]);
+      console.log('✅ Archivo anterior eliminado (si existía)');
+      
+      // Ahora subir el nuevo archivo
       const { error: uploadError } = await supabase.storage
         .from('archivos-ventas')
         .upload(fileName, svgBlob, {
-          cacheControl: '3600',
-          upsert: true
+          cacheControl: '3600'
         });
       
       if (uploadError) {
