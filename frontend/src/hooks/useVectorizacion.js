@@ -86,9 +86,13 @@ export const useVectorizacion = () => {
       if (pedido.archivo_vector && pedido.medida_pedida && pedido.medida_pedida.includes("x")) {
         const url = publicUrl(pedido.archivo_vector);
         
-        // Agregar un pequeño delay para archivos recién subidos
-        if (pedido.archivo_vector.includes('_manual-') || pedido.archivo_vector.includes('archivo_vector_')) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+        // Agregar delay para archivos recién subidos - aumentar el delay y mejorar la detección
+        if (pedido.archivo_vector.includes('_manual-') || 
+            pedido.archivo_vector.includes('archivo_vector_') ||
+            pedido.archivo_vector.includes('.svg')) {
+          console.log('⏳ Esperando que archivo esté disponible para medición:', pedido.archivo_vector);
+          await new Promise(resolve => setTimeout(resolve, 3000)); // Aumentar a 3 segundos
+          console.log('✅ Archivo listo para medición');
         }
         
         const dimensiones = await medirSVG(url);
