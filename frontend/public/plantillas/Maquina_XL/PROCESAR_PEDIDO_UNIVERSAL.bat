@@ -1,5 +1,5 @@
 @echo off
-title Procesando Pedido - Aspire Automatico (Universal)
+title Procesando Pedido - Aspire Automatico (Maquina XL)
 color 0A
 echo ==========================================
 echo    PROCESANDO PEDIDO AUTOMATICAMENTE
@@ -10,12 +10,12 @@ REM Obtener la carpeta actual donde está el .bat
 set "CURRENT_DIR=%~dp0"
 echo Carpeta de trabajo: %CURRENT_DIR%
 
-REM Buscar el archivo .lua en la carpeta actual
+REM Buscar el archivo .lua para máquina XL
 set "LUA_SCRIPT="
-for %%f in ("%CURRENT_DIR%*.lua") do set "LUA_SCRIPT=%%f"
+for %%f in ("%CURRENT_DIR%AUTOMATIZACION_CON_CAPAS.lua") do set "LUA_SCRIPT=%%f"
 
 if "%LUA_SCRIPT%"=="" (
-    echo ERROR: No se encontro el script .lua en la carpeta actual
+    echo ERROR: No se encontro el script para maquina XL
     echo Verifica que el archivo AUTOMATIZACION_CON_CAPAS.lua este en la misma carpeta
     goto :error_exit
 )
@@ -24,96 +24,79 @@ echo Script encontrado: %LUA_SCRIPT%
 
 REM Crear una copia temporal del script con la ruta modificada
 echo Modificando ruta de vectores en el script...
-set "TEMP_LUA=%TEMP%\AUTOMATIZACION_TEMP.lua"
-
+set "TEMP_LUA=%TEMP%\AUTOMATIZACION_XL_TEMP.lua"
 REM Convertir la ruta de Windows a formato Lua (con forward slashes)
 set "LUA_PATH=%CURRENT_DIR%"
 set "LUA_PATH=%LUA_PATH:\=/%"
 set "LUA_PATH=%LUA_PATH:~0,-1%"
-
 echo Ruta que se usara: %LUA_PATH%
-
 REM Crear el archivo temporal con la ruta modificada
 powershell -Command "Get-Content '%LUA_SCRIPT%' | ForEach-Object { $_ -replace 'local VECTOR_FOLDER = \".*\"', 'local VECTOR_FOLDER = \"%LUA_PATH%\"' } | Set-Content '%TEMP_LUA%'"
-
 if not exist "%TEMP_LUA%" (
     echo ERROR: No se pudo crear el archivo temporal modificado
     goto :error_exit
 )
-
 echo Script modificado exitosamente con la nueva ruta
 
 REM Buscar Aspire en diferentes ubicaciones posibles
-set "ASPIRE_EXE="
 set "ASPIRE_PATH="
+set "ASPIRE_EXE="
 
-REM Opción 1: Aspire 10.5 x64 (tu instalación)
+REM Opción 1: Buscar en Program Files
 if exist "C:\Program Files\Aspire 10.5\x64\Aspire.exe" (
+    set "ASPIRE_PATH=Aspire 10.5"
     set "ASPIRE_EXE=C:\Program Files\Aspire 10.5\x64\Aspire.exe"
-    set "ASPIRE_PATH=Aspire 10.5"
     goto :aspire_found
 )
 
-REM Opción 2: Vectric Aspire V10.5 (instalación estándar)
-if exist "C:\Program Files\Vectric\Aspire V10.5\Aspire.exe" (
-    set "ASPIRE_EXE=C:\Program Files\Vectric\Aspire V10.5\Aspire.exe"
-    set "ASPIRE_PATH=Vectric\Aspire V10.5"
-    goto :aspire_found
-)
-
-REM Opción 3: Aspire 10.5 x86
+REM Opción 2: Buscar en Program Files (x86)
 if exist "C:\Program Files (x86)\Aspire 10.5\x64\Aspire.exe" (
-    set "ASPIRE_EXE=C:\Program Files (x86)\Aspire 10.5\x64\Aspire.exe"
     set "ASPIRE_PATH=Aspire 10.5"
+    set "ASPIRE_EXE=C:\Program Files (x86)\Aspire 10.5\x64\Aspire.exe"
     goto :aspire_found
 )
 
-REM Opción 4: Vectric Aspire V10.5 x86
-if exist "C:\Program Files (x86)\Vectric\Aspire V10.5\Aspire.exe" (
-    set "ASPIRE_EXE=C:\Program Files (x86)\Vectric\Aspire V10.5\Aspire.exe"
-    set "ASPIRE_PATH=Vectric\Aspire V10.5"
+REM Opción 3: Buscar versiones anteriores
+if exist "C:\Program Files\Aspire 10.0\x64\Aspire.exe" (
+    set "ASPIRE_PATH=Aspire 10.0"
+    set "ASPIRE_EXE=C:\Program Files\Aspire 10.0\x64\Aspire.exe"
     goto :aspire_found
 )
 
-REM Opción 5: Aspire 11.0 x64
-if exist "C:\Program Files\Aspire 11.0\x64\Aspire.exe" (
-    set "ASPIRE_EXE=C:\Program Files\Aspire 11.0\x64\Aspire.exe"
-    set "ASPIRE_PATH=Aspire 11.0"
+if exist "C:\Program Files (x86)\Aspire 10.0\x64\Aspire.exe" (
+    set "ASPIRE_PATH=Aspire 10.0"
+    set "ASPIRE_EXE=C:\Program Files (x86)\Aspire 10.0\x64\Aspire.exe"
     goto :aspire_found
 )
 
-REM Opción 6: Vectric Aspire V11.0
-if exist "C:\Program Files\Vectric\Aspire V11.0\Aspire.exe" (
-    set "ASPIRE_EXE=C:\Program Files\Vectric\Aspire V11.0\Aspire.exe"
-    set "ASPIRE_PATH=Vectric\Aspire V11.0"
+REM Opción 4: Buscar en Program Files sin Vectric
+if exist "C:\Program Files\Aspire 10.5\Aspire.exe" (
+    set "ASPIRE_PATH=Aspire 10.5"
+    set "ASPIRE_EXE=C:\Program Files\Aspire 10.5\Aspire.exe"
     goto :aspire_found
 )
 
-REM Si no encuentra Aspire
-echo ERROR: No se encontro Aspire en ninguna ubicacion conocida
-echo Ubicaciones buscadas:
-echo   - C:\Program Files\Aspire 10.5\x64\
-echo   - C:\Program Files\Vectric\Aspire V10.5\
-echo   - C:\Program Files (x86)\Aspire 10.5\x64\
-echo   - C:\Program Files (x86)\Vectric\Aspire V10.5\
-echo   - C:\Program Files\Aspire 11.0\x64\
-echo   - C:\Program Files\Vectric\Aspire V11.0\
-echo.
-echo Verifica que Aspire este instalado correctamente
+if exist "C:\Program Files\Aspire 10.0\Aspire.exe" (
+    set "ASPIRE_PATH=Aspire 10.0"
+    set "ASPIRE_EXE=C:\Program Files\Aspire 10.0\Aspire.exe"
+    goto :aspire_found
+)
+
+echo ERROR: No se pudo encontrar Aspire en ninguna ubicación conocida
+echo Buscando en otras ubicaciones...
 goto :error_exit
 
 :aspire_found
 echo Aspire encontrado: %ASPIRE_EXE%
+echo Version: %ASPIRE_PATH%
 
 REM Buscar carpeta de gadgets en la ubicación correcta
 set "GADGETS_FOLDER="
-
 REM Opción 1: Carpeta principal de gadgets en Public Documents
-if exist "C:\Users\Public\Documents\Vectric Files\Gadgets\Aspire V10.5\MyGadget\" (
+if exist "C:\Users\Public\Documents\Vectric Files\Gadgets\Aspire 10.5\MyGadget\" (
     set "GADGETS_FOLDER=C:\Users\Public\Documents\Vectric Files\Gadgets\Aspire V10.5\MyGadget\"
     goto :gadgets_found
 )
-
 REM Opción 2: Crear carpeta basada en la versión encontrada
 set "GADGETS_FOLDER=C:\Users\Public\Documents\Vectric Files\Gadgets\%ASPIRE_PATH%\MyGadget\"
 echo Creando carpeta de gadgets: %GADGETS_FOLDER%
@@ -122,21 +105,20 @@ mkdir "%GADGETS_FOLDER%" 2>nul
 :gadgets_found
 echo Carpeta de gadgets: %GADGETS_FOLDER%
 
-REM Copiar el script MODIFICADO a la carpeta de gadgets
+REM Copiar el script modificado a la carpeta de gadgets de Aspire con nombre único
 echo Copiando script modificado a Aspire...
-copy "%TEMP_LUA%" "%GADGETS_FOLDER%\AUTOMATIZACION_CON_CAPAS.lua" >nul 2>nul
+copy "%TEMP_LUA%" "%GADGETS_FOLDER%AUTOMATIZACION_CON_CAPAS.lua" >nul 2>nul
 
 if %errorlevel% neq 0 (
     echo ERROR: No se pudo copiar el script a Aspire
-    echo Carpeta destino: %GADGETS_FOLDER%
-    echo Verifica los permisos o ejecuta como administrador
+    echo Verifica los permisos de la carpeta de gadgets
     goto :error_exit
 )
 
-echo Script modificado copiado exitosamente
+echo Script copiado exitosamente
 
 REM Limpiar archivo temporal
-del "%TEMP_LUA%" >nul 2>nul
+del "%TEMP_LUA%" 2>nul
 
 REM Verificar vectores en la carpeta
 set "VECTOR_COUNT=0"
@@ -164,7 +146,7 @@ echo.
 echo Esperando que Aspire cargue completamente...
 timeout /t 15 /nobreak >nul
 
-echo Ejecutando automatizacion...
+echo Ejecutando automatizacion para MAQUINA XL...
 powershell -WindowStyle Hidden -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('^{F8}')" 2>nul
 
 REM Esperar un poco más para que se abra el diálogo
@@ -187,8 +169,14 @@ echo "¡Automatizacion completa exitosa!"
 echo el pedido habra sido procesado completamente
 echo.
 echo ==========================================
-echo    INFORMACION DE LA RUTA
+echo    INFORMACION DE LA MAQUINA XL
 echo ==========================================
+echo.
+echo Configuracion optimizada para Maquina XL:
+echo - Columna UNICA en X = 31.5mm
+echo - Ancho maximo de columna = 63mm
+echo - Optimizacion automatica de material
+echo - Lado mas largo ocupa los 63mm
 echo.
 echo El script se configuro para buscar vectores en:
 echo %CURRENT_DIR%
@@ -201,11 +189,6 @@ goto :success_exit
 echo.
 echo PROCESO TERMINADO CON ERRORES
 echo Revisa los mensajes de error anteriores
-echo.
-echo Si el problema persiste:
-echo 1. Ejecuta este archivo como administrador
-echo 2. Verifica que Aspire este instalado
-echo 3. Contacta soporte tecnico
 echo.
 pause
 exit /b 1

@@ -89,6 +89,27 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
 
       const zip = new JSZip();
       
+      // Determinar la carpeta de la máquina una sola vez
+      let carpetaMaquina;
+      let archivoAspire;
+      switch (programa.maquina) {
+        case 'C':
+          carpetaMaquina = 'Maquina_C';
+          archivoAspire = 'Archivo Base C.crv3d';
+          break;
+        case 'G':
+          carpetaMaquina = 'Maquina_G';
+          archivoAspire = 'Archivo Base G.crv3d';
+          break;
+        case 'XL':
+          carpetaMaquina = 'Maquina_XL';
+          archivoAspire = 'Archivo Base XL.crv3d';
+          break;
+        default:
+          carpetaMaquina = 'Maquina_C';
+          archivoAspire = 'Archivo Base C.crv3d';
+      }
+      
       // 1. Descargar cada vector y agregarlo al ZIP
       for (const pedido of pedidosConVector) {
         try {
@@ -111,38 +132,22 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
         }
       }
       
-      // 2. Agregar archivo .aspire según la máquina del programa
+      // 2. Agregar archivo .crv3d desde la carpeta específica de la máquina
       try {
-        let archivoAspire;
-        switch (programa.maquina) {
-          case 'C':
-            archivoAspire = 'Archivo Base C.crv3d';
-            break;
-          case 'G':
-            archivoAspire = 'Archivo Base G.crv3d';
-            break;
-          case 'XL':
-            archivoAspire = 'Archivo Base XL.crv3d';
-            break;
-          default:
-            archivoAspire = 'Archivo Base C.crv3d';
-        }
-        
-        // Descargar el archivo .aspire desde la carpeta plantillas
-        const aspireResponse = await fetch(`/plantillas/${archivoAspire}`);
+        const aspireResponse = await fetch(`/plantillas/${carpetaMaquina}/${archivoAspire}`);
         if (aspireResponse.ok) {
           const aspireBlob = await aspireResponse.blob();
-          // Renombrar el archivo .aspire con el nombre del programa
+          // Renombrar el archivo .crv3d con el nombre del programa
           const nombreProgramaLimpio = programa.nombre_archivo?.replace(/[^a-zA-Z0-9]/g, '_') || programa.id_programa;
           zip.file(`${nombreProgramaLimpio}.crv3d`, aspireBlob);
         }
       } catch (error) {
-        console.error('Error agregando archivo .aspire:', error);
+        console.error('Error agregando archivo .crv3d:', error);
       }
       
-      // 3. Agregar archivo .lua de automatización
+      // 3. Agregar archivo .lua de automatización desde la carpeta específica de la máquina
       try {
-        const luaResponse = await fetch('/plantillas/AUTOMATIZACION_CON_CAPAS.lua');
+        const luaResponse = await fetch(`/plantillas/${carpetaMaquina}/AUTOMATIZACION_CON_CAPAS.lua`);
         if (luaResponse.ok) {
           const luaContent = await luaResponse.text();
           zip.file('AUTOMATIZACION_CON_CAPAS.lua', luaContent);
@@ -151,9 +156,9 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
         console.error('Error agregando archivo .lua:', error);
       }
       
-      // 4. Agregar archivo .bat ejecutable
+      // 4. Agregar archivo .bat ejecutable desde la carpeta específica de la máquina
       try {
-        const batResponse = await fetch('/plantillas/PROCESAR_PEDIDO_UNIVERSAL.bat');
+        const batResponse = await fetch(`/plantillas/${carpetaMaquina}/PROCESAR_PEDIDO_UNIVERSAL.bat`);
         if (batResponse.ok) {
           const batContent = await batResponse.text();
           zip.file('PROCESAR_PEDIDO_UNIVERSAL.bat', batContent);
