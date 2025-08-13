@@ -91,134 +91,14 @@ function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublic
       const newPhotos = [...uploadedPhotos, ...uploadedFiles];
       setUploadedPhotos(newPhotos);
       
-      // Auto-process matching if CLIP API is enabled and we have design files
-      if (isClipApiEnabled() && (pedido.archivo_base || pedido.archivo_vector)) {
-        await processMatching(newPhotos);
-      }
+      // CLIP API is disabled - no automatic processing
+      console.log('⏸️ DEBUG: CLIP API disabled, skipping automatic processing');
       
     } catch (err) {
       console.error('Error uploading files:', err);
       setError(err.message || 'Error al subir las fotos');
     } finally {
       setIsUploading(false);
-    }
-  };
-
-  const processMatching = async (photos) => {
-    if (!photos.length) return;
-    
-    setIsProcessing(true);
-    setError(null);
-    
-    try {
-      // Prepare reference SVGs (design files)
-      const svgFiles = [];
-      const formData = new FormData();
-      
-      // Add design files to FormData
-      if (pedido.archivo_base) {
-        try {
-          const baseUrl = getPublicUrl(pedido.archivo_base);
-          const response = await fetch(baseUrl);
-          const blob = await response.blob();
-          const baseFile = new File([blob], 'base.svg', { type: 'image/svg+xml' });
-          formData.append('svgs', baseFile);
-          svgFiles.push('base.svg');
-        } catch (err) {
-          console.warn('Error loading base file:', err);
-        }
-      }
-      
-      if (pedido.archivo_vector) {
-        try {
-          const vectorUrl = getPublicUrl(pedido.archivo_vector);
-          const response = await fetch(vectorUrl);
-          const blob = await response.blob();
-          const vectorFile = new File([blob], 'vector.svg', { type: 'image/svg+xml' });
-          formData.append('svgs', vectorFile);
-          svgFiles.push('vector.svg');
-        } catch (err) {
-          console.warn('Error loading vector file:', err);
-        }
-      }
-      
-      // Add photos to FormData
-      for (const photo of photos) {
-        if (photo.isExisting) continue; // Skip existing photos for processing
-        
-        try {
-          const response = await fetch(photo.url);
-          const blob = await response.blob();
-          const photoFile = new File([blob], photo.name, { type: blob.type });
-          formData.append('fotos', photoFile);
-        } catch (err) {
-          console.warn('Error loading photo:', err);
-        }
-      }
-      
-      // If no files to process, return early
-      if (!formData.has('svgs') || !formData.has('fotos')) {
-        console.log('No files to process:', {
-          hasSvgs: formData.has('svgs'),
-          hasFotos: formData.has('fotos'),
-          svgCount: formData.getAll('svgs').length,
-          fotoCount: formData.getAll('fotos').length
-        });
-        setMatchingResults([]);
-        return;
-      }
-      
-      console.log('Sending request to:', `${CLIP_API_URL}/predict`);
-      console.log('FormData contents:', {
-        svgCount: formData.getAll('svgs').length,
-        fotoCount: formData.getAll('fotos').length,
-        svgNames: formData.getAll('svgs').map(f => f.name),
-        fotoNames: formData.getAll('fotos').map(f => f.name)
-      });
-      
-      // Call the CLIP API directly
-      const response = await fetch(`${CLIP_API_URL}/predict`, {
-        method: 'POST',
-        body: formData
-      });
-      
-      if (!response.ok) {
-        throw new Error('Error processing matching');
-      }
-      
-      const results = await response.json();
-      console.log('🚀 PHOTO UPLOAD - API Response completa:', results);
-      console.log('📊 PHOTO UPLOAD - results.success:', results.success);
-      console.log('📋 PHOTO UPLOAD - results.results:', results.results);
-      
-      // Format the results for display
-      if (results.success && results.results) {
-        console.log('Raw results:', results.results);
-        const formattedResults = results.results.flatMap(result => 
-          result.matches ? result.matches.map(match => ({
-            ...match,
-            foto: result.foto
-          })) : []
-        );
-        console.log('Formatted results:', formattedResults);
-        setMatchingResults(formattedResults);
-      } else {
-        console.log('No success or results in response');
-        setMatchingResults([]);
-      }
-      
-    } catch (err) {
-      console.error('Error processing matching:', err);
-      console.log('FormData contents:', {
-        hasSvgs: formData.has('svgs'),
-        hasFotos: formData.has('fotos'),
-        svgCount: formData.getAll('svgs').length,
-        fotoCount: formData.getAll('fotos').length
-      });
-      // Don't show error for matching issues, just log them
-      setMatchingResults([]);
-    } finally {
-      setIsProcessing(false);
     }
   };
 
@@ -251,27 +131,28 @@ function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublic
 
   const handleSave = async () => {
     try {
-      // Save photos based on CLIP API status
-      if (isClipApiEnabled()) {
-        // Use original flow with CLIP API
-        await onPhotosUploaded(pedido.id_pedido, uploadedPhotos, matchingResults);
-      } else {
-        // Save photos directly to pending photos table
-        const newPhotos = uploadedPhotos.filter(photo => !photo.isExisting);
-        
-        for (const photo of newPhotos) {
-          const { error: insertError } = await supabase
-            .from('fotos_pendientes')
-            .insert({
-              nombre_archivo: photo.name,
-              url_foto: photo.id, // This is the relative path in the bucket
-              estado: 'pendiente',
-              usuario_subio: (await supabase.auth.getUser()).data.user?.id
-            });
-            
-          if (insertError) {
-            console.error('Error saving photo to pending:', insertError);
-          }
+      console.log('💾 DEBUG: handleSave called');
+      console.log('💾 DEBUG: CLIP API enabled?', isClipApiEnabled());
+      
+      // CLIP API is disabled - always save to pending
+      console.log('📸 DEBUG: Saving photos to pending table');
+      const newPhotos = uploadedPhotos.filter(photo => !photo.isExisting);
+      console.log('📸 DEBUG: Photos to save:', newPhotos.length);
+      
+      for (const photo of newPhotos) {
+        const { error: insertError } = await supabase
+          .from('fotos_pendientes')
+          .insert({
+            nombre_archivo: photo.name,
+            url_foto: photo.id, // This is the relative path from the bucket
+            estado: 'pendiente',
+            usuario_subio: (await supabase.auth.getUser()).data.user?.id
+          });
+          
+        if (insertError) {
+          console.error('Error saving photo to pending:', insertError);
+        } else {
+          console.log('✅ DEBUG: Photo saved to pending:', photo.name);
         }
       }
       
@@ -393,41 +274,22 @@ function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublic
             </h3>
             
             <div
+              ref={fileInputRef}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              style={{
-                border: dragActive ? '2px dashed #06b6d4' : '2px dashed rgba(63, 63, 70, 0.5)',
-                borderRadius: '12px',
-                padding: '40px',
-                textAlign: 'center',
-                background: dragActive ? 'rgba(6, 182, 212, 0.05)' : 'rgba(39, 39, 42, 0.3)',
-                transition: 'all 0.3s ease',
-                cursor: 'pointer'
-              }}
               onClick={() => fileInputRef.current?.click()}
+              style={{
+                border: '2px dashed',
+                borderColor: dragActive ? '#06b6d4' : 'rgba(63, 63, 70, 0.5)',
+                borderRadius: '12px',
+                padding: '40px 20px',
+                textAlign: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                background: dragActive ? 'rgba(6, 182, 212, 0.05)' : 'transparent'
+              }}
             >
-              <Upload style={{ 
-                width: '48px', 
-                height: '48px', 
-                color: dragActive ? '#06b6d4' : '#71717a',
-                margin: '0 auto 16px auto'
-              }} />
-              <p style={{ 
-                color: dragActive ? '#06b6d4' : '#a1a1aa',
-                fontSize: '16px',
-                margin: '0 0 8px 0'
-              }}>
-                {dragActive ? 'Suelta las fotos aquí' : 'Arrastra fotos aquí o haz clic para seleccionar'}
-              </p>
-              <p style={{ 
-                color: '#71717a',
-                fontSize: '14px',
-                margin: 0
-              }}>
-                Formatos soportados: JPG, PNG, GIF (máximo 10MB cada una)
-              </p>
-              
               <input
                 ref={fileInputRef}
                 type="file"
@@ -436,10 +298,36 @@ function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublic
                 onChange={handleFileInputChange}
                 style={{ display: 'none' }}
               />
+              
+              <div style={{ marginBottom: '16px' }}>
+                <Upload style={{ 
+                  width: '48px', 
+                  height: '48px', 
+                  color: dragActive ? '#06b6d4' : '#71717a',
+                  margin: '0 auto'
+                }} />
+              </div>
+              
+              <p style={{
+                color: dragActive ? '#06b6d4' : '#71717a',
+                fontSize: '16px',
+                fontWeight: '500',
+                margin: '0 0 8px 0'
+              }}>
+                Arrastra las fotos aquí o haz clic para seleccionar
+              </p>
+              
+              <p style={{
+                color: '#71717a',
+                fontSize: '14px',
+                margin: 0
+              }}>
+                PNG, JPG, JPEG hasta 10MB
+              </p>
             </div>
           </div>
 
-          {/* Error Message */}
+          {/* Error Display */}
           {error && (
             <div style={{
               display: 'flex',
@@ -539,86 +427,6 @@ function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublic
             </div>
           )}
 
-          {/* Matching Results - Only show when CLIP API is enabled */}
-          {isClipApiEnabled() && (isProcessing || matchingResults.length > 0) && (
-            <div style={{ marginBottom: '32px' }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                marginBottom: '16px'
-              }}>
-                <Zap style={{ width: '16px', height: '16px', color: '#06b6d4' }} />
-                <h3 style={{
-                  color: 'white',
-                  fontSize: '16px',
-                  fontWeight: '500',
-                  margin: 0
-                }}>
-                  Verificación Automática
-                </h3>
-                {isProcessing && (
-                  <Loader2 style={{ width: '16px', height: '16px', color: '#06b6d4' }} className="animate-spin" />
-                )}
-              </div>
-              
-              {isProcessing ? (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  padding: '16px',
-                  background: 'rgba(6, 182, 212, 0.1)',
-                  border: '1px solid rgba(6, 182, 212, 0.3)',
-                  borderRadius: '8px'
-                }}>
-                  <Loader2 style={{ width: '20px', height: '20px', color: '#06b6d4' }} className="animate-spin" />
-                  <span style={{ color: '#06b6d4', fontSize: '14px' }}>
-                    Procesando imágenes con IA...
-                  </span>
-                </div>
-              ) : matchingResults.length > 0 ? (
-                <div style={{
-                  background: 'rgba(6, 182, 212, 0.1)',
-                  border: '1px solid rgba(6, 182, 212, 0.3)',
-                  borderRadius: '8px',
-                  padding: '16px'
-                }}>
-                  {matchingResults.map((result, index) => (
-                    <div key={index} style={{ marginBottom: index < matchingResults.length - 1 ? '12px' : 0 }}>
-                      {result.error ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <AlertCircle style={{ width: '16px', height: '16px', color: '#f59e0b' }} />
-                          <span style={{ color: '#f59e0b', fontSize: '14px' }}>
-                            {result.foto}: {result.error}
-                          </span>
-                        </div>
-                      ) : (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <CheckCircle style={{ width: '16px', height: '16px', color: '#22c55e' }} />
-                          <span style={{ color: '#22c55e', fontSize: '14px' }}>
-                            {result.foto} → {result.svg} ({Math.round(result.score * 100)}% similitud)
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{
-                  padding: '16px',
-                  background: 'rgba(245, 158, 11, 0.1)',
-                  border: '1px solid rgba(245, 158, 11, 0.3)',
-                  borderRadius: '8px',
-                  color: '#f59e0b',
-                  fontSize: '14px'
-                }}>
-                  No se encontraron coincidencias automáticas. Verifica manualmente.
-                </div>
-              )}
-            </div>
-          )}
-
           {/* Actions */}
           <div style={{
             display: 'flex',
@@ -652,31 +460,31 @@ function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublic
             
             <button
               onClick={handleSave}
-              disabled={uploadedPhotos.length === 0 || isUploading || isProcessing}
+              disabled={uploadedPhotos.length === 0 || isUploading}
               style={{
                 padding: '12px 24px',
-                background: uploadedPhotos.length === 0 || isUploading || isProcessing ? 'rgba(63, 63, 70, 0.5)' : '#06b6d4',
+                background: uploadedPhotos.length === 0 || isUploading ? 'rgba(63, 63, 70, 0.5)' : '#06b6d4',
                 border: 'none',
                 borderRadius: '8px',
                 color: 'white',
                 fontSize: '14px',
                 fontWeight: '500',
-                cursor: uploadedPhotos.length === 0 || isUploading || isProcessing ? 'not-allowed' : 'pointer',
+                cursor: uploadedPhotos.length === 0 || isUploading ? 'not-allowed' : 'pointer',
                 transition: 'all 0.2s ease',
-                opacity: uploadedPhotos.length === 0 || isUploading || isProcessing ? 0.5 : 1
+                opacity: uploadedPhotos.length === 0 || isUploading ? 0.5 : 1
               }}
               onMouseEnter={(e) => {
-                if (uploadedPhotos.length > 0 && !isUploading && !isProcessing) {
+                if (uploadedPhotos.length > 0 && !isUploading) {
                   e.target.style.background = '#0891b2';
                 }
               }}
               onMouseLeave={(e) => {
-                if (uploadedPhotos.length > 0 && !isUploading && !isProcessing) {
+                if (uploadedPhotos.length > 0 && !isUploading) {
                   e.target.style.background = '#06b6d4';
                 }
               }}
             >
-              {isUploading ? 'Subiendo...' : isProcessing ? 'Procesando...' : (isClipApiEnabled() ? 'Guardar Fotos' : 'Guardar en Pendientes')}
+              {isUploading ? 'Subiendo...' : 'Guardar en Pendientes'}
             </button>
           </div>
         </div>

@@ -1,6 +1,8 @@
 // Configuración para el sistema de verificación
 // Permite habilitar/deshabilitar fácilmente la CLIP API
 
+console.log('🔧 DEBUG: verificacionConfig.js loaded');
+
 export const VERIFICACION_CONFIG = {
   // CLIP API habilitada/deshabilitada
   CLIP_API_ENABLED: false,
@@ -15,9 +17,13 @@ export const VERIFICACION_CONFIG = {
   SHOW_DISABLED_NOTICE: true
 };
 
+console.log('🔧 DEBUG: VERIFICACION_CONFIG:', VERIFICACION_CONFIG);
+
 // Función helper para verificar si CLIP API está habilitada
 export const isClipApiEnabled = () => {
-  return VERIFICACION_CONFIG.CLIP_API_ENABLED;
+  const enabled = VERIFICACION_CONFIG.CLIP_API_ENABLED;
+  console.log('🔧 DEBUG: isClipApiEnabled() called, returning:', enabled);
+  return enabled;
 };
 
 // Función helper para obtener el mensaje de CLIP deshabilitada
