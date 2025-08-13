@@ -17,6 +17,10 @@ import { supabase } from '../../supabaseClient';
 import { shouldAutoChangeStatus } from '../../config/verificacionConfig';
 
 function PendingPhotosManager({ isOpen, onClose, onPhotoMatched }) {
+  console.log('🔧 PENDING PHOTOS - Component loaded');
+  console.log('🔧 PENDING PHOTOS - isClipApiEnabled():', isClipApiEnabled());
+  console.log('🔧 PENDING PHOTOS - shouldShowDisabledNotice():', shouldShowDisabledNotice());
+  
   const [pendingPhotos, setPendingPhotos] = useState([]);
   const [availablePedidos, setAvailablePedidos] = useState([]);
   const [loading, setLoading] = useState(false);

@@ -21,6 +21,10 @@ import { useNotification } from '../../hooks/useNotification';
 import { isClipApiEnabled, getClipDisabledMessage, shouldShowDisabledNotice } from '../../config/verificacionConfig';
 
 function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
+  console.log('🔧 MASSIVE UPLOAD - Component loaded');
+  console.log('🔧 MASSIVE UPLOAD - isClipApiEnabled():', isClipApiEnabled());
+  console.log('🔧 MASSIVE UPLOAD - shouldShowDisabledNotice():', shouldShowDisabledNotice());
+  
   const { addNotification } = useNotification();
   const [uploadedPhotos, setUploadedPhotos] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -96,7 +100,28 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
       if (isClipApiEnabled()) {
         await processMatching([...uploadedPhotos, ...uploadedFiles]);
       } else {
-        console.log('⏸️ MASSIVE UPLOAD - CLIP API disabled, photos will be saved to pending');
+        console.log('⏸️ MASSIVE UPLOAD - CLIP API disabled, saving photos to pending table');
+        // Save all photos to pending table when CLIP API is disabled
+        for (const photo of uploadedFiles) {
+          try {
+            const { error: insertError } = await supabase
+              .from('fotos_pendientes')
+              .insert({
+                nombre_archivo: photo.name,
+                url_foto: photo.id, // This is the relative path from the bucket
+                estado: 'pendiente',
+                usuario_subio: (await supabase.auth.getUser()).data.user?.id
+              });
+              
+            if (insertError) {
+              console.error('Error saving photo to pending:', insertError);
+            } else {
+              console.log('✅ MASSIVE UPLOAD - Photo saved to pending:', photo.name);
+            }
+          } catch (err) {
+            console.error('Error saving photo to pending:', err);
+          }
+        }
       }
       
     } catch (err) {
@@ -1002,6 +1027,56 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
             </div>
             
             <div style={{ display: 'flex', gap: '16px' }}>
+              {/* Show "Guardar en Pendientes" button when CLIP API is disabled */}
+              {!isClipApiEnabled() && uploadedPhotos.length > 0 && (
+                <button
+                  onClick={async () => {
+                    console.log('💾 MASSIVE UPLOAD - Manually saving photos to pending');
+                    for (const photo of uploadedPhotos) {
+                      try {
+                        const { error: insertError } = await supabase
+                          .from('fotos_pendientes')
+                          .insert({
+                            nombre_archivo: photo.name,
+                            url_foto: photo.id,
+                            estado: 'pendiente',
+                            usuario_subio: (await supabase.auth.getUser()).data.user?.id
+                          });
+                          
+                        if (insertError) {
+                          console.error('Error saving photo to pending:', insertError);
+                        } else {
+                          console.log('✅ MASSIVE UPLOAD - Photo saved to pending:', photo.name);
+                        }
+                      } catch (err) {
+                        console.error('Error saving photo to pending:', err);
+                      }
+                    }
+                    addNotification('Fotos guardadas en pendientes', 'success');
+                    onClose();
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    background: '#06b6d4',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: 'white',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = '#0891b2';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = '#06b6d4';
+                  }}
+                >
+                  Guardar en Pendientes
+                </button>
+              )}
+              
               <button
                 onClick={onClose}
                 style={{

@@ -17,6 +17,10 @@ import { CLIP_API_URL } from '../../config/api';
 import { isClipApiEnabled, getClipDisabledMessage, shouldShowDisabledNotice } from '../../config/verificacionConfig';
 
 function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublicUrl }) {
+  console.log('🔧 PHOTO UPLOAD - Component loaded');
+  console.log('🔧 PHOTO UPLOAD - isClipApiEnabled():', isClipApiEnabled());
+  console.log('🔧 PHOTO UPLOAD - shouldShowDisabledNotice():', shouldShowDisabledNotice());
+  
   const [uploadedPhotos, setUploadedPhotos] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
