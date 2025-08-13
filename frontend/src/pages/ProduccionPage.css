@@ -1,0 +1,726 @@
+/* ===== PRODUCCIONPAGE.CSS ===== */
+/* 
+ * Este archivo contiene todos los estilos para la página de producción
+ * Organizado por secciones para facilitar el mantenimiento
+ * 
+ * Estructura:
+ * 1. Layout Principal
+ * 2. Header y Navegación
+ * 3. Barra de Herramientas (Búsqueda, Ordenamiento, Filtros)
+ * 4. Tabla de Datos
+ * 5. Celdas y Contenido
+ * 6. Estados y Selectores
+ * 7. Componentes de Archivos
+ * 8. Responsive Design
+ */
+
+/* ===== 1. LAYOUT PRINCIPAL ===== */
+/* Contenedor principal de la página - Fondo negro y altura completa */
+.produccion-page {
+  background: #000;                    /* Fondo negro para tema oscuro */
+  min-height: 100vh;                   /* Altura mínima del viewport */
+  color: white;                        /* Texto blanco por defecto */
+}
+
+/* ===== 2. HEADER Y NAVEGACIÓN ===== */
+/* Header principal con navegación y título de la página */
+.produccion-header {
+  border-bottom: 1px solid rgba(39, 39, 42, 0.5);  /* Borde inferior sutil */
+  background: rgba(9, 9, 11, 0.8);                 /* Fondo semi-transparente */
+  position: sticky;                                 /* Se mantiene fijo al hacer scroll */
+  top: 0;                                          /* Posición en la parte superior */
+  z-index: 10;                                     /* Por encima de otros elementos */
+  padding: 24px 32px;                              /* Espaciado interno */
+}
+
+/* Contenedor del header con flexbox para distribución horizontal */
+.produccion-header-content {
+  display: flex;                      /* Layout flexible horizontal */
+  align-items: center;                /* Centrado vertical */
+  justify-content: space-between;     /* Distribución entre extremos */
+}
+
+/* Lado izquierdo del header - Título y icono */
+.produccion-header-left {
+  display: flex;                      /* Layout flexible */
+  align-items: center;                /* Centrado vertical */
+  gap: 24px;                         /* Espacio entre elementos */
+}
+
+/* Contenedor del título con icono y texto */
+.produccion-header-title {
+  display: flex;                      /* Layout flexible */
+  align-items: center;                /* Centrado vertical */
+  gap: 12px;                         /* Espacio entre icono y texto */
+}
+
+/* Icono del header - Círculo blanco con icono negro */
+.produccion-header-icon {
+  width: 32px;                        /* Ancho fijo */
+  height: 32px;                       /* Alto fijo */
+  background: white;                  /* Fondo blanco */
+  border-radius: 8px;                 /* Bordes redondeados */
+  display: flex;                      /* Flexbox para centrado */
+  align-items: center;                /* Centrado vertical */
+  justify-content: center;            /* Centrado horizontal */
+}
+
+/* Estilos del SVG dentro del icono */
+.produccion-header-icon svg {
+  width: 20px;                        /* Tamaño del icono */
+  height: 20px;                       /* Tamaño del icono */
+  color: black;                       /* Color del icono */
+}
+
+/* Texto del header - Título principal */
+.produccion-header-text h1 {
+  font-size: 32px;                    /* Tamaño de fuente grande */
+  font-weight: 300;                   /* Peso de fuente ligero */
+  letter-spacing: -0.025em;           /* Espaciado entre letras */
+  margin: 0;                          /* Sin márgenes */
+}
+
+/* Subtítulo del header - Contador de pedidos */
+.produccion-header-text p {
+  font-size: 12px;                    /* Tamaño de fuente pequeño */
+  color: #71717a;                     /* Color gris para subtítulo */
+  margin: 2px 0 0 0;                  /* Margen superior sutil */
+}
+
+/* Lado derecho del header - Herramientas y controles */
+.produccion-header-right {
+  display: flex;                      /* Layout flexible */
+  align-items: center;                /* Centrado vertical */
+  gap: 16px;                         /* Espacio entre elementos */
+}
+
+/* ===== 3. BARRA DE HERRAMIENTAS ===== */
+/* Contenedor de la barra de búsqueda con posicionamiento relativo */
+.search-container {
+  position: relative;                 /* Para posicionar el icono de búsqueda */
+}
+
+/* Campo de entrada de búsqueda */
+.search-input {
+  width: 320px;                       /* Ancho fijo del campo */
+  background: rgba(39, 39, 42, 0.5); /* Fondo semi-transparente */
+  border: 1px solid rgba(63, 63, 70, 0.5); /* Borde sutil */
+  color: white;                       /* Texto blanco */
+  border-radius: 8px;                 /* Bordes redondeados */
+  padding: 8px 16px 8px 44px;        /* Padding con espacio para icono */
+  outline: none;                      /* Sin contorno al hacer focus */
+  font-size: 14px;                   /* Tamaño de fuente */
+  transition: border-color 0.3s ease; /* Transición suave del borde */
+}
+
+/* Estado de focus del campo de búsqueda */
+.search-input:focus {
+  border-color: rgba(96, 165, 250, 0.5); /* Borde azul al hacer focus */
+}
+
+/* Icono de búsqueda posicionado dentro del campo */
+.search-icon {
+  position: absolute;                 /* Posicionamiento absoluto */
+  left: 16px;                        /* Distancia desde la izquierda */
+  top: 50%;                          /* Centrado vertical */
+  transform: translateY(-50%);        /* Ajuste fino del centrado */
+  width: 16px;                       /* Tamaño del icono */
+  height: 16px;                      /* Tamaño del icono */
+  color: #71717a;                    /* Color gris del icono */
+}
+
+/* ===== 4. BOTONES Y CONTROLES ===== */
+/* Botón de ordenamiento con estados activo/inactivo */
+.sort-button {
+  background: rgba(39, 39, 42, 0.5); /* Fondo por defecto */
+  border: 1px solid rgba(63, 63, 70, 0.5); /* Borde por defecto */
+  color: #a1a1aa;                    /* Color de texto por defecto */
+  border-radius: 8px;                 /* Bordes redondeados */
+  padding: 8px 16px;                 /* Espaciado interno */
+  cursor: pointer;                    /* Cursor de mano */
+  display: flex;                      /* Layout flexible */
+  align-items: center;                /* Centrado vertical */
+  gap: 8px;                          /* Espacio entre elementos */
+  font-size: 14px;                   /* Tamaño de fuente */
+  font-weight: 500;                  /* Peso de fuente */
+  transition: all 0.3s ease;         /* Transición suave de todos los cambios */
+}
+
+/* Estado activo del botón de ordenamiento */
+.sort-button.active {
+  background: rgba(59, 130, 246, 0.2); /* Fondo azul semi-transparente */
+  border-color: rgba(59, 130, 246, 0.5); /* Borde azul */
+  color: #60a5fa;                    /* Texto azul */
+}
+
+/* Efecto hover del botón de ordenamiento */
+.sort-button:hover {
+  background: rgba(59, 130, 246, 0.3); /* Fondo azul más intenso */
+  border-color: rgba(59, 130, 246, 0.7); /* Borde azul más intenso */
+  color: #93c5fd;                    /* Texto azul más claro */
+}
+
+/* Efecto hover del botón activo */
+.sort-button.active:hover {
+  background: rgba(59, 130, 246, 0.3); /* Mantener fondo azul intenso */
+  border-color: rgba(59, 130, 246, 0.7); /* Mantener borde azul intenso */
+  color: #93c5fd;                    /* Mantener texto azul claro */
+}
+
+/* Badge que muestra el número de criterios de ordenamiento */
+.sort-badge {
+  background: #3b82f6;               /* Fondo azul */
+  color: white;                      /* Texto blanco */
+  border-radius: 50%;                /* Forma circular */
+  width: 18px;                       /* Ancho del círculo */
+  height: 18px;                      /* Alto del círculo */
+  display: flex;                     /* Flexbox para centrado */
+  align-items: center;               /* Centrado vertical */
+  justify-content: center;           /* Centrado horizontal */
+  font-size: 10px;                  /* Tamaño de fuente pequeño */
+  font-weight: 600;                 /* Peso de fuente */
+}
+
+/* ===== 5. BOTÓN DE FILTROS ===== */
+/* Botón de filtros con estados activo/inactivo */
+.filter-button {
+  color: #a1a1aa;                    /* Color de texto por defecto */
+  background: transparent;            /* Fondo transparente */
+  border: none;                       /* Sin borde */
+  padding: 8px;                      /* Espaciado interno */
+  border-radius: 8px;                /* Bordes redondeados */
+  cursor: pointer;                    /* Cursor de mano */
+  transition: all 0.3s ease;         /* Transición suave */
+}
+
+/* Estado activo del botón de filtros */
+.filter-button.active {
+  color: white;                       /* Texto blanco */
+  background: rgba(39, 39, 42, 0.5); /* Fondo semi-transparente */
+}
+
+/* Efecto hover del botón de filtros */
+.filter-button:hover {
+  color: white;                       /* Texto blanco */
+  background: rgba(39, 39, 42, 0.5); /* Fondo semi-transparente */
+}
+
+/* ===== 6. PANEL DE FILTROS ===== */
+/* Panel desplegable de filtros con backdrop blur */
+.filter-panel {
+  position: absolute;                 /* Posicionamiento absoluto */
+  right: 0;                          /* Alineado a la derecha */
+  top: 48px;                         /* Distancia desde arriba */
+  width: 384px;                      /* Ancho fijo del panel */
+  background: rgba(9, 9, 11, 0.95); /* Fondo casi opaco */
+  backdrop-filter: blur(16px);       /* Efecto de desenfoque del fondo */
+  border: 1px solid rgba(39, 39, 42, 0.5); /* Borde sutil */
+  border-radius: 8px;                /* Bordes redondeados */
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); /* Sombra profunda */
+  z-index: 50;                       /* Por encima de otros elementos */
+  padding: 24px;                     /* Espaciado interno */
+}
+
+/* Header del panel de filtros */
+.filter-panel-header {
+  display: flex;                      /* Layout flexible */
+  align-items: center;                /* Centrado vertical */
+  justify-content: space-between;     /* Distribución entre extremos */
+  margin-bottom: 24px;                /* Espacio inferior */
+}
+
+/* Título del panel de filtros */
+.filter-panel-title {
+  display: flex;                      /* Layout flexible */
+  align-items: center;                /* Centrado vertical */
+  gap: 12px;                         /* Espacio entre elementos */
+}
+
+/* Indicador visual del panel (barra vertical con gradiente) */
+.filter-panel-indicator {
+  width: 4px;                         /* Ancho de la barra */
+  height: 24px;                       /* Alto de la barra */
+  background: linear-gradient(to bottom, #3b82f6, #8b5cf6); /* Gradiente azul a púrpura */
+  border-radius: 9999px;              /* Forma de píldora */
+}
+
+/* Título del panel de filtros */
+.filter-panel-title h3 {
+  font-size: 18px;                   /* Tamaño de fuente */
+  font-weight: 500;                  /* Peso de fuente */
+  color: white;                      /* Color blanco */
+  margin: 0;                         /* Sin márgenes */
+}
+
+/* Botón para limpiar filtros */
+.clear-filters-button {
+  color: #a1a1aa;                    /* Color de texto gris */
+  background: transparent;            /* Fondo transparente */
+  border: none;                       /* Sin borde */
+  font-size: 12px;                   /* Tamaño de fuente pequeño */
+  cursor: pointer;                    /* Cursor de mano */
+  padding: 4px 8px;                  /* Espaciado interno */
+  border-radius: 4px;                /* Bordes redondeados */
+  display: flex;                      /* Layout flexible */
+  align-items: center;                /* Centrado vertical */
+  gap: 4px;                          /* Espacio entre elementos */
+  transition: all 0.3s ease;         /* Transición suave */
+}
+
+/* Efecto hover del botón de limpiar filtros */
+.clear-filters-button:hover {
+  color: white;                       /* Texto blanco */
+  background: rgba(39, 39, 42, 0.5); /* Fondo semi-transparente */
+}
+
+/* ===== 7. CONTENEDOR DE TABLA ===== */
+/* Contenedor principal de la tabla con espaciado */
+.table-container {
+  max-width: 100%;                    /* Ancho máximo del contenedor */
+  margin: 0 auto;                     /* Centrado horizontal */
+  padding: 32px;                      /* Espaciado interno */
+}
+
+/* Wrapper de la tabla con estilos de fondo y borde */
+.table-wrapper {
+  background: rgba(9, 9, 11, 0.5);   /* Fondo semi-transparente */
+  border: 1px solid rgba(39, 39, 42, 0.5); /* Borde sutil */
+  border-radius: 8px;                /* Bordes redondeados */
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); /* Sombra */
+  overflow: hidden;                   /* Ocultar contenido que se desborde */
+}
+
+/* Contenedor de scroll horizontal para tablas anchas */
+.table-scroll {
+  overflow-x: auto;                   /* Scroll horizontal automático */
+}
+
+/* ===== 8. TABLA PRINCIPAL ===== */
+/* Tabla de datos con estilos base */
+.produccion-table {
+  width: 100%;                        /* Ancho completo */
+  border-collapse: collapse;          /* Colapsar bordes de celdas */
+  min-width: 1000px;                 /* Ancho mínimo para evitar compresión */
+}
+
+/* Fila del header de la tabla */
+.produccion-table thead tr {
+  border-bottom: 1px solid rgba(39, 39, 42, 0.5); /* Borde inferior del header */
+}
+
+/* Celdas del header de la tabla */
+.produccion-table th {
+  color: #a1a1aa;                    /* Color de texto gris */
+  font-weight: 500;                  /* Peso de fuente */
+  font-size: 12px;                   /* Tamaño de fuente pequeño */
+  text-transform: uppercase;         /* Texto en mayúsculas */
+  letter-spacing: 0.05em;            /* Espaciado entre letras */
+  text-align: left;                  /* Alineación a la izquierda */
+  padding: 16px 12px;                /* Espaciado interno */
+  vertical-align: middle;            /* Centrado vertical */
+  border-right: 1px solid rgba(39, 39, 42, 0.3); /* Línea vertical derecha para separar columnas */
+  position: relative;                 /* Para posicionar elementos absolutos si es necesario */
+}
+
+/* Header centrado (para columnas como Base, Vector, F Sello) */
+.produccion-table th.center {
+  text-align: center;                /* Centrado horizontal */
+}
+
+/* Header con ancho mínimo específico */
+.produccion-table th.min-width-140 {
+  min-width: 80px;                  /* Ancho mínimo para columnas de estado */
+}
+
+.produccion-table th.min-width-220 {
+  min-width: 10px;                  /* Ancho mínimo para columnas de archivos */
+}
+
+/* ===== CLASES ESPECÍFICAS PARA VECTORIZACIÓN ===== */
+/* Columna de vectorización más compacta */
+.produccion-table th.min-width-80 {
+  min-width: 50px;                   /* Ancho mínimo para columna de vectorización */
+}
+
+.produccion-table td.min-width-80 {
+  min-width: 80px;                   /* Ancho mínimo para celdas de vectorización */
+}
+
+/* Eliminar borde derecho de la última columna del header para evitar línea extra */
+.produccion-table th:last-child {
+  border-right: none;                /* Sin borde derecho en la última columna */
+}
+
+/* Filas del cuerpo de la tabla */
+.produccion-table tbody tr {
+  border-bottom: 1px solid rgba(39, 39, 42, 0.3); /* Borde inferior sutil */
+  cursor: pointer;                    /* Cursor de mano para indicar interactividad */
+  transition: background 0.3s ease;   /* Transición suave del fondo */
+}
+
+/* Efecto hover en las filas de la tabla */
+.produccion-table tbody tr:hover {
+  background: rgba(39, 39, 42, 0.1); /* Fondo sutil al pasar el mouse */
+}
+
+/* Celdas del cuerpo de la tabla */
+.produccion-table td {
+  padding: 10px 12px;                /* Espaciado interno */
+  border-right: 1px solid rgba(39, 39, 42, 0.2); /* Línea vertical derecha más sutil que el header */
+  position: relative;                 /* Para posicionar elementos absolutos si es necesario */
+}
+
+/* Celdas centradas (para archivos) */
+.produccion-table td.center {
+  text-align: center;                /* Centrado horizontal */
+  vertical-align: middle;            /* Centrado vertical */
+}
+
+/* Celdas con ancho mínimo específico */
+.produccion-table td.min-width-220 {
+  min-width: 10px;                  /* Ancho mínimo para columnas de estado */
+}
+
+/* Eliminar borde derecho de la última columna del cuerpo para evitar línea extra */
+.produccion-table tbody tr td:last-child {
+  border-right: none;                /* Sin borde derecho en la última columna */
+}
+
+/* ===== LÍNEAS VERTICALES ADICIONALES ===== */
+/* 
+ * Las líneas verticales se implementan usando border-right en cada celda
+ * Esto crea una separación visual clara entre columnas
+ * 
+ * Beneficios:
+ * - Mejor legibilidad de la tabla
+ * - Separación visual clara entre tipos de datos
+ * - Estructura más organizada y profesional
+ * - Facilita el seguimiento horizontal de filas
+ */
+
+/* Líneas verticales con diferentes opacidades para jerarquía visual */
+.produccion-table th {
+  border-right: 1px solid rgba(39, 39, 42, 0.3); /* Líneas del header más visibles */
+}
+
+.produccion-table td {
+  border-right: 1px solid rgba(39, 39, 42, 0.2); /* Líneas del cuerpo más sutiles */
+}
+
+/* Opcional: Líneas verticales más prominentes para columnas importantes */
+.produccion-table th:nth-child(1),
+.produccion-table td:nth-child(1) {
+  border-right: 1px solid rgba(39, 39, 42, 0.4); /* Columna de fecha más separada */
+}
+
+.produccion-table th:nth-child(5),
+.produccion-table td:nth-child(5) {
+  border-right: 1px solid rgba(39, 39, 42, 0.4); /* Columna de estado más separada */
+}
+
+/* Opcional: Líneas verticales con colores diferentes para grupos de columnas */
+.produccion-table th:nth-child(8),
+.produccion-table td:nth-child(8) {
+  border-right: 1px solid rgba(39, 39, 42, 0.4); /* Separador azul para archivos */
+}
+
+/* ===== RESPONSIVE PARA LÍNEAS VERTICALES ===== */
+/* En dispositivos móviles, las líneas verticales pueden ser menos prominentes */
+@media (max-width: 768px) {
+  .produccion-table th,
+  .produccion-table td {
+    border-right: 1px solid rgba(39, 39, 42, 0.15); /* Líneas más sutiles en móviles */
+  }
+  
+  /* En pantallas muy pequeñas, eliminar algunas líneas para ahorrar espacio */
+  @media (max-width: 480px) {
+    .produccion-table th:nth-child(even),
+    .produccion-table td:nth-child(even) {
+      border-right: none;             /* Eliminar líneas en columnas pares en móviles muy pequeños */
+    }
+  }
+}
+
+/* ===== 9. CELDAS DE DATOS ===== */
+/* Celdas de fecha con estilo distintivo */
+.cell-date {
+  color: #a1a1aa;                    /* Color gris para fechas */
+  font-size: 13px;                   /* Tamaño de fuente */
+  /* 
+   * Formato de fecha: "6 de agosto del 2025"
+   * Implementado en JavaScript con función formatearFechaEspanol()
+   * 
+   * Características del formato:
+   * - Día en número (sin ceros a la izquierda)
+   * - Preposición "de" entre día y mes
+   * - Mes completo en español (enero, febrero, etc.)
+   * - Preposición "del" antes del año
+   * - Año completo de 4 dígitos
+   * 
+   * Ejemplos:
+   * - "7 de agosto del 2025"
+   * - "15 de diciembre del 2024"
+   * - "1 de enero del 2026"
+   */
+}
+
+/* Celdas de texto principal (diseño, medida, notas) */
+.cell-text {
+  color: white;                       /* Color blanco para texto principal */
+  font-weight: 500;                  /* Peso de fuente */
+  font-size: 15px;                   /* Tamaño de fuente */
+  margin: 0;                         /* Sin márgenes */
+  display: block;                    /* Comportamiento de bloque */
+}
+
+/* Celdas de estado programado */
+.cell-programado {
+  color: white;                       /* Color blanco */
+  font-weight: 500;                  /* Peso de fuente */
+  font-size: 15px;                   /* Tamaño de fuente */
+}
+
+/* ===== 10. ESTADOS Y SELECTORES ===== */
+/* Contenedor de selectores de estado */
+.estado-container {
+  display: flex;                      /* Layout flexible */
+  flex-direction: column;             /* Dirección vertical */
+  gap: 4px;                          /* Espacio entre elementos */
+}
+
+/* Selector de estado de fabricación */
+.estado-select {
+  width: 25%;                         /* Ancho del 75% del contenedor */
+}
+
+/* Selector de estado de vectorización */
+.vectorizacion-select {
+  width: 10%;                         /* Ancho del 60% del contenedor */
+}
+
+
+/* O usar selectores más específicos */
+.estado-select[data-type="vectorizacion"] {
+  width: 150px !important;
+  min-width: 140px !important;
+}
+
+/* ===== 11. CELDAS DE ARCHIVOS ===== */
+/* Contenedor de celdas de archivos */
+.archivo-cell {
+  height: 100%;                       /* Altura completa de la celda */
+  width: 100%;                        /* Ancho completo de la celda */
+  display: flex;                      /* Layout flexible */
+  align-items: center;                /* Centrado vertical */
+  justify-content: center;            /* Centrado horizontal */
+}
+
+/* Botón de subida de archivos */
+.upload-button {
+  color: #a1a1aa;                    /* Color de texto gris */
+  background: transparent;            /* Fondo transparente */
+  border: 1px solid rgba(63, 63, 70, 0.5); /* Borde sutil */
+  border-radius: 8px;                /* Bordes redondeados */
+  padding: 6px 12px;                 /* Espaciado interno */
+  font-size: 12px;                   /* Tamaño de fuente */
+  cursor: pointer;                    /* Cursor de mano */
+  display: inline-flex;               /* Layout flexible inline */
+  align-items: center;                /* Centrado vertical */
+  gap: 4px;                          /* Espacio entre elementos */
+  transition: all 0.3s ease;         /* Transición suave */
+}
+
+/* Efecto hover del botón de subida */
+.upload-button:hover {
+  color: white;                       /* Texto blanco */
+  background: rgba(39, 39, 42, 0.5); /* Fondo semi-transparente */
+  border-color: rgba(96, 165, 250, 0.5); /* Borde azul */
+}
+
+/* Ocultar input de archivo nativo */
+.upload-button input[type="file"] {
+  display: none;                      /* Ocultar input de archivo */
+}
+
+/* ===== 12. IMÁGENES DE ARCHIVOS ===== */
+/* Contenedor de imágenes de archivos */
+.archivo-image-container {
+  display: inline-flex;               /* Layout flexible inline */
+  align-items: center;                /* Centrado vertical */
+  justify-content: center;            /* Centrado horizontal */
+  height: 48px;                       /* Alto fijo */
+  width: 48px;                        /* Ancho fijo */
+}
+
+/* Wrapper de imagen con posicionamiento relativo */
+.archivo-image-wrapper {
+  position: relative;                 /* Para posicionar overlay */
+  width: 48px;                        /* Ancho fijo */
+  height: 48px;                       /* Alto fijo */
+  display: flex;                      /* Layout flexible */
+  align-items: center;                /* Centrado vertical */
+  justify-content: center;            /* Centrado horizontal */
+}
+
+/* Imagen del archivo con estilos base */
+.archivo-image {
+  width: 48px;                        /* Ancho fijo */
+  height: 48px;                       /* Alto fijo */
+  border-radius: 6px;                 /* Bordes redondeados */
+  border: 1px solid rgba(63, 63, 70, 0.5); /* Borde sutil */
+  transition: border-color 0.3s ease; /* Transición suave del borde */
+  background: white;                  /* Fondo blanco para mejor visibilidad */
+}
+
+/* Imagen de vector con object-fit: contain para mostrar completo */
+.archivo-image.vector {
+  object-fit: contain;                /* Mostrar imagen completa sin recortar */
+}
+
+/* Imagen base con object-fit: cover para llenar el espacio */
+.archivo-image.base {
+  object-fit: cover;                  /* Llenar espacio recortando si es necesario */
+}
+
+/* Overlay que aparece al hacer hover sobre la imagen */
+.archivo-image-overlay {
+  position: absolute;                 /* Posicionamiento absoluto */
+  inset: 0;                          /* Cubrir toda la imagen */
+  background: rgba(0, 0, 0, 0.5);   /* Fondo negro semi-transparente */
+  border-radius: 6px;                /* Bordes redondeados */
+  display: flex;                      /* Layout flexible */
+  flex-direction: column;             /* Dirección vertical */
+  align-items: center;                /* Centrado horizontal */
+  justify-content: center;            /* Centrado vertical */
+  gap: 4px;                          /* Espacio entre botones */
+}
+
+/* Botones del overlay de imagen */
+.archivo-overlay-button {
+  color: white;                       /* Texto blanco */
+  font-size: 10px;                   /* Tamaño de fuente pequeño */
+  background: rgba(39, 39, 42, 0.8); /* Fondo semi-transparente */
+  padding: 4px 8px;                  /* Espaciado interno */
+  border-radius: 4px;                /* Bordes redondeados */
+  border: none;                       /* Sin borde */
+  cursor: pointer;                    /* Cursor de mano */
+  transition: background 0.3s ease;   /* Transición suave del fondo */
+}
+
+/* Botón de eliminar con color rojo */
+.archivo-overlay-button.delete {
+  color: #ef4444;                    /* Color rojo para eliminar */
+}
+
+/* Efecto hover de los botones del overlay */
+.archivo-overlay-button:hover {
+  background: rgba(39, 39, 42, 1);   /* Fondo más opaco */
+}
+
+/* ===== 13. BOTÓN DE ARCHIVO NO IMAGEN ===== */
+/* Botón para archivos que no son imágenes (PDF, DOC, etc.) */
+.archivo-button {
+  color: #a1a1aa;                    /* Color de texto gris */
+  background: transparent;            /* Fondo transparente */
+  border: 1px solid rgba(63, 63, 70, 0.5); /* Borde sutil */
+  border-radius: 8px;                /* Bordes redondeados */
+  padding: 6px 12px;                 /* Espaciado interno */
+  font-size: 12px;                   /* Tamaño de fuente */
+  cursor: pointer;                    /* Cursor de mano */
+  display: inline-flex;               /* Layout flexible inline */
+  align-items: center;                /* Centrado vertical */
+  gap: 4px;                          /* Espacio entre elementos */
+  transition: all 0.3s ease;         /* Transición suave */
+}
+
+/* Efecto hover del botón de archivo */
+.archivo-button:hover {
+  color: white;                       /* Texto blanco */
+  background: rgba(39, 39, 42, 0.5); /* Fondo semi-transparente */
+  border-color: rgba(96, 165, 250, 0.5); /* Borde azul */
+}
+
+/* ===== 14. ESTADOS DE CARGA Y ERROR ===== */
+/* Celda de estado de carga */
+.loading-cell {
+  text-align: center;                 /* Centrado horizontal */
+  color: #71717a;                    /* Color gris */
+  padding: 32px;                     /* Espaciado interno */
+}
+
+/* Celda de estado de error */
+.error-cell {
+  text-align: center;                 /* Centrado horizontal */
+  color: #ef4444;                    /* Color rojo para errores */
+  padding: 32px;                     /* Espaciado interno */
+}
+
+/* Celda de estado vacío (sin datos) */
+.empty-cell {
+  text-align: center;                 /* Centrado horizontal */
+  color: #71717a;                    /* Color gris */
+  padding: 32px;                     /* Espaciado interno */
+}
+
+/* ===== 15. SELECTOR DE MÁQUINA ===== */
+/* Contenedor del selector de máquina */
+.maquina-select {
+  display: flex;                      /* Layout flexible */
+  gap: 8px;                          /* Espacio entre opciones */
+  justify-content: center;            /* Centrado horizontal */
+}
+
+/* Opciones del selector de máquina */
+.maquina-option {
+  background: transparent;            /* Fondo transparente */
+  color: #a1a1aa;                    /* Color de texto gris */
+  border: 1px solid #3b82f6;         /* Borde azul */
+  border-radius: 6px;                /* Bordes redondeados */
+  padding: 4px 12px;                 /* Espaciado interno */
+  font-weight: 600;                  /* Peso de fuente */
+  font-size: 15px;                   /* Tamaño de fuente */
+  cursor: pointer;                    /* Cursor de mano */
+  transition: all 0.2s;              /* Transición rápida */
+  outline: none;                      /* Sin contorno al hacer focus */
+}
+
+/* Estado activo de la opción de máquina */
+.maquina-option.active {
+  background: #3b82f6;               /* Fondo azul */
+  color: white;                      /* Texto blanco */
+}
+
+/* ===== 16. RESPONSIVE DESIGN ===== */
+/* Media query para dispositivos móviles y tablets pequeñas */
+@media (max-width: 768px) {
+  /* Reducir padding del header en móviles */
+  .produccion-header {
+    padding: 16px;                    /* Padding más pequeño */
+  }
+  
+  /* Cambiar layout del header a vertical en móviles */
+  .produccion-header-content {
+    flex-direction: column;           /* Dirección vertical */
+    gap: 16px;                        /* Espacio entre elementos */
+    align-items: stretch;             /* Estirar elementos */
+  }
+  
+  /* Hacer la búsqueda responsive */
+  .search-input {
+    width: 100%;                      /* Ancho completo en móviles */
+  }
+  
+  /* Reducir padding de la tabla en móviles */
+  .table-container {
+    padding: 16px;                    /* Padding más pequeño */
+  }
+}
+
+/* ===== FIN DEL ARCHIVO ===== */
+/* 
+ * Este archivo CSS está optimizado para:
+ * - Mantenibilidad: Comentarios claros y organización lógica
+ * - Reutilización: Clases semánticas y bien nombradas
+ * - Responsive: Media queries para diferentes dispositivos
+ * - Performance: Transiciones suaves y efectos visuales optimizados
+ */

@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useGuardarVistaUsuario, cargarVistaUsuario, guardarVistaUsuario } from '../hooks/useGuardarVistaUsuario';
 import { useAuth } from '../hooks/useAuth';
-console.log('*** ProduccionPage importó useGuardarVistaUsuario ***', useGuardarVistaUsuario);
+import './ProduccionPage.css';
 
 const ESTADOS_FABRICACION = [
   'Sin Hacer', 'Haciendo', 'Rehacer', 'Retocar', 'Prioridad', 'Verificar', 'Hecho'
@@ -377,6 +377,52 @@ function ProduccionPage() {
     setSortAplicado(true);
   };
 
+  // ===== FUNCIÓN DE FORMATEO DE FECHAS =====
+  /*
+   * formatearFechaEspanol: Convierte una fecha ISO a formato español legible
+   * 
+   * Parámetros:
+   * - fechaISO: String de fecha en formato ISO (ej: "2025-08-07")
+   * 
+   * Retorna:
+   * - String formateado en español (ej: "7 de agosto del 2025")
+   * - "-" si la fecha es inválida o no existe
+   * 
+   * Características del formato:
+   * - Día en número (sin ceros a la izquierda)
+   * - Preposición "de" entre día y mes
+   * - Mes completo en español (enero, febrero, etc.)
+   * - Preposición "del" antes del año
+   * - Año completo de 4 dígitos
+   */
+  const formatearFechaEspanol = (fechaISO) => {
+    if (!fechaISO) return '-';
+    
+    try {
+      const fecha = new Date(fechaISO);
+      
+      // Verificar si la fecha es válida
+      if (isNaN(fecha.getTime())) return '-';
+      
+      // Array de meses en español
+      const meses = [
+        'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+        'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+      ];
+      
+      const dia = fecha.getDate();           // Día del mes (1-31)
+      const mes = meses[fecha.getMonth()];   // Mes en español
+      const año = fecha.getFullYear();       // Año completo
+      
+      // Retornar fecha formateada en español
+      return `${dia} de ${mes} del ${año}`;
+      
+    } catch (error) {
+      console.error('Error al formatear fecha:', error);
+      return '-';
+    }
+  };
+
   // Cargar configuración de vista al montar
   useEffect(() => {
     if (!user || authLoading) return;
@@ -434,171 +480,60 @@ function ProduccionPage() {
   };
 
   return (
-    <div style={{ background: '#000', minHeight: '100vh', color: 'white' }}>
-      <div style={{ borderBottom: '1px solid rgba(39, 39, 42, 0.5)', background: 'rgba(9, 9, 11, 0.8)', position: 'sticky', top: 0, zIndex: 10, padding: '24px 32px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ width: '32px', height: '32px', background: 'white', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div className="produccion-page">
+      <div className="produccion-header">
+        <div className="produccion-header-content">
+          <div className="produccion-header-left">
+            <div className="produccion-header-title">
+              <div className="produccion-header-icon">
                 <Package style={{ width: '20px', height: '20px', color: 'black' }} />
               </div>
-              <div>
-                <h1 style={{ fontSize: '32px', fontWeight: '300', letterSpacing: '-0.025em', margin: 0 }}>
-                  Producción
-                </h1>
-                <p style={{ fontSize: '12px', color: '#71717a', margin: '2px 0 0 0' }}>
-                  {pedidos.length} activos
-                </p>
+              <div className="produccion-header-text">
+                <h1>Producción</h1>
+                <p>{pedidos.length} activos</p>
               </div>
             </div>
           </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{ position: 'relative' }}>
-                <Search style={{
-                  position: 'absolute',
-                  left: '16px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: '16px',
-                  height: '16px',
-                  color: '#71717a'
-                }} />
-                <input
-                  placeholder="Buscar..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{
-                    width: '320px',
-                    background: 'rgba(39, 39, 42, 0.5)',
-                    border: '1px solid rgba(63, 63, 70, 0.5)',
-                    color: 'white',
-                    borderRadius: '8px',
-                    padding: '8px 16px 8px 44px',
-                    outline: 'none',
-                    fontSize: '14px',
-                    transition: 'border-color 0.3s ease'
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = 'rgba(96, 165, 250, 0.5)'}
-                  onBlur={(e) => e.target.style.borderColor = 'rgba(63, 63, 70, 0.5)'}
-                />
-              </div>
-              <button
-                onClick={() => setSortModalOpen(true)}
-                style={{
-                  background: multiSort.sortCriteria.length > 0 ? 'rgba(59, 130, 246, 0.2)' : 'rgba(39, 39, 42, 0.5)',
-                  border: multiSort.sortCriteria.length > 0 ? '1px solid rgba(59, 130, 246, 0.5)' : '1px solid rgba(63, 63, 70, 0.5)',
-                  color: multiSort.sortCriteria.length > 0 ? '#60a5fa' : '#a1a1aa',
-                  borderRadius: '8px',
-                  padding: '8px 16px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.background = 'rgba(59, 130, 246, 0.3)';
-                  e.target.style.borderColor = 'rgba(59, 130, 246, 0.7)';
-                  e.target.style.color = '#93c5fd';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = multiSort.sortCriteria.length > 0 ? 'rgba(59, 130, 246, 0.2)' : 'rgba(39, 39, 42, 0.5)';
-                  e.target.style.borderColor = multiSort.sortCriteria.length > 0 ? 'rgba(59, 130, 246, 0.5)' : 'rgba(63, 63, 70, 0.5)';
-                  e.target.style.color = multiSort.sortCriteria.length > 0 ? '#60a5fa' : '#a1a1aa';
-                }}
-              >
-                <ArrowUpDown style={{ width: '16px', height: '16px' }} />
-                Ordenar
-                {multiSort.sortCriteria.length > 0 && (
-                  <span style={{
-                    background: '#3b82f6',
-                    color: 'white',
-                    borderRadius: '50%',
-                    width: '18px',
-                    height: '18px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '10px',
-                    fontWeight: '600'
-                  }}>
-                    {multiSort.sortCriteria.length}
-                  </span>
-                )}
-              </button>
-              <div style={{ position: 'relative' }}>
+          <div className="produccion-header-right">
+            <div className="search-container">
+              <Search className="search-icon" />
+              <input
+                placeholder="Buscar..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
+            </div>
+            <button
+              onClick={() => setSortModalOpen(true)}
+              className={`sort-button ${multiSort.sortCriteria.length > 0 ? 'active' : ''}`}
+            >
+              <ArrowUpDown style={{ width: '16px', height: '16px' }} />
+              Ordenar
+              {multiSort.sortCriteria.length > 0 && (
+                <span className="sort-badge">
+                  {multiSort.sortCriteria.length}
+                </span>
+              )}
+            </button>
+            <div style={{ position: 'relative' }}>
               <button
                 onClick={() => setShowFilterPanel(!showFilterPanel)}
-                style={{
-                  color: hayFiltrosActivos ? 'white' : '#a1a1aa',
-                  background: hayFiltrosActivos ? 'rgba(39, 39, 42, 0.5)' : 'transparent',
-                  border: 'none',
-                  padding: '8px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.color = 'white';
-                  e.target.style.background = 'rgba(39, 39, 42, 0.5)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.color = hayFiltrosActivos ? 'white' : '#a1a1aa';
-                  e.target.style.background = hayFiltrosActivos ? 'rgba(39, 39, 42, 0.5)' : 'transparent';
-                }}
+                className={`filter-button ${hayFiltrosActivos ? 'active' : ''}`}
               >
                 <Filter style={{ width: '16px', height: '16px' }} />
               </button>
               {showFilterPanel && (
-                <div style={{
-                  position: 'absolute',
-                  right: 0,
-                  top: '48px',
-                  width: '384px',
-                  background: 'rgba(9, 9, 11, 0.95)',
-                  backdropFilter: 'blur(16px)',
-                  border: '1px solid rgba(39, 39, 42, 0.5)',
-                  borderRadius: '8px',
-                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-                  zIndex: 50,
-                  padding: '24px'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{
-                        width: '4px',
-                        height: '24px',
-                        background: 'linear-gradient(to bottom, #3b82f6, #8b5cf6)',
-                        borderRadius: '9999px'
-                      }}></div>
-                      <h3 style={{ fontSize: '18px', fontWeight: '500', color: 'white', margin: 0 }}>Filtros</h3>
+                <div className="filter-panel">
+                  <div className="filter-panel-header">
+                    <div className="filter-panel-title">
+                      <div className="filter-panel-indicator"></div>
+                      <h3>Filtros</h3>
                     </div>
                     {hayFiltrosActivos && (
                       <button
                         onClick={onClearFilters}
-                        style={{
-                          color: '#a1a1aa',
-                          background: 'transparent',
-                          border: 'none',
-                          fontSize: '12px',
-                          cursor: 'pointer',
-                          padding: '4px 8px',
-                          borderRadius: '4px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          transition: 'all 0.3s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.color = 'white';
-                          e.target.style.background = 'rgba(39, 39, 42, 0.5)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.color = '#a1a1aa';
-                          e.target.style.background = 'transparent';
-                        }}
+                        className="clear-filters-button"
                       >
                         <X style={{ width: '12px', height: '12px' }} />
                         Limpiar
@@ -621,6 +556,7 @@ function ProduccionPage() {
           </div>
         </div>
       </div>
+      
       <AddPedidoModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onPedidoAdded={handlePedidoAdded} />
       
       <SortModal
@@ -640,56 +576,58 @@ function ProduccionPage() {
         setOrdenEstadosFabricacion={setOrdenEstadosFabricacion}
       />
       
-      <div style={{ maxWidth: '100%', margin: '0 auto', padding: '32px' }}>
-        <div className="table-container" style={{ background: 'rgba(9, 9, 11, 0.5)', border: '1px solid rgba(39, 39, 42, 0.5)', borderRadius: '8px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1000px' }}>
+      <div className="table-container">
+        <div className="table-wrapper">
+          <div className="table-scroll">
+            <table className="produccion-table">
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(39, 39, 42, 0.5)' }}>
-                  <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', padding: '16px 12px', verticalAlign: 'middle' }}>Fecha</th>
-                  <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', padding: '16px 12px', verticalAlign: 'middle' }}>Diseño</th>
-                  <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', padding: '16px 12px', verticalAlign: 'middle' }}>Medida</th>
-                  <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', padding: '16px 12px', verticalAlign: 'middle' }}>Notas</th>
-                  <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', padding: '16px 12px', verticalAlign: 'middle' }}>Estado</th>
-                  <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', padding: '16px 12px', verticalAlign: 'middle', minWidth: '140px' }}>Vectorización</th>
-                  <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', padding: '16px 12px', verticalAlign: 'middle', minWidth: '140px' }}>Programado</th>
-                  <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center', padding: '16px 12px', verticalAlign: 'middle', minWidth: '220px' }}>Base</th>
-                  <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center', padding: '16px 12px', verticalAlign: 'middle' }}>Vector</th>
-                  <th style={{ color: '#a1a1aa', fontWeight: '500', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center', padding: '16px 12px', verticalAlign: 'middle' }}>F Sello</th>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Diseño</th>
+                  <th>Medida</th>
+                  <th>Notas</th>
+                  <th>Estado</th>
+                  <th className="min-width-80">Vectorización</th>
+                  <th className="min-width-140">Programado</th>
+                  <th className="center min-width-220">Base</th>
+                  <th className="center">Vector</th>
+                  <th className="center">F Sello</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="7" style={{ textAlign: 'center', color: '#71717a', padding: '32px' }}>Cargando...</td>
+                    <td colSpan="10" className="loading-cell">Cargando...</td>
                   </tr>
                 ) : error ? (
                   <tr>
-                    <td colSpan="7" style={{ textAlign: 'center', color: '#ef4444', padding: '32px' }}>Error: {error}</td>
+                    <td colSpan="10" className="error-cell">Error: {error}</td>
                   </tr>
                 ) : pedidos.length > 0 ? (
                   pedidos.map((pedido) => (
-                    <tr key={pedido.id_pedido} style={{ borderBottom: '1px solid rgba(39, 39, 42, 0.3)', cursor: 'pointer', transition: 'background 0.3s ease' }}>
-                      <td style={{ padding: '16px 12px' }}>
-                        <span style={{ color: '#a1a1aa', fontSize: '13px' }}>{pedido.fecha_compra ? new Date(pedido.fecha_compra).toLocaleDateString() : '-'}</span>
+                    <tr key={pedido.id_pedido}>
+                      <td>
+                        <span className="cell-date">
+                          {formatearFechaEspanol(pedido.fecha_compra)}
+                        </span>
                       </td>
-                      <td style={{ padding: '16px 12px' }}>
+                      <td>
                         <div>
-                          <span style={{ color: 'white', fontWeight: 500, fontSize: '15px', margin: 0, display: 'block' }}>{pedido.disenio || "Sin especificar"}</span>
+                          <span className="cell-text">{pedido.disenio || "Sin especificar"}</span>
                         </div>
                       </td>
-                      <td style={{ padding: '16px 12px' }}>
+                      <td>
                         <div>
-                          <span style={{ color: 'white', fontWeight: 500, fontSize: '15px', margin: 0, display: 'block' }}>{pedido.medida_pedida || "Sin medida"}</span>
+                          <span className="cell-text">{pedido.medida_pedida || "Sin medida"}</span>
                         </div>
                       </td>
-                      <td style={{ padding: '16px 12px' }}>
+                      <td>
                         <div>
-                          <span style={{ color: 'white', fontWeight: 500, fontSize: '15px', margin: 0, display: 'block' }}>{pedido.notas || "Sin notas"}</span>
+                          <span className="cell-text">{pedido.notas || " "}</span>
                         </div>
                       </td>
-                      <td style={{ minWidth: '220px', padding: '16px 12px', verticalAlign: 'middle' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <td className="min-width-220">
+                        <div className="estado-container">
                           <EstadoSelect
                             value={pedido.estado_fabricacion}
                             onChange={val => handleEstadoChange(pedido, 'estado_fabricacion', val)}
@@ -697,11 +635,11 @@ function ProduccionPage() {
                             type="fabricacion"
                             isDisabled={false}
                             size="small"
-                            style={{ width: '75%' }}
+                            className="estado-select"
                           />
                         </div>
                       </td>
-                      <td style={{ padding: '16px 12px', textAlign: 'left', verticalAlign: 'middle' }}>
+                      <td className="min-width-80">
                         <EstadoSelect
                           value={pedido.vectorizacion || 'Para Vectorizar'}
                           onChange={val => handleVectorizacionChange(pedido, val)}
@@ -709,15 +647,15 @@ function ProduccionPage() {
                           type="vectorizacion"
                           isDisabled={false}
                           size="small"
-                          style={{ width: '60%' }}
+                          className="vectorizacion-select"
                         />
                       </td>
-                      <td style={{ padding: '16px 12px', textAlign: 'left', verticalAlign: 'middle' }}>
-                        <span style={{ color: 'white', fontWeight: 500, fontSize: '15px' }}>
-                          {pedido.id_programa ?? 'Sin programa'}
+                      <td>
+                        <span className="cell-programado">
+                          {pedido.id_programa ?? ' '}
                         </span>
                       </td>
-                      <td style={{ padding: '16px 12px', textAlign: 'center', verticalAlign: 'middle' }}>
+                      <td className="center">
                         <ArchivoCell
                           filePath={pedido.archivo_base}
                           nombre="Archivo Base"
@@ -726,7 +664,7 @@ function ProduccionPage() {
                           onUpload={refreshPedidosWithFilters}
                         />
                       </td>
-                      <td style={{ padding: '16px 12px', textAlign: 'center', verticalAlign: 'middle' }}>
+                      <td className="center">
                         <ArchivoCell
                           filePath={pedido.archivo_vector}
                           nombre="Archivo Vector"
@@ -735,7 +673,7 @@ function ProduccionPage() {
                           onUpload={refreshPedidosWithFilters}
                         />
                       </td>
-                      <td style={{ padding: '16px 12px', textAlign: 'center', verticalAlign: 'middle' }}>
+                      <td className="center">
                         <ArchivoCell
                           filePath={pedido.foto_sello}
                           nombre="Foto Sello"
@@ -748,7 +686,7 @@ function ProduccionPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="7" style={{ textAlign: 'center', color: '#71717a', padding: '32px' }}>No se encontraron pedidos.</td>
+                    <td colSpan="10" className="empty-cell">No se encontraron pedidos.</td>
                   </tr>
                 )}
               </tbody>
@@ -828,37 +766,13 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, _e
 
   if (!filePath) {
     return (
-      <div style={{ height: '100%', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <label style={{
-          color: '#a1a1aa',
-          background: 'transparent',
-          border: '1px solid rgba(63, 63, 70, 0.5)',
-          borderRadius: '8px',
-          padding: '6px 12px',
-          fontSize: '12px',
-          cursor: 'pointer',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '4px',
-          transition: 'all 0.3s ease'
-        }}
-          onMouseEnter={(e) => {
-            e.target.style.color = 'white';
-            e.target.style.background = 'rgba(39, 39, 42, 0.5)';
-            e.target.style.borderColor = 'rgba(96, 165, 250, 0.5)';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.color = '#a1a1aa';
-            e.target.style.background = 'transparent';
-            e.target.style.borderColor = 'rgba(63, 63, 70, 0.5)';
-          }}
-        >
+      <div className="archivo-cell">
+        <label className="upload-button">
           <Upload style={{ width: '12px', height: '12px' }} />
           {field === 'foto_sello' ? 'Foto' : 'Subir'}
           <input
             type="file"
             onChange={handleFileUpload}
-            style={{ display: 'none' }}
             disabled={isUploading}
             accept="image/*,.pdf,.doc,.docx,.txt"
           />
@@ -876,16 +790,9 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, _e
     const objectFit = field === 'archivo_vector' ? 'contain' : 'cover';
     
     return (
-      <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: '48px', width: '48px' }}>
+      <div className="archivo-image-container">
         <div
-          style={{
-            position: 'relative',
-            width: '48px',
-            height: '48px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
+          className="archivo-image-wrapper"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
@@ -893,56 +800,20 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, _e
             <img
               src={signedUrl}
               alt={nombre}
-              style={{
-                width: '48px',
-                height: '48px',
-                objectFit: objectFit,
-                borderRadius: '6px',
-                border: '1px solid rgba(63, 63, 70, 0.5)',
-                transition: 'border-color 0.3s ease',
-                background: 'white' // Agregar fondo blanco para mejor visibilidad
-              }}
+              className={`archivo-image ${field === 'archivo_vector' ? 'vector' : 'base'}`}
             />
           </a>
           {isHovered && (
-            <div style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'rgba(0, 0, 0, 0.5)',
-              borderRadius: '6px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '4px'
-            }}>
+            <div className="archivo-image-overlay">
               <button
                 onClick={handleDownload}
-                style={{
-                  color: 'white',
-                  fontSize: '10px',
-                  background: 'rgba(39, 39, 42, 0.8)',
-                  padding: '4px 8px',
-                  borderRadius: '4px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'background 0.3s ease'
-                }}
+                className="archivo-overlay-button"
               >
                 Ver
               </button>
               <button
                 onClick={handleDelete}
-                style={{
-                  color: '#ef4444',
-                  fontSize: '10px',
-                  background: 'rgba(39, 39, 42, 0.8)',
-                  padding: '4px 8px',
-                  borderRadius: '4px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'background 0.3s ease'
-                }}
+                className="archivo-overlay-button delete"
               >
                 X
               </button>
@@ -957,29 +828,7 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, _e
     <div style={{ position: 'relative' }}>
       <button
         onClick={() => window.open(signedUrl, '_blank')}
-        style={{
-          color: '#a1a1aa',
-          background: 'transparent',
-          border: '1px solid rgba(63, 63, 70, 0.5)',
-          borderRadius: '8px',
-          padding: '6px 12px',
-          fontSize: '12px',
-          cursor: 'pointer',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '4px',
-          transition: 'all 0.3s ease'
-        }}
-        onMouseEnter={(e) => {
-          e.target.style.color = 'white';
-          e.target.style.background = 'rgba(39, 39, 42, 0.5)';
-          e.target.style.borderColor = 'rgba(96, 165, 250, 0.5)';
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.color = '#a1a1aa';
-          e.target.style.background = 'transparent';
-          e.target.style.borderColor = 'rgba(63, 63, 70, 0.5)';
-        }}
+        className="archivo-button"
       >
         <Upload style={{ width: '12px', height: '12px' }} />
         {field === 'foto_sello' ? 'Foto' : 'Ver'}
@@ -990,23 +839,12 @@ function ArchivoCell({ filePath, nombre, pedidoId, field, onUpload, onDelete, _e
 
 function MaquinaSelect({ value, onChange }) {
   return (
-    <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+    <div className="maquina-select">
       {['G', 'C'].map(opt => (
         <button
           key={opt}
           onClick={() => onChange(opt)}
-          style={{
-            background: value === opt ? '#3b82f6' : 'transparent',
-            color: value === opt ? 'white' : '#a1a1aa',
-            border: '1px solid #3b82f6',
-            borderRadius: '6px',
-            padding: '4px 12px',
-            fontWeight: 600,
-            fontSize: '15px',
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-            outline: 'none',
-          }}
+          className={`maquina-option ${value === opt ? 'active' : ''}`}
         >
           {opt}
         </button>

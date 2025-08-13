@@ -1,0 +1,168 @@
+/* ===== VARIABLES CSS PARA BOTONES SELECT ===== */
+/* 
+ * 🎯 SISTEMA DE VARIABLES CSS PARA BOTONES SELECT
+ * 
+ * ⚠️ IMPORTANTE: Este archivo contiene SOLO las variables CSS para los botones select
+ * del componente EstadoSelect (fabricación, venta, envío, vectorización).
+ * 
+ * NO es un sistema de variables CSS general del proyecto.
+ * Para cambiar colores, tamaños, espaciados de los botones select, modifica SOLO este archivo.
+ * 
+ * ORGANIZACIÓN:
+ * - Variables de espaciado y tamaños para botones select
+ * - Variables de tipografía para botones select
+ * - Variables de transiciones para botones select
+ * - Variables de colores por categoría (fabricación, venta, envío, vectorización)
+ * - Variables de tamaños específicos por tipo (vectorización, venta)
+ * - Variables de opacidades para botones select
+ * - Variables de dropdown para botones select
+ * - Variables de iconos para botones select
+ * - Variables responsive para botones select
+ * - Variables responsive específicas por tipo
+ */
+
+:root {
+  /* ===== ESPACIADO Y TAMAÑOS PARA BOTONES SELECT ===== */
+  --estado-padding-sm: 2.5px 12.5px;
+  --estado-padding-md: 8px 12px;
+  --estado-padding-badge: 3px 6px;
+  --estado-min-width: 130px;
+  --estado-max-width: 200px;
+  --estado-min-height: 2rem;
+  --estado-height: 2rem;
+  --estado-border-radius: 9999px;
+  --estado-dropdown-radius: 8px;
+  
+  /* ===== TIPOGRAFÍA ===== */
+  --estado-font-size: 15px;
+  --estado-font-size-mobile: 14px;
+  --estado-font-size-dropdown: 12px;
+  --estado-font-size-badge: 10px;
+  --estado-font-weight: 500;
+  
+  /* ===== TRANSICIONES ===== */
+  --estado-transition: all 0.3s ease;
+  --estado-transition-fast: all 0.2s ease;
+  --estado-transition-icon: transform 0.3s ease;
+  
+  /* ===== COLORES BASE ===== */
+  --estado-color-disabled: #94a3b8;
+  --estado-color-disabled-bg: rgba(100, 116, 139, 0.1);
+  --estado-color-disabled-border: rgba(100, 116, 139, 0.2);
+  
+  /* ===== COLORES DE FABRICACIÓN ===== */
+  --estado-fabricacion-sin-hacer: #94a3b8;
+  --estado-fabricacion-haciendo: #67e8f9;
+  --estado-fabricacion-hecho: #6ee7b7;
+  --estado-fabricacion-rehacer: #f87171;
+  --estado-fabricacion-retocar: #fbbf24;
+  --estado-fabricacion-prioridad: #c4b5fd;
+  --estado-fabricacion-verificar: #5eead4;
+  
+  /* ===== FONDOS Y BORDES DE FABRICACIÓN ===== */
+  --estado-color-fabricacion-haciendo-bg: rgba(6, 182, 212, 0.1);
+  --estado-color-fabricacion-haciendo-border: rgba(6, 182, 212, 0.2);
+  --estado-color-fabricacion-hecho-bg: rgba(16, 185, 129, 0.1);
+  --estado-color-fabricacion-hecho-border: rgba(16, 185, 129, 0.2);
+  --estado-color-fabricacion-rehacer-bg: rgba(239, 68, 68, 0.1);
+  --estado-color-fabricacion-rehacer-border: rgba(239, 68, 68, 0.2);
+  --estado-color-fabricacion-retocar-bg: rgba(245, 158, 11, 0.1);
+  --estado-color-fabricacion-retocar-border: rgba(245, 158, 11, 0.2);
+  --estado-color-fabricacion-prioridad-bg: rgba(168, 85, 247, 0.1);
+  --estado-color-fabricacion-prioridad-border: rgba(168, 85, 247, 0.2);
+  --estado-color-fabricacion-verificar-bg: rgba(20, 184, 166, 0.1);
+  --estado-color-fabricacion-verificar-border: rgba(20, 184, 166, 0.2);
+  
+  /* ===== COLORES DE VENTA ===== */
+  --estado-venta-ninguno: #94a3b8;
+  --estado-venta-foto: #93c5fd;
+  --estado-venta-transferido: #86efac;
+  
+  /* ===== FONDOS Y BORDES DE VENTA ===== */
+  --estado-color-venta-foto-bg: rgba(59, 130, 246, 0.1);
+  --estado-color-venta-foto-border: rgba(59, 130, 246, 0.2);
+  --estado-color-venta-transferido-bg: rgba(34, 197, 94, 0.1);
+  --estado-color-venta-transferido-border: rgba(34, 197, 94, 0.2);
+  
+  /* ===== COLORES DE ENVÍO ===== */
+  --estado-envio-sin-enviar: #94a3b8;
+  --estado-envio-hacer-etiqueta: #fb923c;
+  --estado-envio-etiqueta-lista: #c4b5fd;
+  --estado-envio-despachado: #5eead4;
+  --estado-envio-seguimiento-enviado: #86efac;
+  
+  /* ===== FONDOS Y BORDES DE ENVÍO ===== */
+  --estado-color-envio-hacer-etiqueta-bg: rgba(249, 115, 22, 0.1);
+  --estado-color-envio-hacer-etiqueta-border: rgba(249, 115, 22, 0.2);
+  --estado-color-envio-etiqueta-lista-bg: rgba(139, 92, 246, 0.1);
+  --estado-color-envio-etiqueta-lista-border: rgba(139, 92, 246, 0.2);
+  --estado-color-envio-despachado-bg: rgba(20, 184, 166, 0.1);
+  --estado-color-envio-despachado-border: rgba(20, 184, 166, 0.2);
+  --estado-color-envio-seguimiento-enviado-bg: rgba(34, 197, 94, 0.1);
+  --estado-color-envio-seguimiento-enviado-border: rgba(34, 197, 94, 0.2);
+  
+  /* ===== COLORES DE VECTORIZACIÓN ===== */
+  --estado-vectorizacion-para-vectorizar: #f87171;
+  --estado-vectorizacion-vectorizado: #6ee7b7;
+  
+  /* ===== FONDOS Y BORDES DE VECTORIZACIÓN ===== */
+  --estado-color-vectorizacion-para-vectorizar-bg: rgba(239, 68, 68, 0.1);
+  --estado-color-vectorizacion-para-vectorizar-border: rgba(239, 68, 68, 0.2);
+  --estado-color-vectorizacion-vectorizado-bg: rgba(16, 185, 129, 0.1);
+  --estado-color-vectorizacion-vectorizado-border: rgba(16, 185, 129, 0.2);
+  
+  /* ===== OPACIDADES ===== */
+  --estado-bg-opacity: 0.1;
+  --estado-bg-opacity-badge: 0.15;
+  --estado-border-opacity: 0.2;
+  --estado-border-opacity-badge: 0.3;
+  
+  /* ===== DROPDOWN ===== */
+  /* Dropdown con ancho automático para igualar al botón */
+  --estado-dropdown-bg: rgba(9, 9, 11, 0.98);
+  --estado-dropdown-border: rgba(39, 39, 42, 0.8);
+  --estado-dropdown-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+  --estado-dropdown-width: auto;             /* ← Ancho automático para igualar al botón */
+  --estado-dropdown-max-height: 100px;
+  --estado-dropdown-hover-bg: rgba(39, 39, 42, 0.6);
+  
+  /* ===== ICONOS ===== */
+  --estado-icon-size: 12px;
+  --estado-icon-margin: 4px;
+  --estado-gap: 8px;
+  
+  /* ===== RESPONSIVE PARA BOTONES SELECT ===== */
+  --estado-mobile-min-width: 100px;
+  --estado-mobile-padding: 2px 10px;
+  --estado-dropdown-mobile-min-width: 120px;
+  
+  /* ===== TAMAÑOS ESPECÍFICOS POR TIPO ===== */
+  /* Vectorización: Botones compactos para abreviaturas (PV, V) */
+  --estado-vectorizacion-min-width: 40px;
+  --estado-vectorizacion-width: 65px;
+  --estado-vectorizacion-height: 2rem;
+  
+  --estado-venta-min-width: 110px;
+  --estado-venta-width: 200px;
+  --estado-venta-height: 2rem;
+  
+  /* ===== RESPONSIVE ESPECÍFICO POR TIPO ===== */
+  /* Vectorización: Botones compactos para abreviaturas (PV, V) */
+  --estado-vectorizacion-mobile-min-width: 50px;
+  --estado-vectorizacion-mobile-width: 50px;
+  
+  --estado-venta-mobile-min-width: 80px;
+  --estado-venta-mobile-width: 80px;
+}
+
+/* ===== RESUMEN DEL SISTEMA ===== */
+/* 
+ * 🎯 ESTE ARCHIVO ES SOLO PARA BOTONES SELECT
+ * 
+ * Todas las variables CSS aquí definidas son específicamente para:
+ * - Componente: EstadoSelect
+ * - Elementos: Botones select de estados (fabricación, venta, envío, vectorización)
+ * - Propósito: NO es un sistema general de variables CSS del proyecto
+ * 
+ * Para agregar variables CSS generales del proyecto, crear un archivo separado.
+ */

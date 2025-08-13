@@ -8,37 +8,109 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const buttonRef = useRef(null);
 
-  // Mapeo de colores según el tipo y valor
-  const getColorClass = (estado, tipo) => {
-    const colorMap = {
+  // Mapeo de variables CSS según el tipo y valor
+  const getCSSVariables = (estado, tipo) => {
+    const variableMap = {
       fabricacion: {
-        'Sin Hacer': 'bg-slate-500/10 text-slate-400 border-slate-500/20',
-        'Haciendo': 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
-        'Hecho': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-        'Rehacer': 'bg-red-500/10 text-red-400 border-red-500/20',
-        'Retocar': 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-        'Prioridad': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-        'Verificar': 'bg-teal-500/10 text-teal-400 border-teal-500/20',
+        'Sin Hacer': {
+          background: 'var(--estado-color-disabled-bg)',
+          color: 'var(--estado-fabricacion-sin-hacer)',
+          borderColor: 'var(--estado-color-disabled-border)'
+        },
+        'Haciendo': {
+          background: 'var(--estado-color-fabricacion-haciendo-bg)',
+          color: 'var(--estado-fabricacion-haciendo)',
+          borderColor: 'var(--estado-color-fabricacion-haciendo-border)'
+        },
+        'Hecho': {
+          background: 'var(--estado-color-fabricacion-hecho-bg)',
+          color: 'var(--estado-fabricacion-hecho)',
+          borderColor: 'var(--estado-color-fabricacion-hecho-border)'
+        },
+        'Rehacer': {
+          background: 'var(--estado-color-fabricacion-rehacer-bg)',
+          color: 'var(--estado-fabricacion-rehacer)',
+          borderColor: 'var(--estado-color-fabricacion-rehacer-border)'
+        },
+        'Retocar': {
+          background: 'var(--estado-color-fabricacion-retocar-bg)',
+          color: 'var(--estado-fabricacion-retocar)',
+          borderColor: 'var(--estado-color-fabricacion-retocar-border)'
+        },
+        'Prioridad': {
+          background: 'var(--estado-color-fabricacion-prioridad-bg)',
+          color: 'var(--estado-fabricacion-prioridad)',
+          borderColor: 'var(--estado-color-fabricacion-prioridad-border)'
+        },
+        'Verificar': {
+          background: 'var(--estado-color-fabricacion-verificar-bg)',
+          color: 'var(--estado-fabricacion-verificar)',
+          borderColor: 'var(--estado-color-fabricacion-verificar-border)'
+        },
       },
       venta: {
-        'Ninguno': 'bg-slate-500/10 text-slate-400 border-slate-500/20',
-        'Foto': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-        'Transferido': 'bg-green-500/10 text-green-400 border-green-500/20',
+        'Ninguno': {
+          background: 'var(--estado-color-disabled-bg)',
+          color: 'var(--estado-venta-ninguno)',
+          borderColor: 'var(--estado-color-disabled-border)'
+        },
+        'Foto': {
+          background: 'var(--estado-color-venta-foto-bg)',
+          color: 'var(--estado-venta-foto)',
+          borderColor: 'var(--estado-color-venta-foto-border)'
+        },
+        'Transferido': {
+          background: 'var(--estado-color-venta-transferido-bg)',
+          color: 'var(--estado-venta-transferido)',
+          borderColor: 'var(--estado-color-venta-transferido-border)'
+        },
       },
       envio: {
-        'Sin enviar': 'bg-slate-500/10 text-slate-400 border-slate-500/20',
-        'Hacer Etiqueta': 'bg-orange-500/10 text-orange-400 border-orange-500/20',
-        'Etiqueta Lista': 'bg-violet-500/10 text-violet-400 border-violet-500/20',
-        'Despachado': 'bg-teal-500/10 text-teal-400 border-teal-500/20',
-        'Seguimiento Enviado': 'bg-green-500/10 text-green-400 border-green-500/20',
+        'Sin enviar': {
+          background: 'var(--estado-color-disabled-bg)',
+          color: 'var(--estado-envio-sin-enviar)',
+          borderColor: 'var(--estado-color-disabled-border)'
+        },
+        'Hacer Etiqueta': {
+          background: 'var(--estado-color-envio-hacer-etiqueta-bg)',
+          color: 'var(--estado-envio-hacer-etiqueta)',
+          borderColor: 'var(--estado-color-envio-hacer-etiqueta-border)'
+        },
+        'Etiqueta Lista': {
+          background: 'var(--estado-color-envio-etiqueta-lista-bg)',
+          color: 'var(--estado-envio-etiqueta-lista)',
+          borderColor: 'var(--estado-color-envio-etiqueta-lista-border)'
+        },
+        'Despachado': {
+          background: 'var(--estado-color-envio-despachado-bg)',
+          color: 'var(--estado-envio-despachado)',
+          borderColor: 'var(--estado-color-envio-despachado-border)'
+        },
+        'Seguimiento Enviado': {
+          background: 'var(--estado-color-envio-seguimiento-enviado-bg)',
+          color: 'var(--estado-envio-seguimiento-enviado)',
+          borderColor: 'var(--estado-color-envio-seguimiento-enviado-border)'
+        },
       },
       vectorizacion: {
-        'Para Vectorizar': 'bg-red-500/10 text-red-400 border-red-500/20',
-        'Vectorizado': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+        'Para Vectorizar': {
+          background: 'var(--estado-color-vectorizacion-para-vectorizar-bg)',
+          color: 'var(--estado-vectorizacion-para-vectorizar)',
+          borderColor: 'var(--estado-color-vectorizacion-para-vectorizar-border)'
+        },
+        'Vectorizado': {
+          background: 'var(--estado-color-vectorizacion-vectorizado-bg)',
+          color: 'var(--estado-vectorizacion-vectorizado)',
+          borderColor: 'var(--estado-color-vectorizacion-vectorizado-border)'
+        },
       },
     };
 
-    return colorMap[tipo]?.[estado] || 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+    return variableMap[tipo]?.[estado] || {
+      background: 'var(--estado-color-disabled-bg)',
+      color: 'var(--estado-color-disabled)',
+      borderColor: 'var(--estado-color-disabled-border)'
+    };
   };
 
   // Mapeo de labels más cortos para la visualización
@@ -66,8 +138,8 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
         'Seguimiento Enviado': 'Seguimiento Enviado',
       },
       vectorizacion: {
-        'Para Vectorizar': 'Para Vectorizar',
-        'Vectorizado': 'Vectorizado',
+        'Para Vectorizar': 'PV',
+        'Vectorizado': 'V',
       },
     };
 
@@ -117,7 +189,7 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
     handleSelect(option);
   };
 
-  const colorClass = getColorClass(value, type);
+  const cssVars = getCSSVariables(value, type);
   const displayLabel = getLabelShort(value, type);
 
   // Renderizar el dropdown como portal
@@ -142,20 +214,21 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
             position: 'fixed',
             top: dropdownPosition.top,
             left: dropdownPosition.left,
-            background: 'rgba(9, 9, 11, 0.98)',
+            background: 'var(--estado-dropdown-bg)',
             backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(39, 39, 42, 0.8)',
-            borderRadius: '8px',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
+            border: '1px solid var(--estado-dropdown-border)',
+            borderRadius: 'var(--estado-dropdown-radius)',
+            boxShadow: 'var(--estado-dropdown-shadow)',
             zIndex: 9999,
             padding: '4px 0',
-            minWidth: '140px',
-            maxHeight: '200px',
+            minWidth: buttonRef.current?.offsetWidth || 'auto',  /* ← Usar ancho del botón */
+            width: buttonRef.current?.offsetWidth || 'auto',     /* ← Usar ancho del botón */
+            maxHeight: 'var(--estado-dropdown-max-height)',
             overflowY: 'auto'
           }}
         >
           {options.map((option) => {
-            const optionColorClass = getColorClass(option, type);
+            const optionCSSVars = getCSSVariables(option, type);
             const optionLabel = getLabelShort(option, type);
 
             return (
@@ -178,50 +251,21 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
                   transition: 'background 0.2s ease',
                   outline: 'none'
                 }}
-                onMouseEnter={(e) => e.target.style.background = 'rgba(39, 39, 42, 0.6)'}
+                onMouseEnter={(e) => e.target.style.background = 'var(--estado-dropdown-hover-bg)'}
                 onMouseLeave={(e) => e.target.style.background = 'transparent'}
               >
                 <span style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  padding: '3px 6px',
-                  borderRadius: '9999px',
-                  fontSize: '10px',
-                  fontWeight: '500',
+                  padding: 'var(--estado-padding-badge)',
+                  borderRadius: 'var(--estado-border-radius)',
+                  fontSize: 'var(--estado-font-size-badge)',
+                  fontWeight: 'var(--estado-font-weight)',
                   whiteSpace: 'nowrap',
-                  background: optionColorClass.includes('bg-slate') ? 'rgba(100, 116, 139, 0.15)' :
-                    optionColorClass.includes('bg-cyan') ? 'rgba(6, 182, 212, 0.15)' :
-                      optionColorClass.includes('bg-emerald') ? 'rgba(16, 185, 129, 0.15)' :
-                        optionColorClass.includes('bg-red') ? 'rgba(239, 68, 68, 0.15)' :
-                          optionColorClass.includes('bg-amber') ? 'rgba(245, 158, 11, 0.15)' :
-                            optionColorClass.includes('bg-purple') ? 'rgba(168, 85, 247, 0.15)' :
-                              optionColorClass.includes('bg-teal') ? 'rgba(20, 184, 166, 0.15)' :
-                                optionColorClass.includes('bg-blue') ? 'rgba(59, 130, 246, 0.15)' :
-                                  optionColorClass.includes('bg-green') ? 'rgba(34, 197, 94, 0.15)' :
-                                    optionColorClass.includes('bg-orange') ? 'rgba(249, 115, 22, 0.15)' :
-                                      optionColorClass.includes('bg-violet') ? 'rgba(139, 92, 246, 0.15)' : 'rgba(100, 116, 139, 0.15)',
-                  color: optionColorClass.includes('text-slate') ? '#a8a29e' :
-                    optionColorClass.includes('text-cyan') ? '#67e8f9' :
-                      optionColorClass.includes('text-emerald') ? '#6ee7b7' :
-                        optionColorClass.includes('text-red') ? '#f87171' :
-                          optionColorClass.includes('text-amber') ? '#fbbf24' :
-                            optionColorClass.includes('text-purple') ? '#c4b5fd' :
-                              optionColorClass.includes('text-teal') ? '#5eead4' :
-                                optionColorClass.includes('text-blue') ? '#93c5fd' :
-                                  optionColorClass.includes('text-green') ? '#86efac' :
-                                    optionColorClass.includes('text-orange') ? '#fb923c' :
-                                      optionColorClass.includes('text-violet') ? '#c4b5fd' : '#a8a29e',
-                  border: `1px solid ${optionColorClass.includes('border-slate') ? 'rgba(100, 116, 139, 0.3)' :
-                    optionColorClass.includes('border-cyan') ? 'rgba(6, 182, 212, 0.3)' :
-                      optionColorClass.includes('border-emerald') ? 'rgba(16, 185, 129, 0.3)' :
-                        optionColorClass.includes('border-red') ? 'rgba(239, 68, 68, 0.3)' :
-                          optionColorClass.includes('border-amber') ? 'rgba(245, 158, 11, 0.3)' :
-                            optionColorClass.includes('border-purple') ? 'rgba(168, 85, 247, 0.3)' :
-                              optionColorClass.includes('border-teal') ? 'rgba(20, 184, 166, 0.3)' :
-                                optionColorClass.includes('border-blue') ? 'rgba(59, 130, 246, 0.3)' :
-                                  optionColorClass.includes('border-green') ? 'rgba(34, 197, 94, 0.3)' :
-                                    optionColorClass.includes('border-orange') ? 'rgba(249, 115, 22, 0.3)' :
-                                      optionColorClass.includes('border-violet') ? 'rgba(139, 92, 246, 0.3)' : 'rgba(100, 116, 139, 0.3)'}`
+                  border: '1px solid',
+                  background: optionCSSVars.background,
+                  color: optionCSSVars.color,
+                  borderColor: optionCSSVars.borderColor
                 }}>
                   {optionLabel}
                 </span>
@@ -246,54 +290,24 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '2.5px 12.5px',
-          borderRadius: '9999px',
-          fontSize: '15px',
-          fontWeight: '500',
+          padding: 'var(--estado-padding-sm)',
+          borderRadius: 'var(--estado-border-radius)',
+          fontSize: 'var(--estado-font-size)',
+          fontWeight: 'var(--estado-font-weight)',
           border: '1px solid',
-          transition: 'all 0.3s ease',
+          transition: 'var(--estado-transition)',
           cursor: isDisabled ? 'not-allowed' : 'pointer',
-          maxWidth: '200px',
-          minWidth: type === 'vectorizacion' ? '130px' : type === 'venta' ? 'unset' : '130px',
-          width: type === 'vectorizacion' ? '130px' : type === 'venta' ? 'unset' : '100%',
+          maxWidth: 'var(--estado-max-width)',
+          minWidth: type === 'vectorizacion' ? 'var(--estado-vectorizacion-min-width)' : type === 'venta' ? 'var(--estado-venta-min-width)' : 'var(--estado-min-width)',
+          width: type === 'vectorizacion' ? 'var(--estado-vectorizacion-width)' : type === 'venta' ? 'var(--estado-venta-width)' : '100%',
           outline: 'none',
           opacity: isDisabled ? 0.5 : 1,
           pointerEvents: isDisabled ? 'none' : 'auto',
-          background: colorClass.includes('bg-slate') ? 'rgba(100, 116, 139, 0.1)' :
-            colorClass.includes('bg-cyan') ? 'rgba(6, 182, 212, 0.1)' :
-              colorClass.includes('bg-emerald') ? 'rgba(16, 185, 129, 0.1)' :
-                colorClass.includes('bg-red') ? 'rgba(239, 68, 68, 0.1)' :
-                  colorClass.includes('bg-amber') ? 'rgba(245, 158, 11, 0.1)' :
-                    colorClass.includes('bg-purple') ? 'rgba(168, 85, 247, 0.1)' :
-                      colorClass.includes('bg-teal') ? 'rgba(20, 184, 166, 0.1)' :
-                        colorClass.includes('bg-blue') ? 'rgba(59, 130, 246, 0.1)' :
-                          colorClass.includes('bg-green') ? 'rgba(34, 197, 94, 0.1)' :
-                            colorClass.includes('bg-orange') ? 'rgba(249, 115, 22, 0.1)' :
-                              colorClass.includes('bg-violet') ? 'rgba(139, 92, 246, 0.1)' : 'rgba(100, 116, 139, 0.1)',
-          color: colorClass.includes('text-slate') ? '#94a3b8' :
-            colorClass.includes('text-cyan') ? '#67e8f9' :
-              colorClass.includes('text-emerald') ? '#6ee7b7' :
-                colorClass.includes('text-red') ? '#f87171' :
-                  colorClass.includes('text-amber') ? '#fbbf24' :
-                    colorClass.includes('text-purple') ? '#c4b5fd' :
-                      colorClass.includes('text-teal') ? '#5eead4' :
-                        colorClass.includes('text-blue') ? '#93c5fd' :
-                          colorClass.includes('text-green') ? '#86efac' :
-                            colorClass.includes('text-orange') ? '#fb923c' :
-                              colorClass.includes('text-violet') ? '#c4b5fd' : '#94a3b8',
-          borderColor: colorClass.includes('border-slate') ? 'rgba(100, 116, 139, 0.2)' :
-            colorClass.includes('border-cyan') ? 'rgba(6, 182, 212, 0.2)' :
-              colorClass.includes('border-emerald') ? 'rgba(16, 185, 129, 0.2)' :
-                colorClass.includes('border-red') ? 'rgba(239, 68, 68, 0.2)' :
-                  colorClass.includes('border-amber') ? 'rgba(245, 158, 11, 0.2)' :
-                    colorClass.includes('border-purple') ? 'rgba(168, 85, 247, 0.2)' :
-                      colorClass.includes('border-teal') ? 'rgba(20, 184, 166, 0.2)' :
-                        colorClass.includes('border-blue') ? 'rgba(59, 130, 246, 0.2)' :
-                          colorClass.includes('border-green') ? 'rgba(34, 197, 94, 0.2)' :
-                            colorClass.includes('border-orange') ? 'rgba(249, 115, 22, 0.2)' :
-                              colorClass.includes('border-violet') ? 'rgba(139, 92, 246, 0.2)' : 'rgba(100, 116, 139, 0.2)',
-          minHeight: '2rem',
-          height: '2rem',
+          background: cssVars.background,
+          color: cssVars.color,
+          borderColor: cssVars.borderColor,
+          minHeight: 'var(--estado-min-height)',
+          height: 'var(--estado-height)',
         }}
       >
         <span style={{
@@ -304,13 +318,13 @@ const EstadoSelect = ({ value, onChange, options, type, isDisabled = false }) =>
           {displayLabel}
         </span>
         <ChevronDown style={{
-          width: '12px',
-          height: '12px',
-          marginLeft: '4px',
+          width: 'var(--estado-icon-size)',
+          height: 'var(--estado-icon-size)',
+          marginLeft: 'var(--estado-icon-margin)',
           transform: isOpen ? 
             (dropdownDirection === 'up' ? 'rotate(0deg)' : 'rotate(180deg)') : 
             'rotate(0deg)',
-          transition: 'transform 0.3s ease'
+          transition: 'var(--estado-transition-icon)'
         }} />
       </button>
 

@@ -1,0 +1,93 @@
+/* ===== ESTADOSELECT.CSS ===== */
+/* 
+ * Estilos para el componente EstadoSelect
+ * Variables CSS para botones select están en src/styles/estado-select-variables.css
+ * 
+ * 🎯 SISTEMA ORGANIZADO PARA BOTONES SELECT:
+ * - Variables CSS en src/styles/estado-select-variables.css (colores, tamaños, etc. SOLO para botones select)
+ * - Estilos globales en src/styles/globals.css
+ * - Componente React usa estilos inline con variables CSS de botones select
+ * - Solo estilos base y responsive del componente aquí
+ * 
+ * ⚠️ IMPORTANTE: Este archivo y variables.css son SOLO para los botones select
+ * del componente EstadoSelect. NO es un sistema general de variables CSS.
+ */
+
+/* ===== 1. CONTENEDOR PRINCIPAL ===== */
+.estado-select-container {
+  position: relative;
+  width: 100%;
+}
+
+/* ===== 2. BOTÓN PRINCIPAL ===== */
+.estado-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--estado-padding-sm);
+  border-radius: var(--estado-border-radius);
+  font-size: var(--estado-font-size);
+  font-weight: var(--estado-font-weight);
+  border: 1px solid;
+  transition: var(--estado-transition);
+  cursor: pointer;
+  max-width: var(--estado-max-width);
+  min-width: var(--estado-min-width);
+  width: 100%;
+  outline: none;
+  min-height: var(--estado-min-height);
+  height: var(--estado-height);
+}
+
+/* ===== 3. VARIANTES DE TAMAÑO ===== */
+.estado-button.vectorizacion {
+  min-width: var(--estado-vectorizacion-min-width);
+  width: var(--estado-vectorizacion-width);
+  height: var(--estado-vectorizacion-height);
+}
+
+.estado-button.venta {
+  min-width: var(--estado-venta-min-width);
+  width: var(--estado-venta-width);
+  height: var(--estado-venta-height);
+}
+
+/* ===== 4. ESTADO DESHABILITADO ===== */
+.estado-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ===== 5. ELEMENTOS INTERNOS ===== */
+.estado-button-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.estado-button-icon {
+  width: var(--estado-icon-size);
+  height: var(--estado-icon-size);
+  margin-left: var(--estado-icon-margin);
+  transition: var(--estado-transition-icon);
+}
+
+/* ===== 6. RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+  .estado-button {
+    min-width: var(--estado-mobile-min-width);
+    font-size: var(--estado-font-size-mobile);
+    padding: var(--estado-mobile-padding);
+  }
+  
+  .estado-button.vectorizacion {
+    min-width: var(--estado-vectorizacion-mobile-min-width);
+    width: var(--estado-vectorizacion-mobile-width);
+  }
+  
+  .estado-button.venta {
+    min-width: var(--estado-venta-mobile-min-width);
+    width: var(--estado-venta-mobile-width);
+  }
+}
