@@ -20,6 +20,43 @@ import { supabase } from '../../supabaseClient';
 import { useNotification } from '../../hooks/useNotification';
 import { isClipApiEnabled, getClipDisabledMessage, shouldShowDisabledNotice } from '../../config/verificacionConfig';
 
+// Función para detectar dispositivos móviles
+const isMobileDevice = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+         (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
+};
+
+// Función para validar archivos de manera más robusta
+const validateFile = (file, isMobile) => {
+  // Validar que el archivo existe
+  if (!file) {
+    throw new Error('Archivo no válido');
+  }
+
+  // Validar tamaño (más restrictivo en móviles)
+  const maxSize = isMobile ? 5 * 1024 * 1024 : 10 * 1024 * 1024; // 5MB en móviles, 10MB en desktop
+  if (file.size > maxSize) {
+    throw new Error(`${file.name} es demasiado grande (máximo ${isMobile ? '5MB' : '10MB'})`);
+  }
+
+  // Validar tipo de archivo de manera más robusta
+  const isValidImage = 
+    // Verificar por tipo MIME
+    (file.type && file.type.startsWith('image/')) ||
+    // Verificar por extensión como respaldo
+    /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(file.name) ||
+    // Verificar por nombre de archivo
+    file.name.toLowerCase().includes('img') ||
+    file.name.toLowerCase().includes('photo') ||
+    file.name.toLowerCase().includes('image');
+
+  if (!isValidImage) {
+    throw new Error(`${file.name} no parece ser una imagen válida`);
+  }
+
+  return true;
+};
+
 function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
   console.log('🔧 MASSIVE UPLOAD - Component loaded');
   console.log('🔧 MASSIVE UPLOAD - isClipApiEnabled():', isClipApiEnabled());
@@ -33,7 +70,14 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState(null);
   const [pendingMatches, setPendingMatches] = useState([]);
+  const [isMobile, setIsMobile] = useState(false);
   const fileInputRef = useRef(null);
+
+  // Detectar dispositivo móvil al cargar
+  useEffect(() => {
+    setIsMobile(isMobileDevice());
+    console.log('📱 MASSIVE UPLOAD - Device detected as:', isMobile ? 'MOBILE' : 'DESKTOP');
+  }, []);
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -56,42 +100,52 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
     try {
       const uploadedFiles = [];
       
+      // Procesar archivos uno por uno para evitar problemas de memoria
       for (const file of files) {
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-          throw new Error(`${file.name} no es una imagen válida`);
-        }
-        
-        // Validate file size (10MB limit)
-        if (file.size > 10 * 1024 * 1024) {
-          throw new Error(`${file.name} es demasiado grande (máximo 10MB)`);
-        }
+        try {
+          // Validar archivo con límites específicos para móviles
+          validateFile(file, isMobile);
+          
+          const timestamp = Date.now();
+          const randomId = Math.random().toString(36).substr(2, 9);
+          const fileExtension = file.name.split('.').pop();
+          const fileName = `fotos/verificacion_masiva_${timestamp}_${randomId}.${fileExtension}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('archivos-ventas')
+            .upload(fileName, file);
+            
+          if (uploadError) throw uploadError;
+          
+          const { data: publicData } = supabase.storage
+            .from('archivos-ventas')
+            .getPublicUrl(fileName);
+            
+          uploadedFiles.push({
+            id: fileName,
+            url: publicData.publicUrl,
+            name: file.name,
+            fileName: fileName,
+            status: 'uploaded',
+            matchedPedido: null,
+            confidence: 0,
+            isConfirmed: false
+          });
 
-        const timestamp = Date.now();
-        const randomId = Math.random().toString(36).substr(2, 9);
-        const fileExtension = file.name.split('.').pop();
-        const fileName = `fotos/verificacion_masiva_${timestamp}_${randomId}.${fileExtension}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('archivos-ventas')
-          .upload(fileName, file);
-          
-        if (uploadError) throw uploadError;
-        
-        const { data: publicData } = supabase.storage
-          .from('archivos-ventas')
-          .getPublicUrl(fileName);
-          
-        uploadedFiles.push({
-          id: fileName,
-          url: publicData.publicUrl,
-          name: file.name,
-          fileName: fileName,
-          status: 'uploaded',
-          matchedPedido: null,
-          confidence: 0,
-          isConfirmed: false
-        });
+          // Pequeña pausa entre archivos para evitar sobrecarga en móviles
+          if (isMobile && files.length > 1) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
+
+        } catch (fileError) {
+          console.error(`Error processing file ${file.name}:`, fileError);
+          // Continuar con otros archivos en lugar de fallar completamente
+          addNotification(`Error con ${file.name}: ${fileError.message}`, 'error');
+        }
+      }
+      
+      if (uploadedFiles.length === 0) {
+        throw new Error('No se pudo procesar ningún archivo');
       }
       
       setUploadedPhotos(prev => [...prev, ...uploadedFiles]);
@@ -150,15 +204,28 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
       console.log('🔍 Verificando API del servidor...');
       
       try {
-        const healthCheck = await fetch(`${CLIP_API_URL}/health`);
+        // Agregar timeout para evitar colgar en conexiones lentas
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos timeout
+        
+        const healthCheck = await fetch(`${CLIP_API_URL}/health`, {
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
         if (!healthCheck.ok) {
           throw new Error('API no responde correctamente');
         }
         console.log('✅ API del servidor funcionando');
       } catch (error) {
+        if (error.name === 'AbortError') {
+          throw new Error('Timeout: La API tardó demasiado en responder');
+        }
         console.error('❌ Error verificando API:', error);
         throw new Error('No se puede conectar al servidor. Verifica que esté funcionando.');
       }
+
       // Prepare all design files from pedidos
       const allDesignFiles = [];
       const pedidoFileMap = {};
@@ -243,10 +310,17 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
         fotoNames: formData.getAll('fotos').map(f => f.name)
       });
       
+      // Agregar timeout para la request principal
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 segundos timeout
+      
       const response = await fetch(`${CLIP_API_URL}/predict`, {
         method: 'POST',
-        body: formData
+        body: formData,
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
         const errorText = await response.text().catch(() => 'Unknown error');
@@ -587,15 +661,15 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
           {/* Upload Area */}
           <div style={{ marginBottom: '32px' }}>
             <div
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
+              onDragOver={!isMobile ? handleDragOver : undefined}
+              onDragLeave={!isMobile ? handleDragLeave : undefined}
+              onDrop={!isMobile ? handleDrop : undefined}
               style={{
-                border: dragActive ? '2px dashed #06b6d4' : '2px dashed rgba(63, 63, 70, 0.5)',
+                border: (!isMobile && dragActive) ? '2px dashed #06b6d4' : '2px dashed rgba(63, 63, 70, 0.5)',
                 borderRadius: '12px',
                 padding: '40px',
                 textAlign: 'center',
-                background: dragActive ? 'rgba(6, 182, 212, 0.05)' : 'rgba(39, 39, 42, 0.3)',
+                background: (!isMobile && dragActive) ? 'rgba(6, 182, 212, 0.05)' : 'rgba(39, 39, 42, 0.3)',
                 transition: 'all 0.3s ease',
                 cursor: 'pointer'
               }}
@@ -604,27 +678,61 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
               <Upload style={{ 
                 width: '48px', 
                 height: '48px', 
-                color: dragActive ? '#06b6d4' : '#71717a',
+                color: (!isMobile && dragActive) ? '#06b6d4' : '#71717a',
                 margin: '0 auto 16px auto'
               }} />
               <p style={{ 
-                color: dragActive ? '#06b6d4' : '#a1a1aa',
+                color: (!isMobile && dragActive) ? '#06b6d4' : '#a1a1aa',
                 fontSize: '18px',
                 margin: '0 0 8px 0',
                 fontWeight: '500'
               }}>
-                {dragActive ? 'Suelta las fotos aquí' : 'Arrastra múltiples fotos aquí o haz clic para seleccionar'}
+                {isMobile 
+                  ? 'Toca aquí para seleccionar fotos'
+                  : dragActive 
+                    ? 'Suelta las fotos aquí' 
+                    : 'Arrastra múltiples fotos aquí o haz clic para seleccionar'
+                }
               </p>
               <p style={{ 
                 color: '#71717a',
                 fontSize: '14px',
-                margin: 0
+                margin: '0 0 16px 0'
               }}>
                 {isClipApiEnabled() 
                   ? 'El sistema analizará automáticamente cada foto y la asignará al pedido correspondiente'
                   : 'Las fotos se guardarán en pendientes para asignación manual'
                 }
               </p>
+              
+              {/* Información específica para móviles */}
+              {isMobile && (
+                <div style={{
+                  padding: '12px',
+                  background: 'rgba(6, 182, 212, 0.1)',
+                  border: '1px solid rgba(6, 182, 212, 0.3)',
+                  borderRadius: '8px',
+                  marginTop: '16px'
+                }}>
+                  <p style={{
+                    color: '#06b6d4',
+                    fontSize: '12px',
+                    margin: '0 0 4px 0',
+                    fontWeight: '500'
+                  }}>
+                    📱 Dispositivo móvil detectado
+                  </p>
+                  <p style={{
+                    color: '#06b6d4',
+                    fontSize: '11px',
+                    margin: 0
+                  }}>
+                    • Límite de archivo: 5MB por foto<br/>
+                    • Selecciona fotos una por una o en grupo<br/>
+                    • Procesamiento optimizado para móviles
+                  </p>
+                </div>
+              )}
               
               <input
                 ref={fileInputRef}
@@ -668,10 +776,63 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
               borderRadius: '8px',
               marginBottom: '24px'
             }}>
-              <Loader2 style={{ width: '20px', height: '20px', color: '#06b6d4' }} className="animate-spin" />
-              <span style={{ color: '#06b6d4', fontSize: '14px' }}>
-                Analizando fotos con IA...
-              </span>
+              <Loader2 style={{ 
+                width: '20px', 
+                height: '20px', 
+                color: '#06b6d4',
+                animation: 'spin 1s linear infinite'
+              }} />
+              <div>
+                <div style={{ color: '#06b6d4', fontSize: '14px', fontWeight: '500' }}>
+                  Procesando fotos...
+                </div>
+                <div style={{ color: '#71717a', fontSize: '12px' }}>
+                  {isMobile 
+                    ? 'Analizando coincidencias (puede tardar más en móviles)'
+                    : 'Analizando coincidencias con IA'
+                  }
+                </div>
+              </div>
+              <style>
+                {`
+                  @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                  }
+                `}
+              </style>
+            </div>
+          )}
+
+          {/* Uploading Status */}
+          {isUploading && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '16px',
+              background: 'rgba(59, 130, 246, 0.1)',
+              border: '1px solid rgba(59, 130, 246, 0.3)',
+              borderRadius: '8px',
+              marginBottom: '24px'
+            }}>
+              <Loader2 style={{ 
+                width: '20px', 
+                height: '20px', 
+                color: '#3b82f6',
+                animation: 'spin 1s linear infinite'
+              }} />
+              <div>
+                <div style={{ color: '#3b82f6', fontSize: '14px', fontWeight: '500' }}>
+                  Subiendo fotos...
+                </div>
+                <div style={{ color: '#71717a', fontSize: '12px' }}>
+                  {isMobile 
+                    ? 'Subiendo archivos (procesando uno por uno para optimizar memoria)'
+                    : 'Subiendo archivos al servidor'
+                  }
+                </div>
+              </div>
             </div>
           )}
 
