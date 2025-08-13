@@ -141,6 +141,19 @@ const AddPedidosModal = ({ isOpen, onClose, programa, onPedidosUpdated, publicUr
     return `${minutos} min`;
   };
 
+  const formatearFecha = (fecha) => {
+    if (!fecha) return '-';
+    try {
+      return new Date(fecha).toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch (error) {
+      return '-';
+    }
+  };
+
 
 
   if (!isOpen || !programa) return null;
@@ -148,6 +161,12 @@ const AddPedidosModal = ({ isOpen, onClose, programa, onPedidosUpdated, publicUr
   // Nuevo bloque reutilizable para datos del pedido, con mejor jerarquía visual
   const DatosPedido = ({ pedido }) => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: 2 }}>
+      {pedido.fecha_compra && (
+        <div style={{ color: '#a1a1aa', fontSize: '14px', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Calendar style={{ width: 15, height: 15 }} />
+          <span><b>Fecha:</b> {formatearFecha(pedido.fecha_compra)}</span>
+        </div>
+      )}
       {pedido.tipo_planchuela && (
         <div style={{ color: '#a1a1aa', fontSize: '14px', display: 'flex', alignItems: 'center', gap: 6 }}>
           <Package style={{ width: 15, height: 15 }} />

@@ -1,0 +1,26 @@
+[
+  {
+    "nombre_funcion": "get_pedidos_maquina_c",
+    "definicion_completa": "CREATE OR REPLACE FUNCTION public.get_pedidos_maquina_c()\n RETURNS TABLE(id_pedido integer, disenio text, medida_real text, estado_fabricacion text, tipo_planchuela integer, largo_planchuela double precision, tiempo_estimado numeric, archivo_vector text)\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    RETURN QUERY\r\n    SELECT \r\n        p.id_pedido,\r\n        p.disenio,\r\n        p.medida_real,\r\n        p.estado_fabricacion,\r\n        p.tipo_planchuela,\r\n        p.largo_planchuela,\r\n        p.tiempo_estimado,\r\n        p.archivo_vector\r\n    FROM pedidos p\r\n    WHERE \r\n        (p.id_programa IS NULL OR p.id_programa = '')\r\n        AND p.estado_fabricacion IN ('Sin Hacer', 'Rehacer', 'Prioridad')\r\n        AND p.vectorizacion = 'Vectorizado'\r\n        AND p.medida_real IS NOT NULL \r\n        AND p.medida_real != ''\r\n        AND p.tipo_planchuela IN (12, 19, 25, 38)\r\n    ORDER BY \r\n        CASE \r\n            WHEN p.estado_fabricacion = 'Prioridad' THEN 1\r\n            WHEN p.estado_fabricacion = 'Rehacer' THEN 2\r\n            WHEN p.estado_fabricacion = 'Sin Hacer' THEN 3\r\n        END;\r\nEND;\r\n$function$\n",
+    "tipos_argumentos": "",
+    "tipo_retorno": 2249
+  }
+]
+
+[
+  {
+    "nombre_funcion": "get_pedidos_maquina_g",
+    "definicion_completa": "CREATE OR REPLACE FUNCTION public.get_pedidos_maquina_g()\n RETURNS TABLE(id_pedido integer, disenio text, medida_real text, estado_fabricacion text, tipo_planchuela integer, largo_planchuela double precision, tiempo_estimado numeric, archivo_vector text)\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    RETURN QUERY\r\n    SELECT \r\n        p.id_pedido,\r\n        p.disenio,\r\n        p.medida_real,\r\n        p.estado_fabricacion,\r\n        p.tipo_planchuela,\r\n        p.largo_planchuela,\r\n        p.tiempo_estimado,\r\n        p.archivo_vector\r\n    FROM pedidos p\r\n    WHERE \r\n        (p.id_programa IS NULL OR p.id_programa = '')\r\n        AND p.estado_fabricacion IN ('Sin Hacer', 'Rehacer', 'Prioridad')\r\n        AND p.vectorizacion = 'Vectorizado'\r\n        AND p.medida_real IS NOT NULL \r\n        AND p.medida_real != ''\r\n        AND p.tipo_planchuela IN (12, 38)\r\n    ORDER BY \r\n        CASE \r\n            WHEN p.estado_fabricacion = 'Prioridad' THEN 1\r\n            WHEN p.estado_fabricacion = 'Rehacer' THEN 2\r\n            WHEN p.estado_fabricacion = 'Sin Hacer' THEN 3\r\n        END;\r\nEND;\r\n$function$\n",
+    "tipos_argumentos": "",
+    "tipo_retorno": 2249
+  }
+]
+
+[
+  {
+    "nombre_funcion": "get_pedidos_maquina_xl",
+    "definicion_completa": "CREATE OR REPLACE FUNCTION public.get_pedidos_maquina_xl()\n RETURNS TABLE(id_pedido integer, disenio text, medida_real text, estado_fabricacion text, tipo_planchuela integer, largo_planchuela double precision, tiempo_estimado numeric, archivo_vector text)\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    RETURN QUERY\r\n    SELECT \r\n        p.id_pedido,\r\n        p.disenio,\r\n        p.medida_real,\r\n        p.estado_fabricacion,\r\n        p.tipo_planchuela,\r\n        p.largo_planchuela,\r\n        p.tiempo_estimado,\r\n        p.archivo_vector\r\n    FROM pedidos p\r\n    WHERE \r\n        (p.id_programa IS NULL OR p.id_programa = '')\r\n        AND p.estado_fabricacion IN ('Sin Hacer', 'Rehacer', 'Prioridad')\r\n        AND p.vectorizacion = 'Vectorizado'\r\n        AND p.medida_real IS NOT NULL \r\n        AND p.medida_real != ''\r\n        AND p.tipo_planchuela = 63\r\n    ORDER BY \r\n        CASE \r\n            WHEN p.estado_fabricacion = 'Prioridad' THEN 1\r\n            WHEN p.estado_fabricacion = 'Rehacer' THEN 2\r\n            WHEN p.estado_fabricacion = 'Sin Hacer' THEN 3\r\n        END;\r\nEND;\r\n$function$\n",
+    "tipos_argumentos": "",
+    "tipo_retorno": 2249
+  }
+]
