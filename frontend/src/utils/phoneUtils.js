@@ -6,7 +6,7 @@
  * Limpia un número de teléfono removiendo caracteres no numéricos
  * y el prefijo 549 si está presente
  * @param {string} phoneNumber - El número de teléfono a limpiar
- * @returns {string} - El número limpio sin prefijo 549
+ * @returns {string} - El número limpio solo con dígitos, sin prefijo 549
  */
 export const cleanPhoneNumber = (phoneNumber) => {
   if (!phoneNumber || typeof phoneNumber !== 'string') {
@@ -27,7 +27,7 @@ export const cleanPhoneNumber = (phoneNumber) => {
 /**
  * Formatea un número de teléfono para mostrar en la UI
  * @param {string} phoneNumber - El número de teléfono a formatear
- * @returns {string} - El número formateado (ej: 11 1234-5678)
+ * @returns {string} - El número limpio sin espacios ni guiones
  */
 export const formatPhoneNumber = (phoneNumber) => {
   if (!phoneNumber || typeof phoneNumber !== 'string') {
@@ -40,19 +40,7 @@ export const formatPhoneNumber = (phoneNumber) => {
     return '';
   }
 
-  // Formatear según la longitud del número
-  if (cleaned.length === 10) {
-    // Formato: 11 1234-5678
-    return `${cleaned.substring(0, 2)} ${cleaned.substring(2, 6)}-${cleaned.substring(6)}`;
-  } else if (cleaned.length === 11) {
-    // Formato: 11 1234-5678
-    return `${cleaned.substring(0, 2)} ${cleaned.substring(2, 6)}-${cleaned.substring(6)}`;
-  } else if (cleaned.length === 8) {
-    // Formato: 1234-5678
-    return `${cleaned.substring(0, 4)}-${cleaned.substring(4)}`;
-  }
-  
-  // Si no coincide con ningún formato, devolver el número limpio
+  // Devolver solo el número limpio, sin formateo
   return cleaned;
 };
 
@@ -70,9 +58,9 @@ export const isValidPhoneNumber = (phoneNumber) => {
 
 /**
  * Prepara un número de teléfono para enviar al servidor
- * Asegura que no tenga el prefijo 549
+ * Asegura que no tenga el prefijo 549 y esté limpio
  * @param {string} phoneNumber - El número de teléfono a preparar
- * @returns {string} - El número listo para enviar al servidor
+ * @returns {string} - El número limpio solo con dígitos, listo para el servidor
  */
 export const preparePhoneForServer = (phoneNumber) => {
   return cleanPhoneNumber(phoneNumber);
