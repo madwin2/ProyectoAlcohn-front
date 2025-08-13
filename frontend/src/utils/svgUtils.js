@@ -106,7 +106,7 @@ export const calcularOpcionesEscalado = (dimSVG, medida) => {
  */
 export const calcularTipoPlanchuela = (medidaReal) => {
   if (!medidaReal || !medidaReal.includes('x')) return null;
-  const arr = [12, 19, 25, 38], [x, y] = medidaReal.split('x').map(parseFloat);
+  const arr = [12, 19, 25, 38, 63], [x, y] = medidaReal.split('x').map(parseFloat);
   const minmm = Math.min(x, y) * 10;
   return arr.find(v => minmm < v) || null;
 };

@@ -255,7 +255,7 @@ function Vectorizacion() {
       const nuevoPath = await guardarSVGModificado(nuevoSVG, nombreArchivo);
       if (!nuevoPath) throw new Error("No se pudo guardar el SVG dimensionado.");
       // Calcular tipo de planchuela
-      const planchuelas = [12, 19, 25, 38];
+      const planchuelas = [12, 19, 25, 38, 63];
       const [mx, my] = medidaElegida.split("x").map(parseFloat);
       // Convertir a milímetros
       const minMedida = Math.min(mx, my) * 10;
