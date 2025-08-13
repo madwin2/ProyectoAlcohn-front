@@ -13,6 +13,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './hooks/useAuth.jsx';
 import { NotificationProvider } from './contexts/NotificationContext';
 import './App.css';
+import './config/testConfig.js'; // Importar archivo de prueba
 
 function Layout() {
   return (

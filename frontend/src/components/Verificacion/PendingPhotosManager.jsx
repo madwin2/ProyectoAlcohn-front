@@ -14,7 +14,7 @@ import {
   Archive
 } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
-import { shouldAutoChangeStatus } from '../../config/verificacionConfig';
+import { isClipApiEnabled, getClipDisabledMessage, shouldShowDisabledNotice, shouldAutoChangeStatus } from '../../config/verificacionConfig';
 
 function PendingPhotosManager({ isOpen, onClose, onPhotoMatched }) {
   console.log('🔧 PENDING PHOTOS - Component loaded');
