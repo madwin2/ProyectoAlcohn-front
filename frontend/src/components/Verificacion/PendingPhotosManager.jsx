@@ -14,6 +14,7 @@ import {
   Archive
 } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
+import { shouldAutoChangeStatus } from '../../config/verificacionConfig';
 
 function PendingPhotosManager({ isOpen, onClose, onPhotoMatched }) {
   const [pendingPhotos, setPendingPhotos] = useState([]);
@@ -242,11 +243,18 @@ function PendingPhotosManager({ isOpen, onClose, onPhotoMatched }) {
       const photo = pendingPhotos.find(p => p.id === photoId);
       if (!photo) return;
       
-      // Update pedido with the photo
-      const { error: updateError } = await supabase.rpc('editar_pedido', {
+      // Update pedido with the photo and optionally change status to 'Hecho'
+      const updateData = {
         p_id: pedidoId,
         p_foto_sello: photo.url_foto // This is now the relative path from the bucket
-      });
+      };
+      
+      // Automatically change status to 'Hecho' if configured
+      if (shouldAutoChangeStatus()) {
+        updateData.p_estado_fabricacion = 'Hecho';
+      }
+      
+      const { error: updateError } = await supabase.rpc('editar_pedido', updateData);
 
       if (updateError) throw updateError;
       

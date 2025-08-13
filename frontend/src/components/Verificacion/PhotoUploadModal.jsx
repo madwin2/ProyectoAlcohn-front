@@ -14,6 +14,7 @@ import {
 import { supabase } from '../../supabaseClient';
 import { formatMatchingResults } from '../../services/clipService';
 import { CLIP_API_URL } from '../../config/api';
+import { isClipApiEnabled, getClipDisabledMessage, shouldShowDisabledNotice } from '../../config/verificacionConfig';
 
 function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublicUrl }) {
   const [uploadedPhotos, setUploadedPhotos] = useState([]);
@@ -90,8 +91,8 @@ function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublic
       const newPhotos = [...uploadedPhotos, ...uploadedFiles];
       setUploadedPhotos(newPhotos);
       
-      // Auto-process matching if we have design files
-      if (pedido.archivo_base || pedido.archivo_vector) {
+      // Auto-process matching if CLIP API is enabled and we have design files
+      if (isClipApiEnabled() && (pedido.archivo_base || pedido.archivo_vector)) {
         await processMatching(newPhotos);
       }
       
@@ -250,9 +251,33 @@ function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublic
 
   const handleSave = async () => {
     try {
-      await onPhotosUploaded(pedido.id_pedido, uploadedPhotos, matchingResults);
+      // Save photos based on CLIP API status
+      if (isClipApiEnabled()) {
+        // Use original flow with CLIP API
+        await onPhotosUploaded(pedido.id_pedido, uploadedPhotos, matchingResults);
+      } else {
+        // Save photos directly to pending photos table
+        const newPhotos = uploadedPhotos.filter(photo => !photo.isExisting);
+        
+        for (const photo of newPhotos) {
+          const { error: insertError } = await supabase
+            .from('fotos_pendientes')
+            .insert({
+              nombre_archivo: photo.name,
+              url_foto: photo.id, // This is the relative path in the bucket
+              estado: 'pendiente',
+              usuario_subio: (await supabase.auth.getUser()).data.user?.id
+            });
+            
+          if (insertError) {
+            console.error('Error saving photo to pending:', insertError);
+          }
+        }
+      }
+      
       onClose();
     } catch (err) {
+      console.error('Error saving photos:', err);
       setError('Error al guardar las fotos');
     }
   };
@@ -337,6 +362,25 @@ function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublic
           maxHeight: 'calc(90vh - 160px)',
           overflowY: 'auto'
         }}>
+          {/* CLIP API Disabled Notice */}
+          {shouldShowDisabledNotice() && !isClipApiEnabled() && (
+            <div style={{
+              padding: '16px',
+              background: 'rgba(245, 158, 11, 0.1)',
+              border: '1px solid rgba(245, 158, 11, 0.3)',
+              borderRadius: '8px',
+              marginBottom: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <AlertCircle style={{ width: '16px', height: '16px', color: '#f59e0b' }} />
+              <span style={{ color: '#f59e0b', fontSize: '14px' }}>
+                <strong>{getClipDisabledMessage()}</strong>
+              </span>
+            </div>
+          )}
+
           {/* Upload Area */}
           <div style={{ marginBottom: '32px' }}>
             <h3 style={{
@@ -495,8 +539,8 @@ function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublic
             </div>
           )}
 
-          {/* Matching Results */}
-          {(isProcessing || matchingResults.length > 0) && (
+          {/* Matching Results - Only show when CLIP API is enabled */}
+          {isClipApiEnabled() && (isProcessing || matchingResults.length > 0) && (
             <div style={{ marginBottom: '32px' }}>
               <div style={{
                 display: 'flex',
@@ -632,7 +676,7 @@ function PhotoUploadModal({ isOpen, onClose, pedido, onPhotosUploaded, getPublic
                 }
               }}
             >
-              {isUploading ? 'Subiendo...' : isProcessing ? 'Procesando...' : 'Guardar Fotos'}
+              {isUploading ? 'Subiendo...' : isProcessing ? 'Procesando...' : (isClipApiEnabled() ? 'Guardar Fotos' : 'Guardar en Pendientes')}
             </button>
           </div>
         </div>
