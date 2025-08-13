@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
 import { getInclusiveEndDateISOString } from '../utils/pedidosUtils';
+import { cleanPhoneNumber, formatPhoneNumber } from '../utils/phoneUtils';
 
 export const usePedidosApi = ({
   sortOrder,
@@ -149,16 +150,27 @@ export const usePedidosApi = ({
 
   const handleEditFormChange = (e) => {
     const { name, value } = e.target;
-    setEditForm((prev) => ({ ...prev, [name]: value }));
+    
+    // Si es el campo de teléfono, limpiar y formatear automáticamente
+    if (name === 'telefono_cliente') {
+      const cleanedPhone = cleanPhoneNumber(value);
+      const formattedPhone = formatPhoneNumber(cleanedPhone);
+      setEditForm((prev) => ({ ...prev, [name]: formattedPhone }));
+    } else {
+      setEditForm((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const saveEdit = useCallback(async (id) => {
     try {
+      // Preparar el número de teléfono para el servidor (sin prefijo 549)
+      const phoneForServer = cleanPhoneNumber(editForm.telefono_cliente);
+      
       const clienteFields = {
         p_id_pedido: id,
         p_nombre_cliente: editForm.nombre_cliente,
         p_apellido_cliente: editForm.apellido_cliente,
-        p_telefono_cliente: editForm.telefono_cliente,
+        p_telefono_cliente: phoneForServer, // Usar el número limpio sin prefijo 549
         p_medio_contacto: editForm.medio_contacto,
       };
 

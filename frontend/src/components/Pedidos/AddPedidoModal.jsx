@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import { simpleFileUploadService } from '../../services/simpleFileUpload';
 import { X, Package, User, Phone, Calendar, DollarSign, FileText, Upload, Loader2 } from 'lucide-react';
+import { preparePhoneForServer } from '../../utils/phoneUtils';
+import PhoneInput from '../ui/PhoneInput';
 
 const initialFormState = {
   nombre_cliente: '',
@@ -54,11 +56,14 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded }) {
       // Paso 1: Crear o buscar cliente
       let clienteId = null;
       
+      // Preparar el número de teléfono para el servidor (sin prefijo 549)
+      const phoneForServer = preparePhoneForServer(formData.telefono_cliente);
+      
       // Verificar si el cliente ya existe por teléfono
       const { data: clientesExistentes, error: clienteBusquedaError } = await supabase
         .from('clientes')
         .select('id_cliente')
-        .eq('telefono_cliente', formData.telefono_cliente);
+        .eq('telefono_cliente', phoneForServer);
 
       if (clienteBusquedaError) {
         throw clienteBusquedaError;
@@ -72,7 +77,7 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded }) {
         const clienteData = {
           nombre_cliente: formData.nombre_cliente,
           apellido_cliente: formData.apellido_cliente,
-          telefono_cliente: formData.telefono_cliente,
+          telefono_cliente: phoneForServer, // Usar el número limpio sin prefijo 549
           medio_contacto: formData.medio_contacto,
         };
 
@@ -383,26 +388,10 @@ function AddPedidoModal({ isOpen, onClose, onPedidoAdded }) {
                       onBlur={(e) => e.target.style.borderColor = 'rgba(63, 63, 70, 0.5)'}
                     />
                     <div style={{ display: 'flex', gap: '12px' }}>
-                      <input
-                        type="tel"
-                        name="telefono_cliente"
-                        placeholder="Teléfono"
+                      <PhoneInput
                         value={formData.telefono_cliente}
                         onChange={handleChange}
                         required
-                        style={{
-                          flex: 1,
-                          background: 'rgba(24, 24, 27, 0.5)',
-                          border: '1px solid rgba(63, 63, 70, 0.5)',
-                          borderRadius: '8px',
-                          padding: '12px',
-                          color: 'white',
-                          fontSize: '14px',
-                          outline: 'none',
-                          transition: 'border-color 0.3s ease'
-                        }}
-                        onFocus={(e) => e.target.style.borderColor = 'rgba(96, 165, 250, 0.5)'}
-                        onBlur={(e) => e.target.style.borderColor = 'rgba(63, 63, 70, 0.5)'}
                       />
                       <select
                         name="medio_contacto"

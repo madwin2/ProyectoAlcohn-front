@@ -5,6 +5,7 @@ import EstadoSelect from '../EstadoSelect';
 import TareaPendiente from './TareaPendiente';
 import AddTareaModal from './AddTareaModal';
 import { Plus } from 'lucide-react';
+import PhoneInput from '../ui/PhoneInput';
 
 const PedidoRow = ({ 
   pedido, 
@@ -261,12 +262,11 @@ const PedidoRow = ({
                 style={{ ...invisibleInput, color: 'white', fontWeight: 500, fontSize: '15px', marginBottom: 0, display: 'block' }}
                 placeholder="Contacto"
               />
-              <input
-                name="telefono_cliente"
+              <PhoneInput
                 value={editForm.telefono_cliente}
                 onChange={handleEditFormChange}
-                style={{ ...invisibleInput, color: '#71717a', fontWeight: 400, fontSize: '13px', marginBottom: 0, display: 'block' }}
                 placeholder="Teléfono"
+                style={{ ...invisibleInput, color: '#71717a', fontWeight: 400, fontSize: '13px', marginBottom: 0, display: 'block' }}
               />
             </>
           ) : (
