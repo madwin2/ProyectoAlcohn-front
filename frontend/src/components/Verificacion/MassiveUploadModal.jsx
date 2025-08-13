@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 import { useNotification } from '../../hooks/useNotification';
+import { isClipApiEnabled, getClipDisabledMessage, shouldShowDisabledNotice } from '../../config/verificacionConfig';
 
 function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
   const { addNotification } = useNotification();
@@ -91,8 +92,12 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
       
       setUploadedPhotos(prev => [...prev, ...uploadedFiles]);
       
-      // Auto-process matching
-      await processMatching([...uploadedPhotos, ...uploadedFiles]);
+      // Auto-process matching only if CLIP API is enabled
+      if (isClipApiEnabled()) {
+        await processMatching([...uploadedPhotos, ...uploadedFiles]);
+      } else {
+        console.log('⏸️ MASSIVE UPLOAD - CLIP API disabled, photos will be saved to pending');
+      }
       
     } catch (err) {
       console.error('Error uploading files:', err);
@@ -104,6 +109,13 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
 
   const processMatching = async (photos) => {
     if (!photos.length || !pedidos.length) return;
+    
+    // Check if CLIP API is enabled
+    if (!isClipApiEnabled()) {
+      console.log('⏸️ MASSIVE UPLOAD - CLIP API disabled, skipping processing');
+      setMatchingResults([]);
+      return;
+    }
     
     setIsProcessing(true);
     setError(null);
@@ -528,6 +540,25 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
           maxHeight: 'calc(90vh - 160px)',
           overflowY: 'auto'
         }}>
+          {/* CLIP API Disabled Notice */}
+          {shouldShowDisabledNotice() && !isClipApiEnabled() && (
+            <div style={{
+              padding: '16px',
+              background: 'rgba(245, 158, 11, 0.1)',
+              border: '1px solid rgba(245, 158, 11, 0.3)',
+              borderRadius: '8px',
+              marginBottom: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <AlertCircle style={{ width: '16px', height: '16px', color: '#f59e0b' }} />
+              <span style={{ color: '#f59e0b', fontSize: '14px' }}>
+                <strong>{getClipDisabledMessage()}</strong>
+              </span>
+            </div>
+          )}
+
           {/* Upload Area */}
           <div style={{ marginBottom: '32px' }}>
             <div
@@ -564,7 +595,10 @@ function MassiveUploadModal({ isOpen, onClose, pedidos, onMatchingComplete }) {
                 fontSize: '14px',
                 margin: 0
               }}>
-                El sistema analizará automáticamente cada foto y la asignará al pedido correspondiente
+                {isClipApiEnabled() 
+                  ? 'El sistema analizará automáticamente cada foto y la asignará al pedido correspondiente'
+                  : 'Las fotos se guardarán en pendientes para asignación manual'
+                }
               </p>
               
               <input

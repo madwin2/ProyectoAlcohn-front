@@ -3,6 +3,7 @@
 
 import { supabase } from '../supabaseClient';
 import { CLIP_API_URL } from '../config/api.js';
+import { isClipApiEnabled } from '../config/verificacionConfig.js';
 
 const PENDING_PHOTOS_KEY = 'pendingVerificationPhotos';
 
@@ -120,6 +121,12 @@ export const clearPendingPhotos = () => {
  */
 export const autoMatchPendingPhotos = async (newPedidos) => {
   try {
+    // Check if CLIP API is enabled
+    if (!isClipApiEnabled()) {
+      console.log('⏸️ PENDING PHOTOS SERVICE - CLIP API disabled, skipping auto-matching');
+      return { matches: [], remaining: loadPendingPhotos() };
+    }
+    
     const pendingPhotos = loadPendingPhotos();
     
     if (pendingPhotos.length === 0 || newPedidos.length === 0) {

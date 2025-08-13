@@ -80,6 +80,12 @@ function PendingPhotosManager({ isOpen, onClose, onPhotoMatched }) {
   const processAutoMatching = async () => {
     if (!pendingPhotos.length || !availablePedidos.length) return;
     
+    // Check if CLIP API is enabled
+    if (!shouldAutoChangeStatus() || !isClipApiEnabled()) {
+      console.log('⏸️ PENDING PHOTOS - CLIP API disabled, skipping auto-matching');
+      return;
+    }
+    
     setProcessing(true);
     setError(null);
     
@@ -348,7 +354,7 @@ function PendingPhotosManager({ isOpen, onClose, onPhotoMatched }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <button
               onClick={processAutoMatching}
-              disabled={processing || !pendingPhotos.length || !availablePedidos.length}
+              disabled={processing || !pendingPhotos.length || !availablePedidos.length || !isClipApiEnabled()}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -403,6 +409,25 @@ function PendingPhotosManager({ isOpen, onClose, onPhotoMatched }) {
           maxHeight: 'calc(90vh - 160px)',
           overflowY: 'auto'
         }}>
+          {/* CLIP API Disabled Notice */}
+          {shouldShowDisabledNotice() && !isClipApiEnabled() && (
+            <div style={{
+              padding: '16px',
+              background: 'rgba(245, 158, 11, 0.1)',
+              border: '1px solid rgba(245, 158, 11, 0.3)',
+              borderRadius: '8px',
+              marginBottom: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <AlertCircle style={{ width: '16px', height: '16px', color: '#f59e0b' }} />
+              <span style={{ color: '#f59e0b', fontSize: '14px' }}>
+                <strong>{getClipDisabledMessage()}</strong>
+              </span>
+            </div>
+          )}
+
           {/* Search */}
           <div style={{
             position: 'relative',
