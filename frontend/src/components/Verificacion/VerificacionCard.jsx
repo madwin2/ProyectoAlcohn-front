@@ -11,6 +11,7 @@ import {
   Upload,
   Zap
 } from 'lucide-react';
+import SVGPreview from '../ui/SVGPreview';
 
 function VerificacionCard({ 
   pedido, 
@@ -125,20 +126,31 @@ function VerificacionCard({
         <span style={{ color: '#71717a', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
           Previsualización
         </span>
-        <div style={{ marginTop: '6px' }}>
-          {vectorFile ? (
+        <div style={{ 
+          marginTop: '6px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <SVGPreview
+            vectorUrl={vectorFile ? getPublicUrl(vectorFile) : null}
+            size={48}
+            backgroundColor="white"
+            borderRadius="6px"
+          />
+          {vectorFile && (
             <button
               onClick={() => window.open(getPublicUrl(vectorFile), '_blank')}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
-                padding: '6px 12px',
+                gap: '4px',
+                padding: '4px 8px',
                 background: 'rgba(34, 197, 94, 0.1)',
                 border: '1px solid rgba(34, 197, 94, 0.3)',
-                borderRadius: '6px',
+                borderRadius: '4px',
                 color: '#22c55e',
-                fontSize: '12px',
+                fontSize: '11px',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease'
               }}
@@ -149,11 +161,9 @@ function VerificacionCard({
                 e.target.style.background = 'rgba(34, 197, 94, 0.1)';
               }}
             >
-              <Eye style={{ width: '12px', height: '12px' }} />
-              Ver vector
+              <Eye style={{ width: '10px', height: '10px' }} />
+              Ver
             </button>
-          ) : (
-            <span style={{ color: '#71717a', fontSize: '12px' }}>No disponible</span>
           )}
         </div>
       </div>
