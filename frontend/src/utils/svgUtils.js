@@ -67,32 +67,47 @@ export const dimensionarSVG = async (url, medidaDeseada) => {
     tempSvg.style.visibility = 'hidden'; 
     document.body.appendChild(tempSvg);
     
-    // Clonar todos los elementos preservando sus transformaciones originales
-    const grupo = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    // Crear un grupo temporal para calcular el bbox
+    const grupoTemp = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     doc.querySelectorAll('path, rect, circle, ellipse, line, polyline, polygon').forEach(el => {
       const copy = el.cloneNode(true);
-      // NO eliminar el atributo transform - preservar las transformaciones individuales
-      grupo.appendChild(copy);
+      grupoTemp.appendChild(copy);
     });
     
-    tempSvg.appendChild(grupo);
-    const bbox = grupo.getBBox(); 
+    tempSvg.appendChild(grupoTemp);
+    const bbox = grupoTemp.getBBox(); 
     document.body.removeChild(tempSvg);
     
     // Calcular escalas individuales para respetar las medidas exactas
     const scaleX = targetW / bbox.width;
     const scaleY = targetH / bbox.height;
     
-    // Aplicar escalas individuales para mantener las proporciones exactas
+    // Calcular traslación para centrar
     const tx = -bbox.x * scaleX;
     const ty = -bbox.y * scaleY;
     
-    // Aplicar transformación que respete las escalas individuales
-    grupo.setAttribute('transform', `translate(${tx},${ty}) scale(${scaleX},${scaleY})`);
+    // Crear un nuevo grupo para el resultado
+    const grupoFinal = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    
+    // Aplicar transformaciones individuales a cada elemento
+    doc.querySelectorAll('path, rect, circle, ellipse, line, polyline, polygon').forEach(el => {
+      const copy = el.cloneNode(true);
+      
+      // Obtener la transformación original del elemento
+      const transformOriginal = copy.getAttribute('transform') || '';
+      
+      // Crear la nueva transformación combinando la original con la de escalado
+      const nuevaTransformacion = `translate(${tx},${ty}) scale(${scaleX},${scaleY}) ${transformOriginal}`;
+      
+      // Aplicar la nueva transformación
+      copy.setAttribute('transform', nuevaTransformacion);
+      
+      grupoFinal.appendChild(copy);
+    });
     
     // Limpiar el SVG original y agregar el grupo transformado
     while (svg.firstChild) svg.removeChild(svg.firstChild);
-    svg.appendChild(grupo);
+    svg.appendChild(grupoFinal);
     
     // Actualizar atributos del SVG con las dimensiones reales
     svg.setAttribute('width', `${targetW}mm`);
