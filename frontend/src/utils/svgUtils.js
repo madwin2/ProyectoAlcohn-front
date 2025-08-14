@@ -58,28 +58,45 @@ export const dimensionarSVG = async (url, medidaDeseada) => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(text, 'image/svg+xml');
     const svg = doc.documentElement;
+    
+    // Crear SVG temporal para calcular el bbox real
     const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    tempSvg.style.visibility = 'hidden'; document.body.appendChild(tempSvg);
+    tempSvg.style.visibility = 'hidden'; 
+    document.body.appendChild(tempSvg);
+    
+    // Clonar todos los elementos preservando sus transformaciones originales
     const grupo = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     doc.querySelectorAll('path, rect, circle, ellipse, line, polyline, polygon').forEach(el => {
       const copy = el.cloneNode(true);
-      copy.removeAttribute('transform');
+      // NO eliminar el atributo transform - preservar las transformaciones individuales
       grupo.appendChild(copy);
     });
+    
     tempSvg.appendChild(grupo);
-    const bbox = grupo.getBBox(); document.body.removeChild(tempSvg);
+    const bbox = grupo.getBBox(); 
+    document.body.removeChild(tempSvg);
+    
+    // Calcular escalas individuales para respetar las medidas exactas
     const scaleX = targetW / bbox.width;
     const scaleY = targetH / bbox.height;
-    const scale = Math.min(scaleX, scaleY);
-    const tx = -bbox.x * scale;
-    const ty = -bbox.y * scale;
-    grupo.setAttribute('transform', `translate(${tx},${ty}) scale(${scale})`);
+    
+    // Aplicar escalas individuales para mantener las proporciones exactas
+    const tx = -bbox.x * scaleX;
+    const ty = -bbox.y * scaleY;
+    
+    // Aplicar transformación que respete las escalas individuales
+    grupo.setAttribute('transform', `translate(${tx},${ty}) scale(${scaleX},${scaleY})`);
+    
+    // Limpiar el SVG original y agregar el grupo transformado
     while (svg.firstChild) svg.removeChild(svg.firstChild);
     svg.appendChild(grupo);
-    svg.setAttribute('width', `${bbox.width * scale}mm`);
-    svg.setAttribute('height', `${bbox.height * scale}mm`);
-    svg.setAttribute('viewBox', `0 0 ${bbox.width * scale} ${bbox.height * scale}`);
+    
+    // Actualizar atributos del SVG con las dimensiones reales
+    svg.setAttribute('width', `${targetW}mm`);
+    svg.setAttribute('height', `${targetH}mm`);
+    svg.setAttribute('viewBox', `0 0 ${targetW} ${targetH}`);
     svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    
     return new XMLSerializer().serializeToString(doc);
   } catch (error) {
     console.error('Error dimensionando SVG:', error);
