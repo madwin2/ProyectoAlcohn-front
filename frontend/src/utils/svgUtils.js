@@ -16,24 +16,27 @@ export const medirSVG = async (url) => {
     const svgText = await response.text();
     const parser = new DOMParser();
     const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
-    // Medición detallada con getBBox
+    
+    // Medición detallada con getBBox preservando transformaciones
     const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     tempSvg.style.visibility = 'hidden';
     document.body.appendChild(tempSvg);
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    
+    // Crear un grupo con todos los elementos preservando sus transformaciones
+    const grupo = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     svgDoc.querySelectorAll('path, rect, circle, ellipse, line, polyline, polygon').forEach(el => {
       const clone = el.cloneNode(true);
-      tempSvg.appendChild(clone);
-      const bbox = clone.getBBox();
-      minX = Math.min(minX, bbox.x);
-      minY = Math.min(minY, bbox.y);
-      maxX = Math.max(maxX, bbox.x + bbox.width);
-      maxY = Math.max(maxY, bbox.y + bbox.height);
-      tempSvg.removeChild(clone);
+      // Preservar las transformaciones individuales
+      grupo.appendChild(clone);
     });
+    
+    tempSvg.appendChild(grupo);
+    const bbox = grupo.getBBox();
     document.body.removeChild(tempSvg);
-    const width = maxX - minX;
-    const height = maxY - minY;
+    
+    const width = bbox.width;
+    const height = bbox.height;
+    
     if (!(width > 0 && height > 0)) {
       console.debug('Dimensiones SVG inválidas:', { width, height }, url);
       return { width: 0, height: 0 };
