@@ -116,41 +116,31 @@ export const dimensionarSVG = async (url, medidaDeseada) => {
     const offsetX = (targetW - finalWidth) / 2;
     const offsetY = (targetH - finalHeight) / 2;
     
-    // Aplicar la transformación directamente al SVG
-    svg.setAttribute('width', `${targetW}mm`);
-    svg.setAttribute('height', `${targetH}mm`);
-    svg.setAttribute('viewBox', `0 0 ${targetW} ${targetH}`);
-    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-    
-    // Crear un grupo contenedor con la transformación
-    const grupoContenedor = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    grupoContenedor.setAttribute('transform', `translate(${offsetX},${offsetY}) scale(${scale})`);
-    
-    // Procesar TODOS los elementos recursivamente y moverlos al grupo contenedor
-    const todosLosElementos = [];
-    const procesarElementos = (elemento) => {
+    // Aplicar la transformación directamente a cada elemento individual
+    const procesarYTransformar = (elemento) => {
       if (elemento.tagName === 'g') {
         // Si es un grupo, procesar sus hijos
-        Array.from(elemento.children).forEach(procesarElementos);
+        Array.from(elemento.children).forEach(procesarYTransformar);
       } else if (['path', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon'].includes(elemento.tagName)) {
-        // Si es un elemento de forma, agregarlo
-        todosLosElementos.push(elemento);
+        // Obtener la transformación original del elemento
+        const transformOriginal = elemento.getAttribute('transform') || '';
+        
+        // Crear la nueva transformación combinando la original con la de escalado
+        const nuevaTransformacion = `translate(${offsetX},${offsetY}) scale(${scale}) ${transformOriginal}`;
+        
+        // Aplicar la nueva transformación directamente al elemento
+        elemento.setAttribute('transform', nuevaTransformacion);
       }
     };
     
     // Procesar desde el SVG raíz
-    Array.from(svg.children).forEach(procesarElementos);
+    Array.from(svg.children).forEach(procesarYTransformar);
     
-    // Mover todos los elementos encontrados al grupo contenedor
-    todosLosElementos.forEach(el => {
-      if (el.parentNode) {
-        el.parentNode.removeChild(el);
-      }
-      grupoContenedor.appendChild(el);
-    });
-    
-    // Agregar el grupo contenedor al SVG
-    svg.appendChild(grupoContenedor);
+    // Actualizar atributos del SVG
+    svg.setAttribute('width', `${targetW}mm`);
+    svg.setAttribute('height', `${targetH}mm`);
+    svg.setAttribute('viewBox', `0 0 ${targetW} ${targetH}`);
+    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
     
     return new XMLSerializer().serializeToString(doc);
   } catch (error) {
