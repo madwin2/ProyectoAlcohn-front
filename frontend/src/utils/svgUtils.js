@@ -74,7 +74,22 @@ export const dimensionarSVG = async (url, medidaDeseada) => {
       document.body.appendChild(tempSvg);
       
       const grupoTemp = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      doc.querySelectorAll('path, rect, circle, ellipse, line, polyline, polygon').forEach(el => {
+      // Procesar TODOS los elementos recursivamente
+      const todosLosElementos = [];
+      const procesarElementos = (elemento) => {
+        if (elemento.tagName === 'g') {
+          // Si es un grupo, procesar sus hijos
+          Array.from(elemento.children).forEach(procesarElementos);
+        } else if (['path', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon'].includes(elemento.tagName)) {
+          // Si es un elemento de forma, agregarlo
+          todosLosElementos.push(elemento);
+        }
+      };
+      
+      // Procesar desde el SVG raíz
+      Array.from(svg.children).forEach(procesarElementos);
+      
+      todosLosElementos.forEach(el => {
         const copy = el.cloneNode(true);
         grupoTemp.appendChild(copy);
       });
@@ -111,9 +126,23 @@ export const dimensionarSVG = async (url, medidaDeseada) => {
     const grupoContenedor = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     grupoContenedor.setAttribute('transform', `translate(${offsetX},${offsetY}) scale(${scale})`);
     
-    // Mover todos los elementos al grupo contenedor
-    const elementos = Array.from(svg.querySelectorAll('path, rect, circle, ellipse, line, polyline, polygon'));
-    elementos.forEach(el => {
+    // Procesar TODOS los elementos recursivamente y moverlos al grupo contenedor
+    const todosLosElementos = [];
+    const procesarElementos = (elemento) => {
+      if (elemento.tagName === 'g') {
+        // Si es un grupo, procesar sus hijos
+        Array.from(elemento.children).forEach(procesarElementos);
+      } else if (['path', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon'].includes(elemento.tagName)) {
+        // Si es un elemento de forma, agregarlo
+        todosLosElementos.push(elemento);
+      }
+    };
+    
+    // Procesar desde el SVG raíz
+    Array.from(svg.children).forEach(procesarElementos);
+    
+    // Mover todos los elementos encontrados al grupo contenedor
+    todosLosElementos.forEach(el => {
       if (el.parentNode) {
         el.parentNode.removeChild(el);
       }
