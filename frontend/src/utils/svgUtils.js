@@ -88,9 +88,18 @@ export const dimensionarSVG = async (url, medidaDeseada) => {
       originalHeight = bbox.height;
     }
     
-    // Calcular las escalas necesarias
+    // Calcular escala uniforme para mantener proporciones
     const scaleX = targetW / originalWidth;
     const scaleY = targetH / originalHeight;
+    const scale = Math.min(scaleX, scaleY); // Usar la escala menor para mantener proporciones
+    
+    // Calcular las dimensiones finales manteniendo proporciones
+    const finalWidth = originalWidth * scale;
+    const finalHeight = originalHeight * scale;
+    
+    // Calcular centrado
+    const offsetX = (targetW - finalWidth) / 2;
+    const offsetY = (targetH - finalHeight) / 2;
     
     // Aplicar la transformación directamente al SVG
     svg.setAttribute('width', `${targetW}mm`);
@@ -100,7 +109,7 @@ export const dimensionarSVG = async (url, medidaDeseada) => {
     
     // Crear un grupo contenedor con la transformación
     const grupoContenedor = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    grupoContenedor.setAttribute('transform', `scale(${scaleX},${scaleY})`);
+    grupoContenedor.setAttribute('transform', `translate(${offsetX},${offsetY}) scale(${scale})`);
     
     // Mover todos los elementos al grupo contenedor
     const elementos = Array.from(svg.querySelectorAll('path, rect, circle, ellipse, line, polyline, polygon'));
