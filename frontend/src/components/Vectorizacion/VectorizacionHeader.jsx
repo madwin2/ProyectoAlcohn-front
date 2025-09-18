@@ -1,12 +1,15 @@
 import React from 'react';
-import { Search, Shapes } from 'lucide-react';
+import { Search, Shapes, Filter } from 'lucide-react';
 
 const VectorizacionHeader = ({ 
   grupoBase, 
   grupoVector, 
   grupoVerificados, 
   busqueda, 
-  setBusqueda 
+  setBusqueda,
+  filtroVerificados,
+  setFiltroVerificados,
+  activeTab
 }) => {
   return (
     <div style={{ 
@@ -39,6 +42,34 @@ const VectorizacionHeader = ({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            {/* Filtro de Verificados - Solo mostrar en la pestaña Verificados */}
+            {activeTab === 'verificados' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Filter style={{ width: '16px', height: '16px', color: '#71717a' }} />
+                <select
+                  value={filtroVerificados}
+                  onChange={(e) => setFiltroVerificados(e.target.value)}
+                  style={{
+                    background: 'rgba(24, 24, 27, 0.5)',
+                    border: '1px solid rgba(113, 113, 122, 0.5)',
+                    color: 'white',
+                    borderRadius: '8px',
+                    height: '40px',
+                    padding: '8px 16px',
+                    outline: 'none',
+                    fontSize: '14px',
+                    transition: 'border-color 0.3s ease',
+                    cursor: 'pointer'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = 'rgba(63, 63, 70, 1)'}
+                  onBlur={(e) => e.target.style.borderColor = 'rgba(113, 113, 122, 0.5)'}
+                >
+                  <option value="todos">Todos los verificados</option>
+                  <option value="sin_programar">Sin programar</option>
+                </select>
+              </div>
+            )}
+
             <div style={{ position: 'relative' }}>
               <Search style={{ 
                 position: 'absolute', 

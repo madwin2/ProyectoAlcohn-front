@@ -29,6 +29,7 @@ function VectorizacionPage() {
     removerFondo,
     medidaPersonalizada,
     ratioOriginal,
+    filtroVerificados,
     
     // Groups
     grupoBase,
@@ -39,6 +40,7 @@ function VectorizacionPage() {
     setActiveTab,
     setBusqueda,
     setRemoverFondo,
+    setFiltroVerificados,
     handleVectorizar,
     handlePrevisualizar,
     handleDimensionar,
@@ -78,6 +80,9 @@ function VectorizacionPage() {
         grupoVerificados={grupoVerificados}
         busqueda={busqueda}
         setBusqueda={setBusqueda}
+        filtroVerificados={filtroVerificados}
+        setFiltroVerificados={setFiltroVerificados}
+        activeTab={activeTab}
       />
 
       {/* Content */}

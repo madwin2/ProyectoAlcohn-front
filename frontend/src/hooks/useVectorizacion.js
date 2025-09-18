@@ -18,6 +18,7 @@ export const useVectorizacion = () => {
   const [medidaPersonalizada, setMedidaPersonalizada] = useState({ ancho: '', alto: '' });
   const [ratioOriginal, setRatioOriginal] = useState(1);
   const [authReady, setAuthReady] = useState(false);
+  const [filtroVerificados, setFiltroVerificados] = useState('todos'); // 'todos' | 'sin_programar'
 
   // Función para obtener URL pública
   const publicUrl = (path) => {
@@ -75,7 +76,16 @@ export const useVectorizacion = () => {
   };
 
   // Separar en grupos
-  const grupoVerificados = pedidos.filter(p => p.medida_real);
+  const grupoVerificadosBase = pedidos.filter(p => p.medida_real);
+  
+  // Aplicar filtro a grupoVerificados
+  const grupoVerificados = filtroVerificados === 'sin_programar' 
+    ? grupoVerificadosBase.filter(p => 
+        p.estado_fabricacion === 'Sin Hacer' && 
+        (!p.id_programa || p.id_programa === null || p.id_programa === '')
+      )
+    : grupoVerificadosBase;
+    
   const grupoVector = pedidos.filter(p => p.archivo_vector && !p.medida_real);  
   const grupoBase = pedidos.filter(p => !p.archivo_vector && p.archivo_base && !p.medida_real);
   
@@ -83,8 +93,10 @@ export const useVectorizacion = () => {
   console.log('Grupos separados:', {
     total: pedidos.length,
     verificados: grupoVerificados.length,
+    verificadosBase: grupoVerificadosBase.length,
     vector: grupoVector.length,
-    base: grupoBase.length
+    base: grupoBase.length,
+    filtroVerificados: filtroVerificados
   });
 
   // Medir SVGs y calcular opciones de escalado - OPTIMIZADO
@@ -1015,6 +1027,7 @@ export const useVectorizacion = () => {
     removerFondo,
     medidaPersonalizada,
     ratioOriginal,
+    filtroVerificados,
     
     // Groups
     grupoBase,
@@ -1025,6 +1038,7 @@ export const useVectorizacion = () => {
     setActiveTab,
     setBusqueda,
     setRemoverFondo,
+    setFiltroVerificados,
     handleVectorizar,
     handlePrevisualizar,
     handleDimensionar,
