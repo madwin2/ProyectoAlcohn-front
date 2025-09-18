@@ -309,10 +309,18 @@ const ProgramaCard = ({ programa, onProgramaUpdated, publicUrl }) => {
   };
 
   const formatearFecha = (fecha) => {
-    return new Date(fecha).toLocaleDateString('es-ES', {
+    // Si la fecha viene como string en formato YYYY-MM-DD, usarla directamente
+    if (typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+      const [year, month, day] = fecha.split('-');
+      return `${day}/${month}/${year}`;
+    }
+    
+    // Si viene como timestamp, usar toLocaleDateString con UTC para evitar conversión de zona horaria
+    return new Date(fecha + 'T00:00:00Z').toLocaleDateString('es-ES', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric'
+      year: 'numeric',
+      timeZone: 'UTC'
     });
   };
 
