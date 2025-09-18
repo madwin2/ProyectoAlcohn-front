@@ -43,7 +43,7 @@ const VectorizacionHeader = ({
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             {/* Filtro de Verificados - Solo mostrar en la pestaña Verificados */}
-            {activeTab === 'verificados' && (
+            {activeTab === 'completados' && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Filter style={{ width: '16px', height: '16px', color: '#71717a' }} />
                 <select
